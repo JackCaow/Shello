@@ -1,0 +1,1 @@
+-keep class dev.ghostty.android.NativeBridge { *; }

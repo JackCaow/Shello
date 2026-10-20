@@ -1,0 +1,14 @@
+[
+  {
+    "name": "legacy-family",
+    "expected": "👨‍👩‍👧‍👦",
+    "actual": "👨‍👩‍👧‍👦",
+    "pass": true
+  },
+  {
+    "name": "cluster-keycap",
+    "expected": "1️⃣",
+    "actual": "1️⃣",
+    "pass": true
+  }
+]

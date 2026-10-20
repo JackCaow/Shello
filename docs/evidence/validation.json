@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-20",
+  "status": "local alpha; not publicly published",
+  "version": "0.1.0-alpha01",
+  "host": "macOS arm64, JDK 17, Gradle 8.11.1, Zig 0.16.0, NDK 28.2.13676358",
+  "device": {
+    "model": "25019PNF3C",
+    "androidApi": 36,
+    "ime": "Doubao",
+    "abi": "arm64-v8a"
+  },
+  "ghosttyCommit": "b58ef1d678be2747c830bc1b1e6c0a086afecf9a",
+  "artifacts": {
+    "aar": {
+      "path": "terminal/build/outputs/aar/terminal-release.aar",
+      "sha256": "f6fbd845c18f3e5ec748575fb64bcbb9729698cb5cf60e923ce6a8c42203f191",
+      "bytes": 660248
+    },
+    "sampleDebug": {
+      "path": "sample/build/outputs/apk/debug/sample-debug.apk",
+      "sha256": "af828741c70f6165f9ce0d6de88414f051af1c73548c5b8f72c2d7d27a04675f",
+      "bytes": 8469027
+    },
+    "sampleMinifiedRelease": {
+      "path": "sample/build/outputs/apk/release/sample-release-unsigned.apk",
+      "sha256": "37deb4c7dfa8cd2dce4e69049d506196d4288183994a91b3e828454cbdfaeed4",
+      "bytes": 1611598
+    },
+    "mavenConsumer": {
+      "path": "tests/consumer/app/build/outputs/apk/release/app-release.apk",
+      "sha256": "951dad56757c18926b2f2a99f92874ea2e91002b532fd21d8f3282ef5bdf5ece",
+      "bytes": 1599202
+    }
+  },
+  "instrumentation": {
+    "tests": 4,
+    "passed": 4,
+    "unicodeAssertions": 85,
+    "method": "adb am instrument on physical Android; AndroidJUnitRunner"
+  },
+  "aar": {
+    "jniLibraries": [
+      "jni/arm64-v8a/libghostty_android.so"
+    ],
+    "licenseEntries": [
+      "META-INF/ghostty-android/Ghostty-LICENSE",
+      "META-INF/ghostty-android/LICENSE",
+      "META-INF/ghostty-android/Zig-LICENSE",
+      "META-INF/ghostty-android/licenses/LICENSE_Bjoern_Hoehrmann",
+      "META-INF/ghostty-android/licenses/LICENSE_unicode",
+      "META-INF/ghostty-android/uucode-LICENSE.md"
+    ],
+    "minifiedMavenConsumer": "AAR smoke OK"
+  },
+  "manualDevice": {
+    "legacyFamilyCopy": "pass",
+    "clusterKeycapCopy": "pass",
+    "imeCandidateConfirmation": "pass",
+    "imeCandidateCancellation": "pass",
+    "keyboardGrid": [
+      {
+        "visible": false,
+        "columns": 46,
+        "rows": 35
+      },
+      {
+        "visible": true,
+        "columns": 46,
+        "rows": 18
+      }
+    ],
+    "checkpointRestore": "pass"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 6,
+    "notes": [
+      "2 pinned test dependency updates",
+      "ARM64-only ABI",
+      "2 draw allocation warnings",
+      "touch performClick accessibility warning"
+    ]
+  },
+  "publicCiRun": false,
+  "libraryLongDurationBenchmark": false
+}

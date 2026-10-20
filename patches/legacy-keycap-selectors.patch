@@ -1,0 +1,15 @@
+--- a/src/terminal/Terminal.zig
++++ b/src/terminal/Terminal.zig
+@@ -1524,7 +1524,11 @@
+         // If this is a emoji variation selector, prev must be an emoji
+         if (c == 0xFE0F or c == 0xFE0E) {
+             const prev_props = unicode.table.get(prev.content.codepoint.data);
+-            const emoji = prev_props.grapheme_break == .extended_pictographic;
++            // Keycap bases have Emoji=Yes but are not Extended_Pictographic.
++            // Preserve valid selectors in legacy mode without changing columns.
++            const base = prev.content.codepoint.data;
++            const keycap = base == '#' or base == '*' or (base >= '0' and base <= '9');
++            const emoji = prev_props.grapheme_break == .extended_pictographic or keycap;
+             if (!emoji) return;
+         }
+ 

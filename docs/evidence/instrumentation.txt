@@ -1,0 +1,5 @@
+dev.ghostty.android.TerminalApiTest:....
+
+Time: 0.075
+
+OK (4 tests)
