@@ -9,7 +9,7 @@ Experimental Android terminal library: **libghostty-vt + native Canvas rendering
 - `TerminalSession`: ordered VT byte stream, key encoding, query replies, scrollback, and opaque in-memory checkpoints.
 - `TerminalView`: colors/styles, cursor, grapheme shaping, long-press selection, two handles, and edge autoscroll.
 - `TerminalInputView`: optional direct-input bridge. Composing text stays local; committed text is sent as UTF-8.
-- `sample`: an **offline echo demonstration**, not a shell. No network permissions, accounts, SSH, WebSocket, WebView, or business integration.
+- `sample`: offline echo by default, with an optional real SSH shell using mwiede/JSch. A USB setup script connects to a temporary loopback-only OpenSSH server on your Mac. No business/account integration; the terminal AAR stays transport-independent.
 
 ```text
 PTY / SSH / WebSocket (your application)
@@ -24,7 +24,7 @@ Android **8.1+ (API 27) / arm64-v8a only**, Java 17. Runtime regression covers a
 
 ## Sample UI
 
-The offline sample follows Moshi’s mobile terminal layout: a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. The history button restores recent drafts from RAM. Voice and attachment entries are disabled in this prototype. Minimize opens a half-width local session card with a viewport preview; resume retains the same in-memory session and draft. Control keys display feedback in this echo demo; there is no remote shell or process to execute them. UI components live in `sample`, separate from the embeddable terminal library.
+The sample uses a Moshi-inspired mobile terminal layout (visual parity is still in progress): a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. The history button restores recent drafts from RAM. Voice and attachment entries are disabled in this prototype. Minimize opens a half-width local session card with a viewport preview; resume retains the same in-memory session and draft. Control keys show feedback in offline mode and operate the real PTY in SSH mode. See [local SSH setup and limitations](docs/LOCAL_SSH.md). UI components live in `sample`, separate from the embeddable terminal library.
 
 [UI screenshots and validation](docs/VALIDATION.md#moshi-inspired-sample-ui)
 

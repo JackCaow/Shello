@@ -1,6 +1,6 @@
 # Third-party notices and provenance
 
-The Android adapter, rendering and selection code was extracted from the purpose-built Terminal Lab prototype in 2026. The originating copyright holder is retained in the MIT LICENSE. No account, RCP, product UI, credentials, network service or proprietary dependencies are included. This library's MIT grant is scoped to this repository, not the surrounding source product.
+The Android adapter, rendering and selection code was extracted from the purpose-built Terminal Lab prototype in 2026. The originating copyright holder is retained in the MIT LICENSE. No account, RCP, credentials or proprietary dependencies from the originating product are included. The optional sample SSH fixture was added independently. This library's MIT grant is scoped to this repository, not the surrounding source product.
 
 The native build pins Ghostty `b58ef1d678be2747c830bc1b1e6c0a086afecf9a` (MIT; Mitchell Hashimoto and contributors) and applies the documented keycap-selector patch. Ghostty's `build.zig.zon` pins uucode to `9d55524551411b493cca41ca06363625d90aff1e` (MIT; Jacob Sandlund), including Unicode data and the Björn Höhrmann decoder notices. Zig 0.16.0 is used to compile the core and its standard-library/runtime code (MIT). SIMD, Oniguruma and kitty graphics are disabled in the VT build; no desktop renderer or fonts are distributed.
 
@@ -20,3 +20,5 @@ Upstream source locations:
 - https://github.com/jacobsandlund/uucode
 - https://github.com/ziglang/zig
 - https://github.com/gradle/gradle
+
+The sample application (not the terminal AAR) uses [mwiede/JSch 2.28.8](https://github.com/mwiede/jsch) for SSH. Its BSD-style JSch/JZlib and jBCrypt notices are retained in `sample/src/main/assets/third_party/jsch/` and packaged in the sample APK. No Moshi source code or artwork is included.

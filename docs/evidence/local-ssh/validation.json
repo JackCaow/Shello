@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-21",
+  "ssh": "macOS OpenSSH loopback / ECDSA / strict host key verification / USB reverse",
+  "devices": [
+    "Android 16 API 36 physical ARM64",
+    "Android 8.1 API 27 ARM64 emulator"
+  ],
+  "ssh_tests_per_device": {
+    "passed": 2,
+    "skipped": 0
+  },
+  "release_runtime": "R8 APK locally test-signed; SSH command execution on API 27",
+  "sample_lint": {
+    "errors": 0,
+    "warnings": 15
+  },
+  "ime": "Doubao Pinyin actual taps -> vim -> saved UTF-8 file; draft autocorrect disabled",
+  "known_limitations": [
+    "Mac less 581.2 regional-indicator width mismatch (host flag=2, VT legacy flag=4)",
+    "Mac Vim 9.1 prints ZWJ as <200d>",
+    "Trime external IME BadTokenException during one API 27 transition; release test used system Latin IME",
+    "Reconnect starts a new shell; no process resume",
+    "No long-duration performance certification or full Moshi visual parity"
+  ],
+  "maven_remote_publication": false,
+  "artifacts": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "12be17ee4d42e2208090628f42d9ddb391e1e513a8e8931ff343f6e9b19a560b",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "ea09851bfeaf09cf3fcb4f58396b065475f7e51086a83f38b07d4c1d9ce872a2",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "6c384927140ebca18144f9c3a2a1e816886e9afdc6bc73c26e716aa3dd8c401c"
+  }
+}

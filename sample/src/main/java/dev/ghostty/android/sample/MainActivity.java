@@ -17,11 +17,15 @@ import android.widget.*;
 import dev.ghostty.android.*;
 import java.nio.charset.StandardCharsets;
 
-/** Moshi-inspired terminal controls around a local, offline echo session. */
+/** Moshi-inspired terminal controls around offline echo or a sample SSH shell. */
 public final class MainActivity extends Activity {
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
     private TerminalSession session;
+    private SshTransport ssh;
+    private boolean sshMode, sshConnected, destroyed;
+    private int sshGeneration;
+    private TextView protocolBadge, homeBadge;
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
     private TerminalInputView directInput;
@@ -62,9 +66,10 @@ public final class MainActivity extends Activity {
         sheet.addView(directInput,new LinearLayout.LayoutParams(1,1));
         session=new TerminalSession(40,20);
         terminal.setListener(new TerminalView.Listener() {
-            @Override public void onInput(byte[] bytes) { echo(bytes); }
+            @Override public void onInput(byte[] bytes) { sendInput(bytes); }
             @Override public void onResize(int columns,int rows) {
-                subtitle.setContentDescription("本地终端，"+columns+" 列，"+rows+" 行");
+                subtitle.setContentDescription((sshMode?"SSH 终端":"本地终端")+"，"+columns+" 列，"+rows+" 行");
+                if(ssh!=null)ssh.resize(columns,rows);
                 if(directInput.hasFocus()||draft.hasFocus())terminal.post(terminal::scrollToBottom);
             }
             @Override public void onSelectionChanged(String text) {
@@ -80,6 +85,8 @@ public final class MainActivity extends Activity {
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
         write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› "); root.requestFocus();
+        if(BuildConfig.DEBUG && getIntent().getBooleanExtra("connectLocalSsh",false))
+            terminal.post(this::connectSsh);
     }
 
     private void buildHeader() {
@@ -100,7 +107,7 @@ public final class MainActivity extends Activity {
         subtitle.setSingleLine();subtitle.setEllipsize(TextUtils.TruncateAt.END);
         subtitle.setPadding(dp(8),0,dp(8),0);
         header.addView(subtitle,new LinearLayout.LayoutParams(0,-2,1));
-        TextView badge=label("LOCAL",10,0xff75b6ff);badge.setPadding(dp(5),dp(3),dp(5),dp(3));
+        TextView badge=label("LOCAL",10,0xff75b6ff);protocolBadge=badge;badge.setPadding(dp(5),dp(3),dp(5),dp(3));
         badge.setBackground(round(0xff173247,10)); header.addView(badge);
     }
 
@@ -139,7 +146,8 @@ public final class MainActivity extends Activity {
         params.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(composer,params);
         draft=new EditText(this);draft.setTextColor(TEXT);draft.setHintTextColor(MUTED);
         draft.setTextSize(14);draft.setTypeface(Typeface.MONOSPACE);draft.setHint("对终端说…");draft.setBackgroundColor(Color.TRANSPARENT);
-        draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        // Command drafts must not autocorrect printf/stty into different commands.
+        draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         draft.setMinLines(1);draft.setMaxLines(4);draft.setPadding(dp(8),dp(10),dp(8),dp(8));
         draft.setContentDescription("本地文本草稿");composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
@@ -251,7 +259,7 @@ public final class MainActivity extends Activity {
         thumbnail.addView(sessionPreview,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout caption=row();caption.setPadding(dp(8),dp(6),dp(8),dp(6));caption.setBackgroundColor(0xcc1e1e1e);
         TextView title=label("本地终端",12,TEXT);caption.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        TextView badge=label("LOCAL",10,0xff75b6ff);badge.setBackground(round(0xff173247,9));badge.setPadding(dp(4),dp(2),dp(4),dp(2));caption.addView(badge);
+        TextView badge=label("LOCAL",10,0xff75b6ff);homeBadge=badge;badge.setBackground(round(0xff173247,9));badge.setPadding(dp(4),dp(2),dp(4),dp(2));caption.addView(badge);
         thumbnail.addView(caption,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
         TextView name=label("Ghostty",15,TEXT);name.setPadding(0,dp(6),0,0);card.addView(name);
         TextView prompt=label("›_ local",13,GREEN);prompt.setTypeface(Typeface.MONOSPACE);card.addView(prompt);
@@ -316,9 +324,16 @@ public final class MainActivity extends Activity {
         PopupMenu menu=new PopupMenu(this,anchor);
         String[] titles={"回到底部","Unicode 示例","滚动示例","保存本地快照","恢复本地快照"};
         for(int i=0;i<titles.length;i++)menu.getMenu().add(0,i,i,titles[i]);
-        menu.getMenu().findItem(4).setEnabled(checkpoint!=null);
+        menu.getMenu().findItem(4).setEnabled(checkpoint!=null && !sshMode);
+        for(int id=1;id<=3;id++)menu.getMenu().findItem(id).setEnabled(!sshMode);
+        menu.getMenu().add(0,5,5,sshMode?"重新连接本机 SSH":"连接本机 SSH");
+        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(ssh!=null);
+        menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
+                case 5:connectSsh();break;
+                case 6:disconnectSsh();break;
+                case 7:disconnectSsh();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
                 case 0:terminal.scrollToBottom();break;
                 case 1:demo();break;
                 case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
@@ -328,9 +343,38 @@ public final class MainActivity extends Activity {
             }return true;
         });menu.show();
     }
-    private void echo(byte[] bytes) {
+    private void connectSsh() {
+        java.io.File directory=new java.io.File(getFilesDir(),"ssh");
+        if(!new java.io.File(directory,"connection.properties").isFile()){
+            toast("请先通过 scripts/local-ssh.py 配置本机 SSH");return;
+        }
+        disconnectSsh();sshMode=true;sshConnected=false;
+        write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007");
+        protocolBadge.setText("SSH");homeBadge.setText("SSH");
+        final int generation=sshGeneration;
+        ssh=new SshTransport(directory,session.getColumns(),session.getRows(),new SshTransport.Listener(){
+            private boolean current(){return !destroyed && generation==sshGeneration;}
+            public void onState(String state,boolean connected){
+                if(!current())return;
+                sshConnected=connected;subtitle.setText("本机 · "+state);
+                if(!connected&&!state.equals("连接中"))toast(state);
+            }
+            public void onOutput(byte[] bytes){
+                if(!current())return;
+                byte[] replies=session.write(bytes);if(replies.length>0)ssh.send(replies);
+            }
+        });
+        ssh.connect();
+    }
+    private void disconnectSsh(){
+        sshGeneration++;
+        if(ssh!=null){ssh.close();ssh=null;}sshConnected=false;
+        if(sshMode)subtitle.setText("本机 · 已断开");
+    }
+    private void sendInput(byte[] bytes) {
         String text=new String(bytes,StandardCharsets.UTF_8);
         if(ctrlArmed){setCtrl(false);if(text.length()==1&&text.charAt(0)>=64&&text.charAt(0)<128)text=Character.toString((char)(text.charAt(0)&31));}
+        if(sshMode){if(sshConnected&&ssh!=null)ssh.send(text.getBytes(StandardCharsets.UTF_8));else toast("SSH 未连接");return;}
         if(text.equals("\r")||text.equals("\n")){write("\r\n");return;}
         if(text.equals("\f")){write("\033[2J\033[H");return;}
         if(text.equals("\u007f")||text.equals("\b")){toast("退格");return;}
@@ -390,6 +434,7 @@ public final class MainActivity extends Activity {
         }
     }
     @Override protected void onDestroy(){
+        destroyed=true;disconnectSsh();
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);session.close();
         sessionPreview.setImageDrawable(null);if(previewBitmap!=null)previewBitmap.recycle();
         super.onDestroy();

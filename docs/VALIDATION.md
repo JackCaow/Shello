@@ -2,6 +2,31 @@
 
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
+
+## Real local SSH
+
+Validated on 2026-10-21 against a temporary loopback-only macOS OpenSSH fixture, using the Android 16/API 36 phone and Android 8.1/API 27 ARM64 emulator. [Setup and cleanup](LOCAL_SSH.md). No system Remote Login or Maven publication.
+
+- **2/2 opt-in SSH integration tests passed on each Android version**: 80×24 PTY, window-change to 50×12, UTF-8 Chinese/emoji bytes, vim/less alternate-screen entry/exit, less navigation to line 240, Ctrl+C interruption, a new shell after disconnect, and rejection of an unknown host key. These are transport/protocol assertions, not a blanket visual TUI acceptance. [API 36](evidence/local-ssh/api36-tests.txt), [API 27](evidence/local-ssh/api27-tests.txt).
+- Phone UI verified shell commands, keyboard-induced grid resize, vim direction-pad input, less ASCII paging, and selection handles on actual SSH output. Doubao Pinyin `zhongwen` stayed uncommitted until choosing “中文”; saving from vim produced `0中文01 中文输入 …` in the Mac fixture file, confirming one real IME commit reached disk. [Composing](evidence/local-ssh/phone-pinyin-composing.png), [committed](evidence/local-ssh/phone-pinyin-committed.png), [vim/pad](evidence/local-ssh/phone-vim-pad.png).
+- Fixed release shrinking of JSch's reflection-loaded authentication/KEX/JCE classes with sample-only keep rules. The R8 release APK, signed locally for testing, connected and executed commands on API 27. [Release shell](evidence/local-ssh/api27-r8-shell.png). Sample debug/release/test builds pass; release lint has 0 errors and 15 warnings. [Artifact hashes and scope](evidence/local-ssh/validation.json).
+- Fixed command-draft autocorrection: the API 27 Latin keyboard changed `printf` to `print` and `stty` to `St`. The draft now uses `TYPE_TEXT_FLAG_NO_SUGGESTIONS`, matching the direct terminal input field. Re-ran the command unchanged with the final R8 APK. The final phone build also retained Chinese Pinyin candidates in the draft and executed `echo 中文` correctly: [final shell](evidence/local-ssh/phone-final-shell.png). During an earlier keyboard transition, external Trime 3.3.12 crashed in its `PreeditDelegate` with `BadTokenException`; release command checks used the system Latin IME. This run does not certify Trime stability.
+
+### Open compatibility findings
+
+The Mac's Vim 9.1 displays ZWJ as literal `<200d>` in the tested configuration. Less 581.2 passes the Unicode sequence through, but its host width calculation disagrees with the VT legacy mode for regional indicators:
+
+| Text | Mac `wcwidth` sum | Ghostty legacy columns |
+| --- | ---: | ---: |
+| 👨‍👩‍👧‍👦 | 8 | 8 |
+| 👍🏽 | 4 | 4 |
+| 🇨🇳 | 2 | 4 |
+| 1️⃣ | 1 | 1 |
+
+At the phone's 44-column width, the fixture line is 43 columns to the host and 45 to VT. The unexpected wrap leaves stale characters when less updates the screen. [Failure](evidence/local-ssh/phone-less-flag-width-mismatch.png). Replacing only `🇨🇳` with `CN` removes this mismatch: [same fixture without flags](evidence/local-ssh/phone-less-no-flag.png); [ASCII control](evidence/local-ssh/phone-less-ascii.png). The script includes both comparison files. This remains an open host/terminal width-compatibility issue; this change does not silently switch all sessions to mode 2027 or alter the library's established legacy widths.
+
+Reconnect currently creates a fresh shell, not remote-process resume. Activity destruction closes SSH. Real link-loss recovery, background service ownership, long-duration performance and full Moshi UI parity remain unvalidated/unimplemented.
+
 ## Moshi-inspired sample UI
 
 Updated on 2026-10-20 after inspecting the installed Moshi Android app. A subsequent visual alignment pass matches its compact single-line header, yellow/green header controls, shortcut spacing, rounded-square direction keys with Backspace/Ctrl+L, composer action order and half-width session thumbnails. The sample keeps a LOCAL badge and its own identity. Empty drafts disable Send; the small history button restores one of the last 20 submitted drafts held only in RAM. Voice and attachment entries are visibly unavailable until a host implements them. Opening input after resize returns the local sample to the prompt; the renderer no longer paints a debug Scrollback badge. The sample now uses a dark rounded terminal sheet, bottom shortcut capsule, draggable/lockable direction pad, draft/direct input switching, selection copy controls and a minimizable local session card with a viewport preview. The sample code and line icons are implemented here; no Moshi source or bundled assets are included. The library remains transport-independent.
@@ -14,7 +39,7 @@ Updated on 2026-10-20 after inspecting the installed Moshi Android app. A subseq
 
 Screenshots: [terminal](evidence/moshi-ui/api27-terminal.png), [direction pad](evidence/moshi-ui/api27-pad.png), [Chinese draft](evidence/moshi-ui/api27-composer.png), [direct input](evidence/moshi-ui/api27-direct-input.png), [selection](evidence/moshi-ui/api27-selection.png), [session card](evidence/moshi-ui/api27-session.png). [Build hashes and scope](evidence/moshi-ui/validation.json).
 
-This is an offline interaction sample. Special/control keys show local feedback rather than controlling a real shell; Ctrl+L clears the local viewport. It has one in-memory session; Activity/process recreation resets it. SSH, authentication, reconnect, attachments, voice, remote session management and Moshi's wider settings/gesture system are not implemented. Hosted CI remains build-only for the emulator limitation described below.
+At this earlier checkpoint this was an offline interaction sample. Special/control keys show local feedback rather than controlling a real shell; Ctrl+L clears the local viewport. It has one in-memory session; Activity/process recreation resets it. SSH was not implemented at that checkpoint; the local SSH section above supersedes that limitation. Attachments, voice, remote session management and Moshi's wider settings/gesture system remain unimplemented. Hosted CI remains build-only for the emulator limitation described below.
 
 ## Android 8.1 emulator acceptance and grapheme fix
 
