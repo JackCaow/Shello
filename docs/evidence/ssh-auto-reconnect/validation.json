@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-21",
+  "scope": "Sample-only automatic tmux attachment on transport failures; API 27 ARM64 emulator acceptance. No business integration or Maven publication.",
+  "build": "assembleDebug, assembleRelease, assembleDebugAndroidTest, lintRelease passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 17
+  },
+  "instrumentation": {
+    "passed": 2,
+    "skipped": 1,
+    "note": "Unknown-host-key rejection with non-retry assertion and transport-error classification passed; plain-shell destructive test skipped in tmux mode."
+  },
+  "network": "Two emulator iptables OUTPUT DROP outages, 66.9s and 66.2s. Each restored the SSH channel and original tmux session without tapping reconnect. Temporary DROP/REJECT test rules removed.",
+  "negative_checks": "Manual Disconnect and normal tmux detach each observed for 20s: no retries or tmux clients.",
+  "limits": [
+    "Live Activity only; no background service",
+    "No device-wide Wi-Fi/cellular switching or real phone test",
+    "Header connected means SSH shell channel established, not a separate tmux acknowledgment",
+    "Input delivered immediately before failure can be uncertain; no replay across transports"
+  ],
+  "sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "3801830b4d6c96e6a0c7dbbbfa16b06d860d01975e35a787f3fb6ac30d700d02",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "b550e97b73763c2d00bf4edf1057c71f96aaa1f40a19c02ce408d5cec4ea1a34",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "a20424db1f9f49939068ce8fd534742fe8ba82690041bf822e817b58d55aa9db"
+  },
+  "silent_outage_test_sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "36ccd124a46d5d83b0f7b48e3082eafca303e26611d3f4d657363bd01f93b510",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "7104831b3e27af9b17f667fc58b8e3b94d9d3dedeba647a966ef28a3caa5a2e3",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "a20424db1f9f49939068ce8fd534742fe8ba82690041bf822e817b58d55aa9db"
+  },
+  "final_change": "Added malformed-properties exception handling after the silent-outage tests. Final APK also passed malformed-profile UI handling, abrupt-loss auto-reconnect, and the two applicable instrumentation tests."
+}

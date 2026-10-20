@@ -5,7 +5,7 @@
 - `TerminalSession`：输出字节流、按键编码、查询应答、历史和内存快照。
 - `TerminalView`：原生显示、长按选择、双手柄、边缘自动滚动。
 - `TerminalInputView`：可选输入控件；拼音候选保留在本地，确认后发送 UTF-8。
-- `sample`：参考 Moshi 的深色圆角终端、底部快捷栏、可拖动/锁定方向浮板、草稿与直接输入切换、选择复制及最小化会话卡片。默认离线回显，也可通过 USB 连接 Mac 上的临时 OpenSSH 服务，执行真实 shell；加 `--tmux` 后手动重连挂接原来的 shell/vim 会话。SSH 依赖仅在 sample 中，库本身不依赖网络；UI 与 Moshi 的视觉差距仍在调整。
+- `sample`：参考 Moshi 的深色圆角终端、底部快捷栏、可拖动/锁定方向浮板、草稿与直接输入切换、选择复制及最小化会话卡片。默认离线回显，也可通过 USB 连接 Mac 上的临时 OpenSSH 服务，执行真实 shell；加 `--tmux` 后，网络中断会自动重试并挂接原来的 shell/vim 会话，主动断开则停止重试。SSH 依赖仅在 sample 中，库本身不依赖网络；UI 与 Moshi 的视觉差距仍在调整。
 
 最低构建版本为 Android 8.1（API 27），目前仅提供 ARM64。已完成 API 27 ARM64 模拟器的中文输入、复杂 emoji 选择和滚动手柄测试；此前另有 API 36 真机回归。库 API 仍可能变化。SSH/WebSocket、鉴权、流控和断线恢复协议由使用方实现。库不包含 DimRemote 的业务代码或实验 HTTP 服务。
 

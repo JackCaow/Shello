@@ -32,7 +32,9 @@ Direct keyboard input, Ctrl combinations, Escape, Tab, direction keys and submit
 
 Use **会话工具 → 断开 SSH / 重新连接本机 SSH / 返回离线演示**. In **tmux mode**, the fixture starts one persistent session on its own private socket. Every SSH connection runs `tmux attach-session -d -t SESSION`: it attaches to the existing shell and detaches an older client. It never creates a replacement shell during reconnect. A missing/exited session fails attachment. The sample displays `已连接 · tmux` when its SSH channel opens; this label is not a separate tmux readiness acknowledgment.
 
-Reconnect clears the local VT and tmux redraws the current screen, including a running vim's unsaved buffer. The remote shell, current directory and environment survive SSH disconnection. Android Activity/process destruction still closes SSH, but the tmux server owns the remote processes independently. Reopen the sample and reconnect manually. This does not restore Android drafts, local selection or complete local scrollback after process death. Disconnected direct input is dropped; pressing Send while disconnected retains the draft. No disconnected keystrokes are replayed.
+In tmux mode, transport failures automatically retry with delays of 1, 2, 4, 8, then at most 15 seconds between attempts. A connection that stays open for 10 seconds resets the delay. The last screen remains visible during an outage; the first output from the new connection resets the local VT and tmux redraws the current screen, including a running vim's unsaved buffer. The remote shell, current directory and environment survive SSH disconnection. Android Activity/process destruction still closes SSH, but the tmux server owns the remote processes independently. Reopen the sample and reconnect manually. This does not restore Android drafts, local selection or complete local scrollback after process death. Disconnected direct input is dropped; pressing Send while disconnected retains the draft. No disconnected keystrokes are replayed. Delivery of input sent just before failure detection remains uncertain; it is never resubmitted on the next SSH connection.
+
+**会话工具 → 断开 SSH**, returning to the offline demo, and Activity destruction cancel pending retries and invalidate callbacks from earlier attempts. Authentication, host-key, configuration and protocol failures detected during connection setup stop automatic retries. Normal remote shell exit/tmux detach also stops retries. Plain SSH mode keeps manual reconnection so it cannot silently create a replacement shell. The existing 10-second SSH keepalive with three unanswered probes detects silent outages; detection is not immediate and depends on socket/OS timing. No background service or connectivity permission is added.
 
 Without `--tmux`, reconnect still opens a **new shell**. The `connectLocalSsh` launch extra is honored only by debug builds. No SSH credentials or tmux behavior have been added to the terminal AAR.
 
@@ -43,7 +45,7 @@ With shell state or an unsaved vim buffer on screen:
 ```sh
 python3 scripts/local-ssh.py status --serial DEVICE_SERIAL
 python3 scripts/local-ssh.py drop --serial DEVICE_SERIAL
-# In the app: 会话工具 → 重新连接本机 SSH
+# In tmux mode, observe automatic reconnection; no reconnect tap is required.
 ```
 
 `drop` abruptly kills only this fixture listener's SSH connection handlers. It keeps the listener, tmux server and shell/vim alive. This exercises a broken SSH connection; it does not simulate Wi-Fi/cellular roaming or a silent network blackhole. Verify that the shell PID, exported variable and working directory remain the same; for vim verify the process PID and save the previously unsaved text after reconnect.
@@ -57,6 +59,18 @@ python3 scripts/verify-tmux-local.py --output /tmp/tmux-resume.json
 ```
 
 This performs two abrupt connection drops, asserts shell PID/environment/directory preservation, checks vim remains alive and its unsaved buffer is redrawn, then saves and compares exact file contents. Results are host-client evidence, not Android UI acceptance.
+
+### Verify automatic recovery with silent packet loss
+
+On a rooted Android 8.1 ARM64 emulator, install the debug APK, keep the screen awake/unlocked, then attach the tmux fixture. `adb root` restarts adbd, so provision the connection after it:
+
+```sh
+adb -s emulator-5580 root
+python3 scripts/local-ssh.py connect --serial emulator-5580
+python3 scripts/verify-auto-reconnect.py --serial emulator-5580 --output /tmp/auto-reconnect
+```
+
+The fixture pane must be an idle Bash shell. The script enters commands through the sample UI, temporarily drops outgoing packets to the fixture's loopback SSH port using an emulator-only `iptables` rule, then removes that rule. It holds each outage for about 65 seconds to exercise keepalive failure detection and failed connection retries, first in the shell and then in vim with unsaved text. It asserts original process/environment/directory state and saved text after automatic recovery, without tapping Reconnect. It writes JSON and screenshots; a `finally` block removes the exact firewall rule on a test failure or keyboard interrupt. This is a controlled silent TCP outage over `adb reverse`, not a Wi-Fi/cellular roaming test.
 
 ## Verify and stop
 
@@ -75,4 +89,4 @@ The two integration tests are opt-in: without a private profile they are **skipp
 
 ## Results and boundaries
 
-See [validation](VALIDATION.md#real-local-ssh) for device evidence. macOS Vim 9.1 renders ZWJ as literal `<200d>` in the tested configuration; less 581.2 passes the sequence through. A successful raw UTF-8/PTY test does not certify identical emoji presentation in every remote TUI. Automatic retries, silent-network failure timing, background service ownership, server-reboot recovery, password/key-management UI and performance certification remain outside this sample. tmux recovery depends on the server and its processes staying alive; tmux is not a durable checkpoint across host reboots.
+See [validation](VALIDATION.md#real-local-ssh) for device evidence. macOS Vim 9.1 renders ZWJ as literal `<200d>` in the tested configuration; less 581.2 passes the sequence through. A successful raw UTF-8/PTY test does not certify identical emoji presentation in every remote TUI. Background service ownership, server-reboot recovery, password/key-management UI and performance certification remain outside this sample. Automatic recovery is limited to a live sample Activity in tmux mode. tmux recovery depends on the server and its processes staying alive; tmux is not a durable checkpoint across host reboots.

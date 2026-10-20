@@ -1,0 +1,30 @@
+{
+  "device": "Android 8.1 API 27 ARM64 emulator",
+  "fault_model": "Emulator OUTPUT iptables DROP for loopback SSH TCP port 22222; no reconnect UI action",
+  "shell_pid_before_after": 59117,
+  "vim_pid_before_after": 97338,
+  "shell_environment_cwd_preserved": true,
+  "vim_unsaved_text_saved_exactly": true,
+  "shell_outage": {
+    "blackhole_seconds": 66.9,
+    "recovery_seconds": 3.1,
+    "observed_states": [
+      "\u672c\u673a \u00b7 \u5df2\u8fde\u63a5 \u00b7 tmux",
+      "\u672c\u673a \u00b7 \u8fde\u63a5\u4e2d",
+      "\u672c\u673a \u00b7 \u5df2\u65ad\u5f00\uff0c2 \u79d2\u540e\u91cd\u8fde",
+      "\u672c\u673a \u00b7 \u5df2\u65ad\u5f00\uff0c4 \u79d2\u540e\u91cd\u8fde"
+    ],
+    "packet_counters": "Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)\n    pkts      bytes target     prot opt in     out     source               destination         \n      23     3132 DROP       tcp  --  *      *       0.0.0.0/0            127.0.0.1            tcp dpt:22222 /* ghostty-auto-test */\n    7824   999512 oem_out    all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7824   999512 fw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7824   999512 st_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7824   999512 bw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n"
+  },
+  "vim_outage": {
+    "blackhole_seconds": 66.2,
+    "recovery_seconds": 3.1,
+    "observed_states": [
+      "\u672c\u673a \u00b7 \u5df2\u8fde\u63a5 \u00b7 tmux",
+      "\u672c\u673a \u00b7 \u8fde\u63a5\u4e2d",
+      "\u672c\u673a \u00b7 \u5df2\u65ad\u5f00\uff0c2 \u79d2\u540e\u91cd\u8fde",
+      "\u672c\u673a \u00b7 \u5df2\u65ad\u5f00\uff0c4 \u79d2\u540e\u91cd\u8fde"
+    ],
+    "packet_counters": "Chain OUTPUT (policy ACCEPT 7 packets, 423 bytes)\n    pkts      bytes target     prot opt in     out     source               destination         \n      23     3132 DROP       tcp  --  *      *       0.0.0.0/0            127.0.0.1            tcp dpt:22222 /* ghostty-auto-test */\n    7931  1020989 oem_out    all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7931  1020989 fw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7931  1020989 st_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n    7931  1020989 bw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           \n"
+  }
+}

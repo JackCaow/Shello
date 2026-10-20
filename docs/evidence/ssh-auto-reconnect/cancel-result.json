@@ -1,0 +1,6 @@
+{
+  "manual_disconnect_cancels_retry": true,
+  "normal_remote_detach_does_not_retry": true,
+  "observation_seconds_each": 20,
+  "tmux_clients_while_stopped": 0
+}

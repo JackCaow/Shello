@@ -9,7 +9,7 @@ Experimental Android terminal library: **libghostty-vt + native Canvas rendering
 - `TerminalSession`: ordered VT byte stream, key encoding, query replies, scrollback, and opaque in-memory checkpoints.
 - `TerminalView`: colors/styles, cursor, grapheme shaping, long-press selection, two handles, and edge autoscroll.
 - `TerminalInputView`: optional direct-input bridge. Composing text stays local; committed text is sent as UTF-8.
-- `sample`: offline echo by default, with an optional real SSH shell using mwiede/JSch. A USB setup script connects to a temporary loopback-only OpenSSH server on your Mac; optional `--tmux` preserves the remote shell and running programs across manual SSH reconnects. No business/account integration; the terminal AAR stays transport-independent.
+- `sample`: offline echo by default, with an optional real SSH shell using mwiede/JSch. A USB setup script connects to a temporary loopback-only OpenSSH server on your Mac; optional `--tmux` preserves the remote shell and running programs across automatic SSH reconnects after transport failures. No business/account integration; the terminal AAR stays transport-independent.
 
 ```text
 PTY / SSH / WebSocket (your application)

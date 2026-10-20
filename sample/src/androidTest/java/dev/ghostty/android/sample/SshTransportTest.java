@@ -19,6 +19,8 @@ public class SshTransportTest {
         final CountDownLatch connected = new CountDownLatch(1), ended = new CountDownLatch(1);
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
         volatile String state;
+        volatile boolean retryable;
+        @Override public void onClosed(String value, boolean retry) { retryable=retry; onState(value,false); }
         @Override public synchronized void onOutput(byte[] bytes) { output.write(bytes, 0, bytes.length); }
         @Override public void onState(String value, boolean ready) {
             state = value;
@@ -71,9 +73,19 @@ public class SshTransportTest {
         try {
             ssh.connect();assertTrue(probe.ended.await(15,TimeUnit.SECONDS));
             assertEquals(1L,probe.connected.getCount());assertTrue(probe.state.startsWith("连接失败"));
+            assertFalse("Host-key rejection must not auto-retry", probe.retryable);
         } finally {
             ssh.close();for(File file:invalid.listFiles())file.delete();invalid.delete();
         }
+    }
+    @Test public void retriesOnlyTransportFailures() {
+        assertTrue(SshTransport.isNetworkFailure(new com.jcraft.jsch.JSchException("connect",
+                new java.net.ConnectException("refused"))));
+        assertTrue(SshTransport.isNetworkFailure(new java.net.SocketTimeoutException()));
+        assertTrue(SshTransport.isNetworkFailure(new EOFException()));
+        assertFalse(SshTransport.isNetworkFailure(new FileNotFoundException("profile")));
+        assertFalse(SshTransport.isNetworkFailure(new com.jcraft.jsch.JSchException("Auth fail")));
+        assertFalse(SshTransport.isNetworkFailure(new IllegalArgumentException("bad port")));
     }
     private static void send(SshTransport ssh,String text) { ssh.send(text.getBytes(StandardCharsets.UTF_8)); }
 }

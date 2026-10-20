@@ -16,6 +16,7 @@ final class SshTransport implements AutoCloseable {
     interface Listener {
         void onOutput(byte[] bytes);
         void onState(String state, boolean connected);
+        default void onClosed(String state, boolean retryable) { onState(state, false); }
     }
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Listener listener;
@@ -40,6 +41,7 @@ final class SshTransport implements AutoCloseable {
     }
     private void read() {
         String end = "已断开";
+        boolean retryable = false, profileLoaded = false;
         try {
             Properties config = new Properties();
             try (InputStream source = new FileInputStream(new File(directory, "connection.properties"))) {
@@ -48,6 +50,7 @@ final class SshTransport implements AutoCloseable {
             JSch jsch = new JSch();
             jsch.setKnownHosts(new File(directory, "known_hosts").getPath());
             jsch.addIdentity(new File(directory, "client_key").getPath());
+            profileLoaded = true;
             Session ssh = jsch.getSession(config.getProperty("user"), config.getProperty("host"),
                     Integer.parseInt(config.getProperty("port", "22")));
             connection = ssh;
@@ -73,22 +76,26 @@ final class SshTransport implements AutoCloseable {
                     finally { outputSlots.release(); }
                 });
             }
+            // A normal remote exit/detach must not restart a shell or fight another client.
+            retryable = shell.getExitStatus() < 0 && !ssh.isConnected();
         } catch (Exception error) {
+            retryable = profileLoaded && isNetworkFailure(error);
             // No credentials, hostnames, or raw server errors in the terminal/logcat.
             end = "连接失败：" + error.getClass().getSimpleName();
         } finally {
             if (channel != null) channel.disconnect();
             if (connection != null) connection.disconnect();
             String status = end;
+            boolean canRetry = retryable;
             // FIFO with already-posted output, so EOF does not discard the final screen.
-            main.post(() -> { if (!closed.get()) { listener.onState(status, false); close(); } });
+            main.post(() -> { if (!closed.get()) { close(); listener.onClosed(status, canRetry); } });
         }
     }
     void send(byte[] bytes) {
         if (closed.get() || input == null || channel == null || !channel.isConnected()) return;
         byte[] owned = bytes.clone();
         enqueue(() -> { try { input.write(owned); input.flush(); }
-            catch (IOException error) { fail("发送失败，连接已断开"); } });
+            catch (IOException error) { fail("发送失败，连接已断开", true); } });
     }
     void resize(int columns, int rows) {
         this.columns = columns; this.rows = rows;
@@ -97,10 +104,19 @@ final class SshTransport implements AutoCloseable {
     }
     private void enqueue(Runnable operation) {
         try { writer.execute(operation); }
-        catch (RejectedExecutionException error) { if (!closed.get()) fail("发送队列已满，请重新连接"); }
+        catch (RejectedExecutionException error) { if (!closed.get()) fail("发送队列已满，请重新连接", false); }
     }
-    private void fail(String message) {
-        main.post(() -> { if (!closed.get()) { listener.onState(message, false); close(); } });
+    // Retry transport I/O only. Key/config/authentication/protocol failures need user action.
+    static boolean isNetworkFailure(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof com.jcraft.jsch.JSchHostKeyException) return false;
+            if (cause instanceof java.net.SocketException || cause instanceof java.net.SocketTimeoutException
+                    || cause instanceof java.net.UnknownHostException || cause instanceof EOFException) return true;
+        }
+        return false;
+    }
+    private void fail(String message, boolean retryable) {
+        main.post(() -> { if (!closed.get()) { close(); listener.onClosed(message, retryable); } });
     }
     private void state(String message, boolean connected) {
         main.post(() -> { if (!closed.get()) listener.onState(message, connected); });

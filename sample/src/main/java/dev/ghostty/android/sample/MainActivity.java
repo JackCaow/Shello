@@ -24,7 +24,10 @@ public final class MainActivity extends Activity {
     private TerminalSession session;
     private SshTransport ssh;
     private boolean sshMode, sshConnected, destroyed;
-    private int sshGeneration;
+    private int sshGeneration, retryAttempt;
+    private boolean autoReconnect;
+    private final android.os.Handler reconnectHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable retryTask, stableTask;
     private TextView protocolBadge, homeBadge;
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
@@ -328,7 +331,7 @@ public final class MainActivity extends Activity {
         menu.getMenu().findItem(4).setEnabled(checkpoint!=null && !sshMode);
         for(int id=1;id<=3;id++)menu.getMenu().findItem(id).setEnabled(!sshMode);
         menu.getMenu().add(0,5,5,sshMode?"重新连接本机 SSH":"连接本机 SSH");
-        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(ssh!=null);
+        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(ssh!=null||autoReconnect);
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
@@ -350,25 +353,58 @@ public final class MainActivity extends Activity {
             toast("请先通过 scripts/local-ssh.py 配置本机 SSH");return;
         }
         disconnectSsh();sshMode=true;sshConnected=false;
-        write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007");
+        java.util.Properties config=new java.util.Properties();
+        try(java.io.InputStream in=new java.io.FileInputStream(new java.io.File(directory,"connection.properties"))){
+            config.load(in);autoReconnect="tmux".equals(config.getProperty("sessionMode"));
+        }catch(java.io.IOException|IllegalArgumentException error){subtitle.setText("本机 · 配置无效");toast("无法读取 SSH 配置");return;}
         protocolBadge.setText("SSH");homeBadge.setText("SSH");
-        final int generation=sshGeneration;
-        ssh=new SshTransport(directory,session.getColumns(),session.getRows(),new SshTransport.Listener(){
+        startSshAttempt();
+    }
+    private void startSshAttempt(){
+        if(destroyed)return;
+        retryTask=null;
+        final int generation=++sshGeneration;
+        final boolean[] firstOutput={true};
+        ssh=new SshTransport(new java.io.File(getFilesDir(),"ssh"),session.getColumns(),session.getRows(),new SshTransport.Listener(){
             private boolean current(){return !destroyed && generation==sshGeneration;}
             public void onState(String state,boolean connected){
                 if(!current())return;
                 sshConnected=connected;subtitle.setText("本机 · "+state);
-                if(!connected&&!state.equals("连接中"))toast(state);
+                if(connected){
+                    // A brief successful socket connection must not erase outage backoff.
+                    stableTask=()->{if(current()&&sshConnected)retryAttempt=0;};
+                    reconnectHandler.postDelayed(stableTask,10000);
+                }
+            }
+            public void onClosed(String state,boolean retryable){
+                if(!current())return;
+                ssh=null;sshConnected=false;
+                if(stableTask!=null){reconnectHandler.removeCallbacks(stableTask);stableTask=null;}
+                if(autoReconnect&&retryable){
+                    long delay=Math.min(15000,1000L<<Math.min(retryAttempt++,4));
+                    subtitle.setText("本机 · 已断开，"+(delay/1000)+" 秒后重连");
+                    retryTask=()->{if(current()&&autoReconnect)startSshAttempt();};
+                    reconnectHandler.postDelayed(retryTask,delay);
+                }else{
+                    autoReconnect=false;subtitle.setText("本机 · "+state);toast(state);
+                }
             }
             public void onOutput(byte[] bytes){
                 if(!current())return;
-                byte[] replies=session.write(bytes);if(replies.length>0)ssh.send(replies);
+                // Keep the last screen during outages; rebuild VT when new output arrives.
+                if(firstOutput[0]){
+                    firstOutput[0]=false;
+                    write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007");
+                }
+                byte[] replies=session.write(bytes);if(replies.length>0&&ssh!=null)ssh.send(replies);
             }
         });
         ssh.connect();
     }
     private void disconnectSsh(){
-        sshGeneration++;
+        autoReconnect=false;retryAttempt=0;sshGeneration++;
+        if(retryTask!=null){reconnectHandler.removeCallbacks(retryTask);retryTask=null;}
+        if(stableTask!=null){reconnectHandler.removeCallbacks(stableTask);stableTask=null;}
         if(ssh!=null){ssh.close();ssh=null;}sshConnected=false;
         if(sshMode)subtitle.setText("本机 · 已断开");
     }
