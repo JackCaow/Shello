@@ -14,7 +14,7 @@ Tested on 2026-10-20 using Android Emulator 35.6.11 on macOS ARM64, Pixel 2 prof
 - Actual taps in [Trime 3.3.12](https://github.com/osfans/trime/releases/tag/v3.3.12), using its bundled `luna_pinyin` scheme, keep `zhongwen` uncommitted, send “中文” once on candidate selection, then cancel `ceshi` without sending it or deleting committed content. [Composing](evidence/api27-emulator/composing.png), [committed](evidence/api27-emulator/committed.png), [cancelled](evidence/api27-emulator/cancelled.png). The IME is installed only in the test emulator; no IME binary/dependency is bundled in this library.
 - The sample grid changes **49×27 ↔ 49×11** as the keyboard hides/shows; the input stays visible using `adjustResize`. [Legacy/cluster render](evidence/api27-emulator/unicode.png).
 - Release AAR, sample debug/R8 release, instrumentation APK and independent R8 MavenLocal consumer build. The consumer runs on API 27 and displays [AAR smoke OK](evidence/api27-emulator/consumer.png). Library/sample lint remain at 0 errors (6/14 warnings). No remote Maven publication occurs.
-- CI now boots an API 27 ARM64 emulator and runs the instrumentation suite, including the emoji regression. CI does not install Trime or claim to automate the manual Pinyin candidate taps.
+- CI boots an API 27 ARM64 emulator with CPU acceleration disabled (hosted ARM Macs do not expose nested HVF virtualization) and runs the instrumentation suite, including the emoji regression. CI does not install Trime or claim to automate the manual Pinyin candidate taps.
 
 To reproduce on an ARM64 Mac with the build prerequisites installed:
 
