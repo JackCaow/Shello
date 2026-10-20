@@ -2,6 +2,20 @@
 
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
+## Moshi-inspired sample UI
+
+Updated on 2026-10-20 after inspecting the installed Moshi Android app. The sample now uses a dark rounded terminal sheet, bottom shortcut capsule, draggable/lockable direction pad, draft/direct input switching, selection copy controls and a minimizable local session card with a viewport preview. The sample code and line icons are implemented here; no Moshi source or bundled assets are included. The library remains transport-independent.
+
+- API 27 ARM64 emulator: **10/10 instrumentation tests pass**, including the new selection callback test (gesture selects text, output clears it, redundant clears do not emit duplicate callbacks). [JUnit XML](evidence/moshi-ui/tests.xml).
+- Actual Trime Pinyin key taps produced “中文” in the local draft; the terminal changed only after Send. Direct-input Pinyin confirmation also echoed “中文” once. Long-press Send inserted copied “滚” without a newline, while normal Send appended Return. Keyboard show/hide resized the terminal and kept the controls visible.
+- Manual gestures on API 27 verified direction-pad movement, locked position, selecting/copying “滚”, pasting it into the draft, and minimizing/resuming with the draft preserved. Selection dragging/edge scrolling remain covered by the instrumentation suite.
+- Installed the updated debug sample on the API 36 phone and inspected the initial toolbar layout. The detailed interaction checks and screenshots in this section are from the API 27 emulator.
+- Release AAR, sample debug/R8 release and separate R8 Maven Local consumer compile successfully. Lint: library 0 errors / 6 warnings, sample 0 errors / 8 warnings. No remote Maven publication.
+
+Screenshots: [terminal](evidence/moshi-ui/api27-terminal.png), [direction pad](evidence/moshi-ui/api27-pad.png), [Chinese draft](evidence/moshi-ui/api27-composer.png), [direct input](evidence/moshi-ui/api27-direct-input.png), [selection](evidence/moshi-ui/api27-selection.png), [session card](evidence/moshi-ui/api27-session.png). [Build hashes and scope](evidence/moshi-ui/validation.json).
+
+This is an offline interaction sample. Special/control keys show local feedback rather than controlling a real shell. It has one in-memory session; Activity/process recreation resets it. SSH, authentication, reconnect, attachments, voice, remote session management and Moshi's wider settings/gesture system are not implemented. Hosted CI remains build-only for the emulator limitation described below.
+
 ## Android 8.1 emulator acceptance and grapheme fix
 
 Tested on 2026-10-20 using Android Emulator 35.6.11 on macOS ARM64, Pixel 2 profile, API 27 `google_apis/arm64-v8a` revision 3, Android 8.1.0. This executes the actual old Android framework, ICU and font stack; it is not an API 36 phone running an API 27-targeted binary. [Environment, artifact hashes and results](evidence/api27-emulator/validation.json).

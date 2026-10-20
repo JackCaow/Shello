@@ -22,6 +22,12 @@ TerminalSession ─────── TerminalView
 
 Android **8.1+ (API 27) / arm64-v8a only**, Java 17. Runtime regression covers an Android 8.1 / API 27 ARM64 emulator and the earlier API 36 phone checks; see the versioned [validation evidence](docs/VALIDATION.md). This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
 
+## Sample UI
+
+The offline sample follows Moshi’s mobile terminal layout: a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. Minimize opens a local session card with a viewport preview; resume retains the same in-memory session and draft. Control keys display feedback in this echo demo; there is no remote shell or process to execute them. UI components live in `sample`, separate from the embeddable terminal library.
+
+[UI screenshots and validation](docs/VALIDATION.md#moshi-inspired-sample-ui)
+
 ## Build
 
 Install JDK 17, Android SDK platform 35, NDK `28.2.13676358`, and Zig **0.16.0**. The wrapper pins Gradle 8.11.1. Native source and dependencies are downloaded from public upstream repositories on the first build. Native builds currently target ARM64 Android from macOS or Linux x86_64 hosts; see validation for actually tested hosts.
@@ -87,7 +93,7 @@ ANDROID_SERIAL=your-device ./gradlew :terminal:connectedDebugAndroidTest
 
 `./scripts/check-artifact.sh` builds a separate R8-enabled consumer against the local Maven AAR, with no project/source dependency. Its debug-signed release APK can be installed to verify JNI under shrinking.
 
-Nine instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging and edge autoscroll. These pass on a local API 27 ARM64 emulator. Hosted CI checks builds, lint and separate AAR consumer compilation; its emulator runtime limitation is recorded in the validation notes. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
+Ten instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging, edge autoscroll and selection callbacks. These pass on a local API 27 ARM64 emulator. Hosted CI checks builds, lint and separate AAR consumer compilation; its emulator runtime limitation is recorded in the validation notes. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
 
 ## License
 

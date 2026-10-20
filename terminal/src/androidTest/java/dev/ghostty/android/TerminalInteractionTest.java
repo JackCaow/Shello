@@ -133,6 +133,19 @@ public final class TerminalInteractionTest {
         ui(activity.terminal::clearSelection);
         ui(() -> assertEquals("", activity.terminal.getSelectedText()));
     }
+    @Test public void selectionCallbackTracksGestureAndOutputClear() {
+        write("\033c中文X");
+        longPress(renderer.cellW * .5f, renderer.cellH * .5f);
+        ui(() -> assertEquals("中", activity.selections.get(activity.selections.size()-1)));
+        write("new output");
+        ui(() -> {
+            assertEquals("", activity.terminal.getSelectedText());
+            assertEquals("", activity.selections.get(activity.selections.size()-1));
+            int count=activity.selections.size();
+            activity.terminal.clearSelection();
+            assertEquals("Unchanged selection must not trigger another callback", count, activity.selections.size());
+        });
+    }
     @Test public void edgeDragScrollsAndStopsAfterRelease() {
         StringBuilder lines = new StringBuilder("\033c");
         for (int i = 0; i < 180; i++) lines.append(String.format(java.util.Locale.ROOT, "L%03d 中文\r\n", i));

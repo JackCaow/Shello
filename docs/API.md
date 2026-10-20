@@ -18,7 +18,7 @@
 
 `setListener` supplies synchronous input and resize callbacks. A missing listener means read-only, not queued input. `sendText` emits literal UTF-8, not automatic bracketed paste. The optional `TerminalInputView` sends committed IME text and translates deletion to terminal key input. It does not interpret remote shell commands or implement a full editor. In draft/paste-sensitive workflows, use your own input UI.
 
-The view clears selection on output and resize, keeps selection while scrolling during a handle drag, and exposes `getSelectedText()`. The application owns clipboard access and copy menus. Alternate-screen swipe is translated into cursor keys; terminal mouse reporting is not implemented.
+The view clears selection on output and resize, keeps selection while scrolling during a handle drag, and exposes `getSelectedText()`. The optional `Listener.onSelectionChanged(String)` callback runs synchronously on the UI thread when selection text changes, including an empty string on clear; use it to show or dismiss copy controls. The application owns clipboard access and copy menus. Alternate-screen swipe is translated into cursor keys; terminal mouse reporting is not implemented.
 
 Rendering and parsing are on the UI thread in this alpha. The renderer batches updates on animation frames, but has no dirty-row atlas or GPU renderer. It uses the system monospace/emoji fonts. Do not infer production performance from a prior prototype benchmark.
 

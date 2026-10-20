@@ -16,6 +16,8 @@ public final class TerminalView extends FrameLayout {
         void onInput(byte[] bytes);
         /** Forward the grid size to your PTY. */
         void onResize(int columns, int rows);
+        /** Selection changed on the UI thread; empty when cleared. The host owns copy actions. */
+        default void onSelectionChanged(String text) {}
     }
     private TerminalSession session;
     private Listener listener;
@@ -54,6 +56,11 @@ public final class TerminalView extends FrameLayout {
     }
     public String getSelectedText() { checkUi();return selected; }
     public void clearSelection() { checkUi();touch.clear(); }
+    private void selectionChanged(String text) {
+        if(selected.equals(text))return;
+        selected=text;
+        if(listener!=null)listener.onSelectionChanged(text);
+    }
     public void scrollToBottom() { checkUi();touch.clear();if(session!=null)session.scroll(Integer.MAX_VALUE); }
     public void sendText(String text) { checkUi();emitInput(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
     public void sendKey(TerminalSession.Key key) { checkUi();if(session!=null)emitInput(session.encodeKey(key)); }
@@ -202,7 +209,7 @@ public final class TerminalView extends FrameLayout {
             Renderer.Cell cell=canvas.cells[row][first];
             return index-col+first+(last?Math.max(0,Math.min(cols-first,cell.displaySpan)-1):0);
         }
-        void clear(){selecting=false;handleDrag=false;selected="";ui.removeCallbacks(autoScroll);invalidate();}
+        void clear(){selecting=false;handleDrag=false;selectionChanged("");ui.removeCallbacks(autoScroll);invalidate();}
         float hx(int index,boolean last){return (index%cols+(last?1:0))*cellWidth();}
         float hy(int index){return (index/cols-offset()+1)*cellHeight()+dp(7);}
         boolean hit(MotionEvent e,int index,boolean last){return Math.hypot(e.getX()-hx(index,last),e.getY()-hy(index))<dp(26);}
@@ -228,7 +235,7 @@ public final class TerminalView extends FrameLayout {
         }
         void updateSelection(){
             try{int lo=normalize(Math.min(start,end),false),hi=normalize(Math.max(start,end),true);
-                selected=session.select(lo,hi);invalidate();
+                selectionChanged(session.select(lo,hi));invalidate();
             }catch(Exception e){clear();}
         }
         @Override protected void onDraw(Canvas c){

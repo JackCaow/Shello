@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="dev.ghostty.android.TerminalApiTest" tests="10" failures="0" errors="0" skipped="0" time="17.994" timestamp="2026-10-20T15:28:02" hostname="localhost">
+  <properties>
+    <property name="device" value="Ghostty_API27(AVD) - 8.1.0" />
+    <property name="flavor" value="" />
+    <property name="project" value=":terminal" />
+  </properties>
+  <testcase name="testViewBindingAndImeCommit" classname="dev.ghostty.android.TerminalApiTest" time="0.007" />
+  <testcase name="testPinnedUnicodeContracts" classname="dev.ghostty.android.TerminalApiTest" time="0.0" />
+  <testcase name="testPublicSessionStreamCheckpointAndReplies" classname="dev.ghostty.android.TerminalApiTest" time="0.001" />
+  <testcase name="testOwnershipAndClose" classname="dev.ghostty.android.TerminalApiTest" time="0.001" />
+  <testcase name="testPinnedGraphemeUtf16Boundaries" classname="dev.ghostty.android.TerminalApiTest" time="0.001" />
+  <testcase name="complexEmojiLongPressSelectsWholeCluster" classname="dev.ghostty.android.TerminalInteractionTest" time="8.712" />
+  <testcase name="edgeDragScrollsAndStopsAfterRelease" classname="dev.ghostty.android.TerminalInteractionTest" time="2.059" />
+  <testcase name="selectionCallbackTracksGestureAndOutputClear" classname="dev.ghostty.android.TerminalInteractionTest" time="1.209" />
+  <testcase name="scrollbackAndHandleSelection" classname="dev.ghostty.android.TerminalInteractionTest" time="1.705" />
+  <testcase name="chineseCompositionCommitCancelAndDelete" classname="dev.ghostty.android.TerminalInteractionTest" time="0.285" />
+</testsuite>

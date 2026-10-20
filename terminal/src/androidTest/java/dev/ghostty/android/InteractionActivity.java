@@ -12,6 +12,7 @@ public final class InteractionActivity extends Activity {
     TerminalView terminal;
     TerminalInputView input;
     final List<byte[]> sent = new ArrayList<>();
+    final List<String> selections = new ArrayList<>();
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         LinearLayout root = new LinearLayout(this);
@@ -25,6 +26,7 @@ public final class InteractionActivity extends Activity {
         terminal.setListener(new TerminalView.Listener() {
             public void onInput(byte[] bytes) { sent.add(bytes); }
             public void onResize(int columns, int rows) {}
+            public void onSelectionChanged(String text) { selections.add(text); }
         });
         terminal.setSession(session);
         input.setTerminalView(terminal);
