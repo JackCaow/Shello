@@ -11,6 +11,16 @@ import org.json.*;
 
 public final class TerminalApiTest {
     private static byte[] bytes(String s){return s.getBytes(StandardCharsets.UTF_8);}
+    @Test public void testPinnedGraphemeUtf16Boundaries() {
+        assertArrayEquals(new int[0], NativeBridge.graphemeEnds(""));
+        assertArrayEquals(new int[]{1,2,3}, NativeBridge.graphemeEnds("abc"));
+        String cluster="👩‍❤️‍👩";
+        assertArrayEquals(new int[]{1,1+cluster.length(),3+cluster.length()}, NativeBridge.graphemeEnds("A"+cluster+"é"));
+        assertArrayEquals(new int[]{4,8}, NativeBridge.graphemeEnds("🇨🇳🇺🇸"));
+        assertArrayEquals(new int[]{1,2,3}, NativeBridge.graphemeEnds("\ud800x\udc00"));
+        String longCluster="a"+new String(new char[1024]).replace('\0', '\u0301');
+        assertArrayEquals(new int[]{longCluster.length()}, NativeBridge.graphemeEnds(longCluster));
+    }
     @Test public void testPinnedUnicodeContracts() throws Exception {
         JSONArray results=UnicodeChecks.run();assertEquals(85,results.length());
         for(int i=0;i<results.length();i++){JSONObject r=results.getJSONObject(i);assertTrue(r.toString(),r.getBoolean("pass"));}

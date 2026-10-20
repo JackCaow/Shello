@@ -20,7 +20,7 @@ TerminalSession ─────── TerminalView
                     TerminalInputView
 ```
 
-Android **8.1+ (API 27) / arm64-v8a only**, Java 17. API 27 is the build minimum; device regression currently covers API 36, with API 27 runtime/IME/font validation still pending. This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
+Android **8.1+ (API 27) / arm64-v8a only**, Java 17. Runtime regression covers an Android 8.1 / API 27 ARM64 emulator and the earlier API 36 phone checks; see the versioned [validation evidence](docs/VALIDATION.md). This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
 
 ## Build
 
@@ -74,9 +74,9 @@ Callbacks run synchronously on the session/UI thread. Do not block them. Transpo
 
 ## Unicode and limits
 
-VT columns are authoritative. Legacy mode keeps the application's expected widths while Android shapes adjacent same-style cells as one grapheme. For example, a family emoji occupies 8 legacy columns, with unused space, versus 2 after the application explicitly enables DEC mode 2027. We do not force mode 2027 for Vim/less.
+VT columns are authoritative. Grapheme boundaries come from the pinned Ghostty engine rather than the system ICU version. Legacy mode keeps the application's expected widths while Android shapes adjacent same-style cells as one grapheme. For example, a family emoji occupies 8 legacy columns, with unused space, versus 2 after the application explicitly enables DEC mode 2027. We do not force mode 2027 for Vim/less.
 
-Font fallback/ICU differences, cross-row or cross-style emoji, arbitrary long clusters, mouse reporting, accessibility, hardware dead keys and modifiers, and all IME variants are not fully supported/validated. Scrollback is currently capped at 4 MiB, pending control sequences at 64 KiB. Grid size is bounded to 1,000 per axis and 65,536 cells. Checkpoints are trusted RAM objects, not persisted/network-importable data and not a promise of cross-version compatibility.
+System font/glyph differences (new emoji artwork may be absent on old Android), cross-row or cross-style emoji, arbitrary long clusters, mouse reporting, accessibility, hardware dead keys and modifiers, and all IME variants are not fully supported/validated. Scrollback is currently capped at 4 MiB, pending control sequences at 64 KiB. Grid size is bounded to 1,000 per axis and 65,536 cells. Checkpoints are trusted RAM objects, not persisted/network-importable data and not a promise of cross-version compatibility.
 
 ## Tests
 
@@ -87,7 +87,7 @@ ANDROID_SERIAL=your-device ./gradlew :terminal:connectedDebugAndroidTest
 
 `./scripts/check-artifact.sh` builds a separate R8-enabled consumer against the local Maven AAR, with no project/source dependency. Its debug-signed release APK can be installed to verify JNI under shrinking.
 
-Tests cover the public stream/lifecycle/IME contract and the pinned 85-case Unicode regression corpus. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
+Nine instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging and edge autoscroll. CI runs these on an API 27 ARM64 emulator. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
 
 ## License
 

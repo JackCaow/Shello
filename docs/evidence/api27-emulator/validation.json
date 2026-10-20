@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-20",
+  "environment": {
+    "android": "8.1.0",
+    "api": 27,
+    "abi": "arm64-v8a",
+    "systemImage": "system-images;android-27;google_apis;arm64-v8a",
+    "imageRevision": 3,
+    "fingerprint": "google/sdk_gphone_arm64/generic_arm64:8.1.0/OSM1.180201.044.D3/10734665:userdebug/dev-keys",
+    "emulator": "35.6.11",
+    "host": "macOS arm64",
+    "gpu": "swiftshader_indirect",
+    "avd": "Pixel 2, 1080x1920, 420 dpi"
+  },
+  "reproducedBug": {
+    "test": "complexEmojiLongPressSelectsWholeCluster",
+    "expected": "👩‍❤️‍👩",
+    "actual": "👩",
+    "cause": "System ICU grapheme segmentation splits the legacy row on API 27",
+    "fix": "Use pinned ghostty_unicode_grapheme_width for UTF-16 cluster boundaries; keep VT columns unchanged"
+  },
+  "tests": {
+    "passed": 9,
+    "failures": 0,
+    "unicodeProtocolAssertions": 85,
+    "selectionClusters": [
+      "👨‍👩‍👧‍👦",
+      "👍🏽",
+      "🇨🇳",
+      "1️⃣",
+      "👩‍❤️‍👩",
+      "🧑🏽‍🚀",
+      "👩🏻‍🤝‍👨🏿",
+      "🐦‍🔥",
+      "🙂‍↔️",
+      "🫱🏻‍🫲🏿",
+      "é"
+    ],
+    "gestures": [
+      "long press on final legacy column",
+      "swipe into scrollback",
+      "drag end handle over CJK",
+      "drag start handle to top edge",
+      "autoscroll stops on release"
+    ]
+  },
+  "manualIme": {
+    "name": "Trime",
+    "version": "3.3.12",
+    "source": "https://github.com/osfans/trime/releases/tag/v3.3.12",
+    "apkSha256": "c727d509cbae8ba6a6b3616f57ea299d46bb13072812342811d03aea0bc3cb98",
+    "schema": "luna_pinyin",
+    "steps": "Tapped actual software keys for zhongwen, chose 中文; composed ceshi then erased the entire candidate",
+    "composingDoesNotSend": true,
+    "commitExactlyOnce": true,
+    "cancelDoesNotSendOrDeleteCommittedText": true,
+    "gridKeyboardVisible": [
+      49,
+      11
+    ],
+    "gridKeyboardHidden": [
+      49,
+      27
+    ]
+  },
+  "consumer": "R8-enabled independent MavenLocal AAR: AAR smoke OK on API 27",
+  "limits": [
+    "No Android 8.1 physical device tested",
+    "Latest emoji glyph artwork still depends on the system font; boundary correctness does not install new glyphs",
+    "No long-duration performance benchmark in this run"
+  ],
+  "artifacts": {
+    "aar": {
+      "path": "terminal/build/outputs/aar/terminal-release.aar",
+      "sha256": "b74b706580d2fb3309cc91f38f2af3a6f51e312267bb0f7153d0b6bcf6601560"
+    },
+    "sample": {
+      "path": "sample/build/outputs/apk/debug/sample-debug.apk",
+      "sha256": "47e0dcc794c40af5292e711536a90908b9c1bc8272d52c0da216a6edfb7e9b34"
+    },
+    "consumer": {
+      "path": "tests/consumer/app/build/outputs/apk/release/app-release.apk",
+      "sha256": "5524cddf390c65455443a77dd64b9deccf10db66b0d23ed90e3026c2841ed34d"
+    },
+    "tests": {
+      "path": "terminal/build/outputs/apk/androidTest/debug/terminal-debug-androidTest.apk",
+      "sha256": "e977afa1cbbee168ad3afa9c9eb845e44a2a25924f3bda119125d25b0659f1ec"
+    }
+  },
+  "remoteMavenPublished": false
+}

@@ -1,0 +1,54 @@
+
+dev.ghostty.android.TerminalApiTest:....
+dev.ghostty.android.TerminalInteractionTest:
+Error in complexEmojiLongPressSelectsWholeCluster(dev.ghostty.android.TerminalInteractionTest):
+java.lang.AssertionError: org.junit.ComparisonFailure: Selection split 👩‍❤️‍👩 expected:<👩[‍❤️‍👩]> but was:<👩[]>
+	at dev.ghostty.android.TerminalInteractionTest.ui(TerminalInteractionTest.java:24)
+	at dev.ghostty.android.TerminalInteractionTest.complexEmojiLongPressSelectsWholeCluster(TerminalInteractionTest.java:98)
+	... 33 trimmed
+Caused by: org.junit.ComparisonFailure: Selection split 👩‍❤️‍👩 expected:<👩[‍❤️‍👩]> but was:<👩[]>
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at dev.ghostty.android.TerminalInteractionTest.lambda$complexEmojiLongPressSelectsWholeCluster$6(TerminalInteractionTest.java:98)
+	at dev.ghostty.android.TerminalInteractionTest.$r8$lambda$6Q7ufW9f0RqtrAdWPfxeuLl7EVQ(Unknown Source:0)
+	at dev.ghostty.android.TerminalInteractionTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalInteractionTest.lambda$ui$0(TerminalInteractionTest.java:23)
+	at dev.ghostty.android.TerminalInteractionTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+..
+
+Time: 15.222
+There was 1 failure:
+1) complexEmojiLongPressSelectsWholeCluster(dev.ghostty.android.TerminalInteractionTest)
+java.lang.AssertionError: org.junit.ComparisonFailure: Selection split 👩‍❤️‍👩 expected:<👩[‍❤️‍👩]> but was:<👩[]>
+	at dev.ghostty.android.TerminalInteractionTest.ui(TerminalInteractionTest.java:24)
+	at dev.ghostty.android.TerminalInteractionTest.complexEmojiLongPressSelectsWholeCluster(TerminalInteractionTest.java:98)
+	... 33 trimmed
+Caused by: org.junit.ComparisonFailure: Selection split 👩‍❤️‍👩 expected:<👩[‍❤️‍👩]> but was:<👩[]>
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at dev.ghostty.android.TerminalInteractionTest.lambda$complexEmojiLongPressSelectsWholeCluster$6(TerminalInteractionTest.java:98)
+	at dev.ghostty.android.TerminalInteractionTest.$r8$lambda$6Q7ufW9f0RqtrAdWPfxeuLl7EVQ(Unknown Source:0)
+	at dev.ghostty.android.TerminalInteractionTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalInteractionTest.lambda$ui$0(TerminalInteractionTest.java:23)
+	at dev.ghostty.android.TerminalInteractionTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+
+FAILURES!!!
+Tests run: 7,  Failures: 1

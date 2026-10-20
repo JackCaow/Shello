@@ -2,6 +2,8 @@ package dev.ghostty.android;
 
 final class NativeBridge {
     static { System.loadLibrary("ghostty_android"); }
+    /** UTF-16 end offsets using the pinned VT engine's grapheme rules. */
+    static native int[] graphemeEnds(String text);
     static native long create(int cols, int rows);
     static native void free(long handle);
     static native void write(long handle, byte[] bytes);

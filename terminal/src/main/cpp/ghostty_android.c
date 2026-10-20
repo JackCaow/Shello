@@ -32,6 +32,45 @@ static void check(JNIEnv *env, GhosttyResult r) {
     char message[80]; snprintf(message, sizeof(message), "Ghostty returned %d", r);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/IllegalStateException"), message);
 }
+/* Return UTF-16 boundaries so Java selection and shaping share Ghostty's Unicode
+ * version, independent of the Android ICU/font version. Widths remain VT-owned. */
+JNIEXPORT jintArray JNICALL FN(graphemeEnds)(JNIEnv *env, jclass cls, jstring text) {
+    if (!text) {
+        (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/NullPointerException"), "text");
+        return NULL;
+    }
+    jsize len = (*env)->GetStringLength(env, text);
+    if (!len) return (*env)->NewIntArray(env, 0);
+    const jchar *utf16 = (*env)->GetStringChars(env, text, NULL);
+    if (!utf16) return NULL;
+    uint32_t *cps = malloc((size_t)len * sizeof(*cps));
+    jint *ends = malloc((size_t)len * sizeof(*ends));
+    if (!cps || !ends) {
+        free(cps); free(ends);
+        (*env)->ReleaseStringChars(env, text, utf16);
+        (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/OutOfMemoryError"), "Grapheme boundaries");
+        return NULL;
+    }
+    size_t count = 0;
+    for (jsize i = 0; i < len;) {
+        uint32_t cp = utf16[i++];
+        if (cp >= 0xd800 && cp <= 0xdbff && i < len && utf16[i] >= 0xdc00 && utf16[i] <= 0xdfff) {
+            cp = 0x10000 + ((cp - 0xd800) << 10) + (utf16[i++] - 0xdc00);
+        } else if (cp >= 0xd800 && cp <= 0xdfff) cp = 0xfffd;
+        cps[count] = cp; ends[count++] = i;
+    }
+    (*env)->ReleaseStringChars(env, text, utf16);
+    jsize groups = 0;
+    for (size_t i = 0; i < count;) {
+        i += ghostty_unicode_grapheme_width(cps + i, count - i, NULL);
+        // In-place compaction is safe: groups never advances beyond i - 1.
+        ends[groups++] = ends[i - 1];
+    }
+    jintArray result = (*env)->NewIntArray(env, groups);
+    if (result) (*env)->SetIntArrayRegion(env, result, 0, groups, ends);
+    free(cps); free(ends);
+    return result;
+}
 JNIEXPORT jlong JNICALL FN(create)(JNIEnv *env, jclass cls, jint cols, jint rows) {
     GhosttyTerminal t = NULL;
     check(env, ghostty_terminal_new(NULL, &t, cols, rows));

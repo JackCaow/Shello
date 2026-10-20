@@ -2,6 +2,33 @@
 
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
+## Android 8.1 emulator acceptance and grapheme fix
+
+Tested on 2026-10-20 using Android Emulator 35.6.11 on macOS ARM64, Pixel 2 profile, API 27 `google_apis/arm64-v8a` revision 3, Android 8.1.0. This executes the actual old Android framework, ICU and font stack; it is not an API 36 phone running an API 27-targeted binary. [Environment, artifact hashes and results](evidence/api27-emulator/validation.json).
+
+**Reproduced and fixed:** long-pressing the last legacy column of `👩‍❤️‍👩` selected only `👩`. The API 27 system ICU split the row's emoji sequence. Shaping/selection now obtain UTF-16 cluster boundaries from the pinned `ghostty_unicode_grapheme_width` API through JNI. VT columns, legacy mode and mode 2027 behavior are unchanged. [Failing run before the fix](evidence/api27-emulator/before-fix.txt), [fixed selection](evidence/api27-emulator/couple-selection.png).
+
+- **9/9 instrumentation tests pass**, including the original 85 Unicode assertions, UTF-16 boundaries (empty/ASCII/surrogates/flags/long combining runs), Chinese composing/commit/cancel/delete, and real-window gestures. [JUnit XML](evidence/api27-emulator/tests.xml).
+- Long-pressing the final legacy column selects the complete family, skin-tone, flag, keycap, couple, astronaut, mixed-skin holding-hands/handshake, phoenix, head-shake and combining-character sequences. These assertions verify selection boundaries, not the availability of every modern glyph in Android 8.1's font.
+- Scrolling through 180 lines reveals earlier history; dragging the end handle across CJK selects the expected text. Dragging the start handle to the top edge expands selection while scrolling, and releasing stops the timer. [Scrollback selection](evidence/api27-emulator/scrollback-selection.png).
+- Actual taps in [Trime 3.3.12](https://github.com/osfans/trime/releases/tag/v3.3.12), using its bundled `luna_pinyin` scheme, keep `zhongwen` uncommitted, send “中文” once on candidate selection, then cancel `ceshi` without sending it or deleting committed content. [Composing](evidence/api27-emulator/composing.png), [committed](evidence/api27-emulator/committed.png), [cancelled](evidence/api27-emulator/cancelled.png). The IME is installed only in the test emulator; no IME binary/dependency is bundled in this library.
+- The sample grid changes **49×27 ↔ 49×11** as the keyboard hides/shows; the input stays visible using `adjustResize`. [Legacy/cluster render](evidence/api27-emulator/unicode.png).
+- Release AAR, sample debug/R8 release, instrumentation APK and independent R8 MavenLocal consumer build. The consumer runs on API 27 and displays [AAR smoke OK](evidence/api27-emulator/consumer.png). Library/sample lint remain at 0 errors (6/14 warnings). No remote Maven publication occurs.
+- CI now boots an API 27 ARM64 emulator and runs the instrumentation suite, including the emoji regression. CI does not install Trime or claim to automate the manual Pinyin candidate taps.
+
+To reproduce on an ARM64 Mac with the build prerequisites installed:
+
+```sh
+sdkmanager 'system-images;android-27;google_apis;arm64-v8a'
+echo no | avdmanager create avd -n Ghostty_API27 -k 'system-images;android-27;google_apis;arm64-v8a' -d pixel_2
+emulator -avd Ghostty_API27 -port 5580 -no-snapshot -gpu swiftshader_indirect
+# In a second terminal, after Android has booted:
+ANDROID_SERIAL=emulator-5580 ./scripts/verify.sh
+./scripts/check-artifact.sh
+```
+
+The test-only activity and screenshots are not included in the release AAR. Android 8.1 physical devices, other IMEs, missing modern font glyphs and long-duration performance remain outside this run's acceptance.
+
 ## Historical prototype evidence (not library acceptance)
 
 The preceding Android prototype on Android 16 / model 25019PNF3C passed 85 Unicode checks and a ten-minute synthetic load: 36,000 ticks, 583/583 PTY probes, no errors/timeouts. Native allocated heap in the second half stayed around 72.14–72.19 MiB. Input-to-frame-commit P95 was 204.2 ms with a 160 ms HTTP polling transport. Canvas P95 was 10 ms. That harness, transport and timing instrumentation are not included here, so these are not performance claims for this extracted AAR.
@@ -30,10 +57,10 @@ The library, sample, and separate AAR consumer now declare Android 8.1 / API 27 
 - Library lint: 0 errors / 6 warnings; sample lint: 0 errors / 14 warnings. The verification script now includes sample lint to catch unguarded newer Android APIs.
 - The final API 27-targeted build passes all four instrumentation tests on the API 36 phone (model 25019PNF3C), including 85 Unicode assertions, stream/checkpoint/query/key behavior, ownership, and IME composing/commit/delete callbacks. Initial installation was blocked by the USB confirmation; the successful retry used the same final artifacts. [Runner output](evidence/api27-instrumentation.txt).
 - The separate R8-enabled MavenLocal AAR consumer runs on the API 36 phone and displays **AAR smoke OK**, verifying JNI loading, Unicode selection and checkpoint restore with the final artifact.
-- No API 27 device/emulator has been exercised. Old-system ICU/font rendering, complex emoji selection, and IME/window resize still need runtime acceptance.
+- At this earlier checkpoint, no API 27 device/emulator had been exercised. The emulator acceptance section above supersedes that limitation for the tested scenarios.
 
 Current artifact hashes and compatibility checks are recorded in [api27-validation.json](evidence/api27-validation.json). The original screenshots and `validation.json` above describe the earlier API 31 artifacts.
 
 ## Unvalidated scope
 
-Linux build hosts, x86/32-bit ABIs, older Android, other IMEs, process-death persistence, production transport/reconnection, hardware keyboard layout/dead-key coverage, accessibility, GPU/presentation latency and long-duration performance of the extracted library are not certified.
+Linux build hosts, x86/32-bit ABIs, physical Android 8.1 devices, untested IMEs, process-death persistence, production transport/reconnection, hardware keyboard layout/dead-key coverage, accessibility, GPU/presentation latency and long-duration performance of the extracted library are not certified.

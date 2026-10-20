@@ -110,20 +110,22 @@ public final class TerminalView extends FrameLayout {
             for(Cell[] line:cells)shapeRow(line);
             frame=next;invalidate();
         }
-        final android.icu.text.BreakIterator graphemes=android.icu.text.BreakIterator.getCharacterInstance(Locale.ROOT);
         boolean sameStyle(Cell a,Cell b){return a.fg==b.fg&&a.bg==b.bg&&a.flags==b.flags&&a.underline==b.underline&&a.underlineColor==b.underlineColor;}
         void shapeRow(Cell[] line){
             StringBuilder text=new StringBuilder();ArrayList<Integer> owners=new ArrayList<>();
             for(int x=0;x<line.length;x++){Cell cell=line[x];cell.displayText=cell.text;cell.displaySpan=cell.wide==1?2:1;cell.skip=false;if(cell.wide>=2)continue;
                 String value=cell.text.isEmpty()?" ":cell.text;text.append(value);for(int i=0;i<value.length();i++)owners.add(x);
             }
-            graphemes.setText(text.toString());int begin=graphemes.first();
-            for(int end=graphemes.next();end!=android.icu.text.BreakIterator.DONE;begin=end,end=graphemes.next()){
-                int first=owners.get(begin),last=owners.get(end-1);if(first==last)continue;
+            String rowText=text.toString();int begin=0;
+            // Old Android ICU versions split valid emoji ZWJ sequences. Keep boundaries
+            // consistent with the pinned VT engine while preserving its legacy columns.
+            for(int end:NativeBridge.graphemeEnds(rowText)){
+                int start=begin;begin=end;
+                int first=owners.get(start),last=owners.get(end-1);if(first==last)continue;
                 // Shape across adjacent legacy cells, but never change VT cursor/selection columns.
                 boolean same=true;for(int x=first+1;x<=last;x++)if(line[x].wide<2&&!sameStyle(line[first],line[x]))same=false;
                 if(!same)continue;
-                line[first].displayText=text.substring(begin,end);line[first].displaySpan=last-first+(line[last].wide==1?2:1);
+                line[first].displayText=rowText.substring(start,end);line[first].displaySpan=last-first+(line[last].wide==1?2:1);
                 for(int x=first+1;x<=last;x++)line[x].skip=true;
             }
         }
