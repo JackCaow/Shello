@@ -34,6 +34,9 @@ public class SshTransportTest {
     }
     @Test public void realPtyResizeUnicodeTuiInterruptAndReconnect() throws Exception {
         assumeTrue("Run scripts/local-ssh.py first", new File(profile(), "connection.properties").isFile());
+        java.util.Properties config = new java.util.Properties();
+        try (InputStream in = new FileInputStream(new File(profile(), "connection.properties"))) { config.load(in); }
+        assumeTrue("Plain-shell test must not exit the tmux fixture", !"tmux".equals(config.getProperty("sessionMode")));
         Probe probe = new Probe();
         SshTransport ssh = new SshTransport(profile(), 80, 24, probe);
         try {

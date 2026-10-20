@@ -63,7 +63,7 @@ final class SshTransport implements AutoCloseable {
             shell.connect(10000);
             if (closed.get()) return;
             resize(columns, rows);
-            state("已连接", true);
+            state("tmux".equals(config.getProperty("sessionMode")) ? "已连接 · tmux" : "已连接", true);
             byte[] buffer = new byte[16384];
             for (int count; !closed.get() && (count = output.read(buffer)) != -1;) {
                 outputSlots.acquire();

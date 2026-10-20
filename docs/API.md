@@ -14,7 +14,7 @@
 
 ## View and input
 
-`setSession(null)` detaches without freeing. Activity destruction must detach then close, or explicitly transfer ownership to an appropriate application lifecycle component. The sample does not retain sessions across Activity recreation.
+`setSession(null)` detaches without freeing. Activity destruction must detach then close, or explicitly transfer ownership to an appropriate application lifecycle component. The sample does not retain local VT sessions across Activity recreation. Its optional SSH + tmux fixture instead keeps remote processes on the server and redraws the screen after a new SSH attachment; this is independent of `checkpoint()` and does not add a transport dependency to the library.
 
 `setListener` supplies synchronous input and resize callbacks. A missing listener means read-only, not queued input. `sendText` emits literal UTF-8, not automatic bracketed paste. The optional `TerminalInputView` sends committed IME text and translates deletion to terminal key input. It does not interpret remote shell commands or implement a full editor. In draft/paste-sensitive workflows, use your own input UI.
 

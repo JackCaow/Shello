@@ -303,6 +303,7 @@ public final class MainActivity extends Activity {
     private void sendKey(TerminalSession.Key key){terminal.sendKey(key);}
     private void sendDraft(boolean enter) {
         String text=draft.getText().toString();if(text.isEmpty())return;
+        if(sshMode&&!sshConnected){toast("SSH 未连接，草稿已保留");return;}
         draftHistory.remove(text);draftHistory.add(0,text);if(draftHistory.size()>20)draftHistory.remove(20);
         // Explicit submission finishes this local draft; it is never sent during composition.
         terminal.sendText(text);if(enter)terminal.sendKey(TerminalSession.Key.ENTER);

@@ -3,6 +3,17 @@
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
 
+## SSH + tmux recovery
+
+Updated on 2026-10-21. The sample can attach to an isolated persistent tmux session via real SSH. [Reproduction and cleanup](LOCAL_SSH.md). **Physical Android acceptance is pending:** the phone disappeared from USB/ADB before installation. The earlier phone results below cover plain SSH, not this change.
+
+- **Mac OpenSSH client:** two abrupt SSH drops retained shell PID `59117`, its exported variable and working directory. Vim PID `59192` survived the second drop; its unsaved buffer was redrawn on reattach and saved with an exact file-content comparison. [Result](evidence/ssh-tmux/mac-result.json). `scripts/verify-tmux-local.py` reproduces these assertions.
+- **Android 8.1 / API 27 ARM64 emulator UI:** commands were entered through the sample composer. Two abrupt SSH drops and manual menu reconnects retained shell PID `59117`, its variable/directory and vim PID `64237`. Force-stopping/relaunching the app while vim was still unsaved also reattached to that same process. The restored text was saved through the UI and checked on the Mac. [Result](evidence/ssh-tmux/api27-result.json), [before](evidence/ssh-tmux/api27-vim-before.png), [reconnected](evidence/ssh-tmux/api27-vim-restored.png), [after app force-stop](evidence/ssh-tmux/api27-vim-after-process-death.png).
+- **Disconnected draft fix:** Send retains text instead of clearing a draft when SSH is disconnected. Verified in the emulator UI. [Evidence](evidence/ssh-tmux/api27-disconnected-draft.png).
+- Debug/release/instrumentation builds pass; release lint has 0 errors / 15 warnings. In tmux mode the host-key rejection instrumentation test passed and the destructive plain-shell test was **skipped**, not counted as recovery coverage. [Test output](evidence/ssh-tmux/api27-instrumentation.txt), [artifact hashes and scope](evidence/ssh-tmux/validation.json).
+
+The injected failure kills the fixture's SSH handler processes while preserving its listener and tmux server. It is not Wi-Fi/cellular roaming or silent packet loss. Reconnection remains manual; tmux recreates the visible screen while keeping remote processes alive. Android drafts/selection/full local scrollback after process death, server reboot recovery, automatic retry and background service ownership are not provided. Existing emoji-width compatibility findings below remain open.
+
 ## Real local SSH
 
 Validated on 2026-10-21 against a temporary loopback-only macOS OpenSSH fixture, using the Android 16/API 36 phone and Android 8.1/API 27 ARM64 emulator. [Setup and cleanup](LOCAL_SSH.md). No system Remote Login or Maven publication.
@@ -25,7 +36,7 @@ The Mac's Vim 9.1 displays ZWJ as literal `<200d>` in the tested configuration. 
 
 At the phone's 44-column width, the fixture line is 43 columns to the host and 45 to VT. The unexpected wrap leaves stale characters when less updates the screen. [Failure](evidence/local-ssh/phone-less-flag-width-mismatch.png). Replacing only `🇨🇳` with `CN` removes this mismatch: [same fixture without flags](evidence/local-ssh/phone-less-no-flag.png); [ASCII control](evidence/local-ssh/phone-less-ascii.png). The script includes both comparison files. This remains an open host/terminal width-compatibility issue; this change does not silently switch all sessions to mode 2027 or alter the library's established legacy widths.
 
-Reconnect currently creates a fresh shell, not remote-process resume. Activity destruction closes SSH. Real link-loss recovery, background service ownership, long-duration performance and full Moshi UI parity remain unvalidated/unimplemented.
+At this plain-SSH checkpoint, reconnect created a fresh shell. The optional tmux recovery section above supersedes that limitation for tmux mode. Activity destruction still closes SSH; automatic network recovery, background service ownership, long-duration performance and full Moshi UI parity remain unvalidated/unimplemented.
 
 ## Moshi-inspired sample UI
 

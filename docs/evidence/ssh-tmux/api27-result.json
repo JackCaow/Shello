@@ -1,0 +1,14 @@
+{
+  "device": "Android 8.1 API 27 ARM64 emulator",
+  "shell_pid_before": 59117,
+  "shell_pid_after": 59117,
+  "vim_pid_before": 64237,
+  "vim_pid_after_ssh_reconnect_and_app_force_stop": 64237,
+  "abrupt_ssh_drops": 2,
+  "app_force_stops_with_unsaved_buffer": 1,
+  "shell_variable_and_cwd_preserved": true,
+  "unsaved_buffer_redrawn_after_reconnect": true,
+  "saved_file_exact_match": true,
+  "disconnected_send_retains_draft": true,
+  "physical_phone": "pending: absent from USB/ADB"
+}
