@@ -87,7 +87,7 @@ ANDROID_SERIAL=your-device ./gradlew :terminal:connectedDebugAndroidTest
 
 `./scripts/check-artifact.sh` builds a separate R8-enabled consumer against the local Maven AAR, with no project/source dependency. Its debug-signed release APK can be installed to verify JNI under shrinking.
 
-Nine instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging and edge autoscroll. CI runs these on an API 27 ARM64 emulator. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
+Nine instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging and edge autoscroll. These pass on a local API 27 ARM64 emulator. Hosted CI checks builds, lint and separate AAR consumer compilation; its emulator runtime limitation is recorded in the validation notes. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
 
 ## License
 
