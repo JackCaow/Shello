@@ -24,7 +24,7 @@ Android **8.1+ (API 27) / arm64-v8a only**, Java 17. Runtime regression covers a
 
 ## Sample UI
 
-The offline sample follows Moshi’s mobile terminal layout: a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. Minimize opens a local session card with a viewport preview; resume retains the same in-memory session and draft. Control keys display feedback in this echo demo; there is no remote shell or process to execute them. UI components live in `sample`, separate from the embeddable terminal library.
+The offline sample follows Moshi’s mobile terminal layout: a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. The history button restores recent drafts from RAM. Voice and attachment entries are disabled in this prototype. Minimize opens a half-width local session card with a viewport preview; resume retains the same in-memory session and draft. Control keys display feedback in this echo demo; there is no remote shell or process to execute them. UI components live in `sample`, separate from the embeddable terminal library.
 
 [UI screenshots and validation](docs/VALIDATION.md#moshi-inspired-sample-ui)
 

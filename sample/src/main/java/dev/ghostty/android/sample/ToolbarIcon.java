@@ -24,6 +24,28 @@ final class ToolbarIcon extends Drawable {
             case "keyboard":
                 c.drawRoundRect(2,4,22,20,2,2,p);for(int y=8;y<=12;y+=4)for(int x=6;x<=18;x+=4)c.drawPoint(x,y,p);line(c,7,16,17,16);break;
             case "send":line(c,12,20,12,4);line(c,5,11,12,4,19,11);break;
+            case "plus":line(c,12,4,12,20);line(c,4,12,20,12);break;
+            case "close":line(c,5,5,19,19);line(c,19,5,5,19);break;
+            case "mic":
+                c.drawRoundRect(9,2,15,15,3,3,p);c.drawArc(5,5,19,19,0,180,false,p);line(c,12,19,12,23);break;
+            case "toolbox":
+                c.drawRoundRect(3,10,21,22,2,2,p);line(c,3,14,21,14);line(c,9,18,15,18);
+                line(c,6,10,4,5,9,3,11,7,15,2,20,4,18,10);break;
+            case "history":c.drawArc(4,4,21,21,220,300,false,p);line(c,3,4,3,9,8,9);line(c,12,7,12,13,16,15);break;
+            case "up":line(c,7,14,12,9,17,14);break;
+            case "down":line(c,7,10,12,15,17,10);break;
+            case "left":line(c,14,7,9,12,14,17);break;
+            case "right":line(c,10,7,15,12,10,17);break;
+            case "return":line(c,20,5,20,10,18,14,5,14);line(c,10,9,5,14,10,19);break;
+            case "backspace":line(c,9,5,21,5,21,19,9,19,2,12,9,5);line(c,12,9,17,15);line(c,17,9,12,15);break;
+            case "clear":
+                line(c,10,11,10,3,14,3,14,11,19,13,21,21,3,21,5,13,10,11);
+                line(c,8,16,7,21);line(c,12,15,12,21);line(c,16,16,17,21);break;
+            case "grip":
+                float old=p.getStrokeWidth();p.setStrokeWidth(1.3f);line(c,1,12,23,12);p.setStrokeWidth(old);break;
+            case "settings":
+                c.drawCircle(12,12,3,p);c.drawCircle(12,12,8,p);
+                for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);line(c,12,2,12,4);c.restore();}break;
             case "lock":
             case "unlock":
                 c.drawRoundRect(5,10,19,21,2,2,p);c.drawPoint(12,15,p);
@@ -31,7 +53,8 @@ final class ToolbarIcon extends Drawable {
                 if(name.equals("lock"))line(c,16,7,16,10);
                 break;
             case "pad":
-                line(c,9,6,12,3,15,6);line(c,18,9,21,12,18,15);line(c,15,18,12,21,9,18);line(c,6,15,3,12,6,9);break;
+                c.drawRoundRect(10,2,14,8,1,1,p);c.drawRoundRect(16,10,22,14,1,1,p);
+                c.drawRoundRect(10,16,14,22,1,1,p);c.drawRoundRect(2,10,8,14,1,1,p);break;
             default:break;
         }c.restore();
     }

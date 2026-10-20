@@ -240,7 +240,6 @@ public final class TerminalView extends FrameLayout {
         }
         @Override protected void onDraw(Canvas c){
             if(frame==null)return;
-            if(offset()+rows<frame.optInt("total")){overlay.setColor(0xcc253b52);c.drawRoundRect(getWidth()-dp(108),dp(3),getWidth(),dp(28),dp(5),dp(5),overlay);overlay.setColor(Color.WHITE);overlay.setTextSize(dp(10));c.drawText("Scrollback",getWidth()-dp(104),dp(20),overlay);}
             if(!selecting)return;
             int lo=normalize(Math.min(start,end),false),hi=normalize(Math.max(start,end),true);
             overlay.setColor(0x665b9cff);

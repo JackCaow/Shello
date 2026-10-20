@@ -14,14 +14,18 @@
     "direction pad drag and lock",
     "selection copy into local draft",
     "minimize/resume preserves draft",
-    "keyboard resize and toolbar visibility"
+    "keyboard resize and toolbar visibility",
+    "empty draft Send disabled",
+    "submitted draft history recall",
+    "keyboard resize completion retains prompt visibility"
   ],
   "phone": "API 36 installation and initial layout inspection; detailed interaction acceptance on API 27",
   "artifacts": {
-    "terminal/build/outputs/aar/terminal-release.aar": "c1c3dcd0f9d85dd060c535693f4430682f52417932c4e25e83fb2f2e9b096a1d",
-    "sample/build/outputs/apk/debug/sample-debug.apk": "1fcea8dc74ca95cd4f2b4cf8fda2a0d02187c771832414ee5a0dae1b085b4502",
-    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "04c9f8fd42365318564c268ba365e04bbe5df5f4e5e87ad24b9f66a59be30a9f",
-    "tests/consumer/app/build/outputs/apk/release/app-release.apk": "23ce6e2f8cf4c3d3164f63cb00c00e3990a07a9e915655a6012768b7918eee1e"
+    "terminal/build/outputs/aar/terminal-release.aar": "f76b0c603a49df53280daec950b5964944581ed3a74788088b92ebc179e3313c",
+    "sample/build/outputs/apk/debug/sample-debug.apk": "018ebf4de335c478529e84920fa3aad05eb4cfa3b32b9d95cecb132155baa28d",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "adcab07db532748a7d138ee8cccfe33fdbf74b961d0464cebd5a138449e64320",
+    "tests/consumer/app/build/outputs/apk/release/app-release.apk": "ce4e74f418093b4b9df0aa3b94cb6af1a4bb54c476262643c8088315385be026"
   },
-  "remoteMavenPublished": false
+  "remoteMavenPublished": false,
+  "visualAlignment": "Compact Moshi-style header, shortcut capsule with history, direction pad glyphs and Ctrl+L, composer actions, half-width thumbnail card; voice/attachments disabled."
 }

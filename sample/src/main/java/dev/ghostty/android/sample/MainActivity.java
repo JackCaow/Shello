@@ -31,7 +31,9 @@ public final class MainActivity extends Activity {
     private ScrollView home;
     private ImageView sessionPreview;
     private android.graphics.Bitmap previewBitmap;
-    private TextView subtitle, ctrlButton, padButton, lockButton;
+    private TextView subtitle, ctrlButton, padButton, lockButton, sendButton;
+    private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
+    private boolean padPositioned;
     private boolean ctrlArmed, draftMode, imeVisible, minimized, padLocked;
 
     @Override public void onCreate(Bundle state) {
@@ -62,7 +64,8 @@ public final class MainActivity extends Activity {
         terminal.setListener(new TerminalView.Listener() {
             @Override public void onInput(byte[] bytes) { echo(bytes); }
             @Override public void onResize(int columns,int rows) {
-                subtitle.setText("本地演示 · "+columns+" × "+rows);
+                subtitle.setContentDescription("本地终端，"+columns+" 列，"+rows+" 行");
+                if(directInput.hasFocus()||draft.hasFocus())terminal.post(terminal::scrollToBottom);
             }
             @Override public void onSelectionChanged(String text) {
                 selectionBar.setVisibility(text.isEmpty()?View.GONE:View.VISIBLE);
@@ -76,39 +79,38 @@ public final class MainActivity extends Activity {
             imeVisible=root.getRootView().getHeight()-visible.bottom>dp(120);
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
-        demo(); root.requestFocus();
+        write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› "); root.requestFocus();
     }
 
     private void buildHeader() {
         View grip=new View(this); grip.setBackground(round(0xff5a5b60,3));
         LinearLayout.LayoutParams gripParams=new LinearLayout.LayoutParams(dp(44),dp(3));
         gripParams.gravity=Gravity.CENTER_HORIZONTAL;gripParams.topMargin=dp(8);sheet.addView(grip,gripParams);
-        LinearLayout header=row(); header.setPadding(dp(8),0,dp(8),0);
-        sheet.addView(header,new LinearLayout.LayoutParams(-1,dp(52)));
+        LinearLayout header=row(); header.setPadding(dp(16),0,dp(16),0);
+        sheet.addView(header,new LinearLayout.LayoutParams(-1,dp(28)));
         TextView minimize=key("−","最小化会话",this::minimize); minimize.setTextColor(Color.BLACK);
-        minimize.setTextSize(18);
-        minimize.setBackground(new android.graphics.drawable.InsetDrawable(round(0xffffcf24,12),dp(12)));
-        header.addView(minimize,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        minimize.setTextSize(14);
+        minimize.setBackground(new android.graphics.drawable.InsetDrawable(round(0xffffcc00,9),dp(4)));
+        header.addView(minimize,new LinearLayout.LayoutParams(dp(26),dp(26)));
         TextView menu=icon("panel","会话工具",()->tools(header));
-        menu.setCompoundDrawablesWithIntrinsicBounds(null,new ToolbarIcon("panel",dp(14),Color.BLACK),null,null);
-        menu.setPadding(0,dp(15),0,0);
-        menu.setBackground(new android.graphics.drawable.InsetDrawable(round(GREEN,12),dp(12)));
-        header.addView(menu,new LinearLayout.LayoutParams(dp(44),dp(44)));
-        LinearLayout title=column(); title.setGravity(Gravity.CENTER_VERTICAL);
-        TextView name=label("Ghostty",15,TEXT); name.setTypeface(Typeface.MONOSPACE);
-        subtitle=label("本地演示",10,MUTED); title.addView(name); title.addView(subtitle);
-        header.addView(title,new LinearLayout.LayoutParams(0,-1,1));
-        TextView badge=label("LOCAL",10,0xff75b6ff);badge.setPadding(dp(9),dp(5),dp(9),dp(5));
-        badge.setBackground(round(0xff173247,12)); header.addView(badge);
+        ((ControlLabel)menu).setIcon(new ToolbarIcon("panel",dp(11),Color.BLACK));
+        menu.setBackground(new android.graphics.drawable.InsetDrawable(round(GREEN,9),dp(4)));
+        header.addView(menu,new LinearLayout.LayoutParams(dp(26),dp(26)));
+        subtitle=label("本地终端",12,MUTED);subtitle.setTypeface(Typeface.MONOSPACE);
+        subtitle.setSingleLine();subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        subtitle.setPadding(dp(8),0,dp(8),0);
+        header.addView(subtitle,new LinearLayout.LayoutParams(0,-2,1));
+        TextView badge=label("LOCAL",10,0xff75b6ff);badge.setPadding(dp(5),dp(3),dp(5),dp(3));
+        badge.setBackground(round(0xff173247,10)); header.addView(badge);
     }
 
     private void buildToolbar() {
         HorizontalScrollView scroll=new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);
-        toolbar=row();toolbar.setPadding(dp(4),dp(6),dp(4),dp(6));
+        toolbar=row();toolbar.setPadding(dp(5),dp(4),dp(5),dp(4));
         scroll.setBackground(round(Color.BLACK,32));scroll.setClipToOutline(true);
-        scroll.addView(toolbar,new HorizontalScrollView.LayoutParams(-1,dp(56)));
-        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(56));
+        scroll.addView(toolbar,new HorizontalScrollView.LayoutParams(-1,dp(52)));
+        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(52));
         outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(scroll,outer);
         scroll.setTag("toolbar");
         ctrlButton=key("Ctrl","Ctrl：点击后组合下一个按键",()->setCtrl(!ctrlArmed));
@@ -118,34 +120,60 @@ public final class MainActivity extends Activity {
         padButton=icon("pad","方向键浮板",this::togglePad);addTool(padButton);
         addTool(icon("panel","会话工具",()->tools(toolbar)));
         addTool(icon("paste","粘贴到草稿",this::paste));
-        addTool(icon("chat","编辑文本",()->setDraftMode(true,true)));
-        addTool(icon("keyboard","显示或隐藏键盘",this::toggleKeyboard));
+        TextView history=icon("history","输入历史",this::history);
+        ((ControlLabel)history).setIcon(new ToolbarIcon("history",dp(13),MUTED));
+        history.setBackgroundColor(Color.TRANSPARENT);toolbar.addView(history,new LinearLayout.LayoutParams(dp(16),dp(44)));
+        TextView chat=icon("chat","编辑文本",()->setDraftMode(true,true));addTool(chat);chat.setBackgroundColor(Color.TRANSPARENT);
+        TextView keyboard=icon("keyboard","显示或隐藏键盘",this::toggleKeyboard);addTool(keyboard);keyboard.setBackgroundColor(Color.TRANSPARENT);
     }
     private void addTool(View view) {
-        view.setMinimumWidth(dp(44));
+        view.setMinimumWidth(dp(40));
+        view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),new android.graphics.drawable.InsetDrawable(round(KEY,20),dp(3),dp(4),dp(3),dp(4)),null));
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(44),1);
         toolbar.addView(view,p);
     }
     private void buildComposer() {
-        composer=column();composer.setPadding(dp(10),dp(6),dp(10),dp(6));
+        composer=column();composer.setPadding(dp(12),dp(8),dp(12),dp(8));
         composer.setBackground(round(Color.BLACK,26));composer.setVisibility(View.GONE);
         LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);
         params.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(composer,params);
         draft=new EditText(this);draft.setTextColor(TEXT);draft.setHintTextColor(MUTED);
-        draft.setTextSize(15);draft.setHint("输入命令或文本…");draft.setBackgroundColor(Color.TRANSPARENT);
+        draft.setTextSize(14);draft.setTypeface(Typeface.MONOSPACE);draft.setHint("对终端说…");draft.setBackgroundColor(Color.TRANSPARENT);
         draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         draft.setMinLines(1);draft.setMaxLines(4);draft.setPadding(dp(8),dp(10),dp(8),dp(8));
         draft.setContentDescription("本地文本草稿");composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
         LinearLayout actions=row();composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
-        actions.addView(icon("paste","粘贴到草稿",this::paste),new LinearLayout.LayoutParams(dp(44),dp(44)));
-        actions.addView(key("×","关闭文本框，保留草稿",()->setDraftMode(false,true)),new LinearLayout.LayoutParams(dp(44),dp(44)));
-        TextView hint=label("长按发送：不回车",10,MUTED);hint.setGravity(Gravity.CENTER);
-        actions.addView(hint,new LinearLayout.LayoutParams(0,-1,1));
-        actions.addView(icon("keyboard","显示或隐藏键盘",this::toggleKeyboard),new LinearLayout.LayoutParams(dp(44),dp(44)));
-        TextView send=icon("send","发送并回车；长按仅发送",()->sendDraft(true));
-        send.setBackground(round(0xff123d28,22));send.setOnLongClickListener(v->{sendDraft(false);return true;});
-        actions.addView(send,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        TextView add=icon("plus","添加文本",this::addTextMenu);composerAction(actions,add);
+        composerAction(actions,icon("toolbox","终端工具",()->tools(composer)));
+        composerAction(actions,icon("close","关闭文本框，保留草稿",()->setDraftMode(false,true)));
+        actions.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
+        TextView voice=icon("mic","语音输入（暂未接入）",()->{});voice.setEnabled(false);voice.setAlpha(.4f);composerAction(actions,voice);
+        sendButton=icon("send","发送并回车；长按仅发送",()->sendDraft(true));
+        sendButton.setBackground(round(0xff191b1e,22));sendButton.setEnabled(false);
+        sendButton.setOnLongClickListener(v->{sendDraft(false);return true;});
+        actions.addView(sendButton,new LinearLayout.LayoutParams(dp(40),dp(40)));
+        draft.addTextChangedListener(new android.text.TextWatcher(){
+            public void beforeTextChanged(CharSequence s,int start,int count,int after){}
+            public void onTextChanged(CharSequence s,int start,int before,int count){
+                boolean ready=s.length()>0;sendButton.setEnabled(ready);
+                ((ControlLabel)sendButton).setIcon(new ToolbarIcon("send",dp(22),ready?TEXT:MUTED));
+            }
+            public void afterTextChanged(android.text.Editable e){}
+        });
+    }
+    private void composerAction(LinearLayout actions,TextView button){
+        button.setBackgroundColor(Color.TRANSPARENT);actions.addView(button,new LinearLayout.LayoutParams(dp(40),dp(44)));
+    }
+    private void addTextMenu(){
+        PopupMenu menu=new PopupMenu(this,composer);menu.getMenu().add("粘贴文本").setOnMenuItemClickListener(item->{paste();return true;});
+        menu.getMenu().add("附件（暂未接入）").setEnabled(false);menu.show();
+    }
+    private void history(){
+        PopupMenu menu=new PopupMenu(this,toolbar);
+        if(draftHistory.isEmpty())menu.getMenu().add("暂无输入历史").setEnabled(false);
+        for(String entry:draftHistory)menu.getMenu().add(entry).setOnMenuItemClickListener(item->{setDraftMode(true,true);draft.setText(entry);draft.setSelection(draft.length());return true;});
+        menu.show();
     }
     private void buildSelectionBar() {
         selectionBar=row();selectionBar.setPadding(dp(4),dp(4),dp(4),dp(4));
@@ -157,16 +185,19 @@ public final class MainActivity extends Activity {
     }
     private void buildPad() {
         pad=column();pad.setElevation(dp(10));
-        FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(dp(168),dp(216),Gravity.TOP|Gravity.LEFT);
-        p.leftMargin=dp(80);p.topMargin=dp(100);viewport.addView(pad,p);
-        LinearLayout handle=row();pad.addView(handle,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView drag=key("━━","拖动方向键浮板",()->{});drag.setTextColor(MUTED);
-        handle.addView(drag,new LinearLayout.LayoutParams(0,-1,1));
+        FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(dp(156),dp(184),Gravity.TOP|Gravity.LEFT);
+        viewport.addView(pad,p);
+        LinearLayout handle=row();pad.addView(handle,new LinearLayout.LayoutParams(-1,dp(28)));
+        TextView drag=icon("grip","拖动方向键浮板",()->{});drag.setTextColor(MUTED);
+        ((ControlLabel)drag).setIcon(new ToolbarIcon("grip",dp(44),MUTED));
+        handle.addView(new View(this),new LinearLayout.LayoutParams(dp(46),1));
+        handle.addView(drag,new LinearLayout.LayoutParams(dp(60),-1));
         lockButton=icon("unlock","锁定方向键位置",()->{
             padLocked=!padLocked;
-            lockButton.setCompoundDrawablesWithIntrinsicBounds(null,new ToolbarIcon(padLocked?"lock":"unlock",dp(22),padLocked?GREEN:MUTED),null,null);
+            ((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));
             lockButton.setContentDescription(padLocked?"解锁方向键位置":"锁定方向键位置");
-        });handle.addView(lockButton,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        });((ControlLabel)lockButton).setIcon(new ToolbarIcon("unlock",dp(14),MUTED));
+        handle.addView(lockButton,new LinearLayout.LayoutParams(dp(28),dp(28)));
         drag.setBackgroundColor(Color.TRANSPARENT);lockButton.setBackgroundColor(Color.TRANSPARENT);
         drag.setOnTouchListener(new View.OnTouchListener() {
             float x,y,startX,startY;
@@ -178,22 +209,25 @@ public final class MainActivity extends Activity {
                 return true;
             }
         });
-        padRow(new String[]{"⌫","↑","×"},new String[]{"退格","上","关闭方向键浮板"},new Runnable[]{()->sendKey(TerminalSession.Key.BACKSPACE),()->sendKey(TerminalSession.Key.UP),this::togglePad});
-        padRow(new String[]{"←","↵","→"},new String[]{"左","回车","右"},new Runnable[]{()->sendKey(TerminalSession.Key.LEFT),()->sendKey(TerminalSession.Key.ENTER),()->sendKey(TerminalSession.Key.RIGHT)});
-        padRow(new String[]{"","↓",""},new String[]{"","下",""},new Runnable[]{null,()->sendKey(TerminalSession.Key.DOWN),null});
+        padRow(new String[]{"backspace","up","clear"},new String[]{"退格","上","清屏 Ctrl+L"},new Runnable[]{()->sendKey(TerminalSession.Key.BACKSPACE),()->sendKey(TerminalSession.Key.UP),()->terminal.sendText("\f")});
+        padRow(new String[]{"left","return","right"},new String[]{"左","回车","右"},new Runnable[]{()->sendKey(TerminalSession.Key.LEFT),()->sendKey(TerminalSession.Key.ENTER),()->sendKey(TerminalSession.Key.RIGHT)});
+        padRow(new String[]{"","down",""},new String[]{"","下",""},new Runnable[]{null,()->sendKey(TerminalSession.Key.DOWN),null});
         pad.setVisibility(View.GONE);
     }
     private void padRow(String[] titles,String[] descriptions,Runnable[] actions) {
-        LinearLayout row=row();pad.addView(row,new LinearLayout.LayoutParams(-1,dp(56)));
+        LinearLayout row=row();pad.addView(row,new LinearLayout.LayoutParams(-1,dp(52)));
         for(int i=0;i<3;i++){
-            View view=actions[i]==null?new View(this):key(titles[i],descriptions[i],actions[i]);
-            if(view instanceof TextView)((TextView)view).setTextSize(24);
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(52),1);p.setMargins(dp(2),dp(2),dp(2),dp(2));row.addView(view,p);
+            View view=actions[i]==null?new View(this):icon(titles[i],descriptions[i],actions[i]);
+            if(actions[i]!=null)view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),round(titles[i].equals("return")||titles[i].equals("clear")||titles[i].equals("backspace")?Color.BLACK:KEY,16),null));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(50),1);p.setMargins(dp(1),dp(1),dp(1),dp(1));row.addView(view,p);
         }
     }
     private void togglePad() {
         boolean show=pad.getVisibility()!=View.VISIBLE;pad.setVisibility(show?View.VISIBLE:View.GONE);
-        padButton.setActivated(show);if(show)pad.post(this::clampPad);
+        padButton.setActivated(show);if(show)pad.post(()->{
+            if(!padPositioned){pad.setX((viewport.getWidth()-pad.getWidth())/2f);pad.setY(viewport.getHeight()*.42f-pad.getHeight()/2f);padPositioned=true;}
+            clampPad();
+        });
     }
     private void clampPad() {
         if(pad==null||viewport.getWidth()==0||pad.getWidth()==0)return;
@@ -201,19 +235,26 @@ public final class MainActivity extends Activity {
         pad.setY(Math.max(0,Math.min(pad.getY(),viewport.getHeight()-pad.getHeight())));
     }
     private void buildHome() {
-        home=new ScrollView(this);LinearLayout content=column();content.setPadding(dp(20),dp(24),dp(20),dp(24));home.addView(content);
-        TextView heading=label("会话",24,TEXT);content.addView(heading);
-        TextView note=label("本地演示 · 未连接远程主机",13,MUTED);note.setPadding(0,dp(8),0,dp(24));content.addView(note);
-        LinearLayout card=column();card.setPadding(dp(18),dp(18),dp(18),dp(18));card.setBackground(round(SURFACE,20));
-        card.setContentDescription("恢复 Ghostty 本地会话");card.setOnClickListener(v->resumeSession());
-        content.addView(card,new LinearLayout.LayoutParams(-1,dp(220)));
-        card.addView(label("Ghostty · LOCAL",14,TEXT));
+        home=new ScrollView(this);LinearLayout content=column();content.setPadding(dp(16),dp(12),dp(16),dp(24));home.addView(content);
+        LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        TextView settings=icon("settings","会话工具",()->tools(top));settings.setBackgroundColor(Color.TRANSPARENT);
+        top.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(44)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(60)));
+        TextView heading=label("会话",13,MUTED);heading.setPadding(0,dp(8),0,dp(12));content.addView(heading);
+        LinearLayout cards=row();cards.setGravity(Gravity.TOP);content.addView(cards);
+        LinearLayout card=column();card.setContentDescription("恢复 Ghostty 本地会话");card.setOnClickListener(v->resumeSession());
+        int width=(getResources().getDisplayMetrics().widthPixels-dp(44))/2;
+        cards.addView(card,new LinearLayout.LayoutParams(width,-2));
+        FrameLayout thumbnail=new FrameLayout(this);thumbnail.setBackground(round(SURFACE,14));thumbnail.setClipToOutline(true);
+        card.addView(thumbnail,new LinearLayout.LayoutParams(-1,width));
         sessionPreview=new ImageView(this);sessionPreview.setScaleType(ImageView.ScaleType.FIT_START);
         sessionPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        LinearLayout.LayoutParams previewParams=new LinearLayout.LayoutParams(-1,0,1);
-        previewParams.topMargin=dp(16);previewParams.bottomMargin=dp(12);card.addView(sessionPreview,previewParams);
-        card.addView(label("点击继续会话",12,0xffa8d8b1));
-        content.addView(label("最小化保留本次会话；退出应用后重置。",12,MUTED));
+        thumbnail.addView(sessionPreview,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout caption=row();caption.setPadding(dp(8),dp(6),dp(8),dp(6));caption.setBackgroundColor(0xcc1e1e1e);
+        TextView title=label("本地终端",12,TEXT);caption.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        TextView badge=label("LOCAL",10,0xff75b6ff);badge.setBackground(round(0xff173247,9));badge.setPadding(dp(4),dp(2),dp(4),dp(2));caption.addView(badge);
+        thumbnail.addView(caption,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
+        TextView name=label("Ghostty",15,TEXT);name.setPadding(0,dp(6),0,0);card.addView(name);
+        TextView prompt=label("›_ local",13,GREEN);prompt.setTypeface(Typeface.MONOSPACE);card.addView(prompt);
         stage.addView(home,new FrameLayout.LayoutParams(-1,-1));home.setVisibility(View.GONE);
     }
     private void minimize() {
@@ -254,6 +295,7 @@ public final class MainActivity extends Activity {
     private void sendKey(TerminalSession.Key key){terminal.sendKey(key);}
     private void sendDraft(boolean enter) {
         String text=draft.getText().toString();if(text.isEmpty())return;
+        draftHistory.remove(text);draftHistory.add(0,text);if(draftHistory.size()>20)draftHistory.remove(20);
         // Explicit submission finishes this local draft; it is never sent during composition.
         terminal.sendText(text);if(enter)terminal.sendKey(TerminalSession.Key.ENTER);
         draft.setText("");
@@ -290,6 +332,7 @@ public final class MainActivity extends Activity {
         String text=new String(bytes,StandardCharsets.UTF_8);
         if(ctrlArmed){setCtrl(false);if(text.length()==1&&text.charAt(0)>=64&&text.charAt(0)<128)text=Character.toString((char)(text.charAt(0)&31));}
         if(text.equals("\r")||text.equals("\n")){write("\r\n");return;}
+        if(text.equals("\f")){write("\033[2J\033[H");return;}
         if(text.equals("\u007f")||text.equals("\b")){toast("退格");return;}
         if(text.codePoints().anyMatch(cp->cp<32&&cp!='\n'&&cp!='\t')){
             String display=text.replace("\033","Esc ");
@@ -324,14 +367,27 @@ public final class MainActivity extends Activity {
     private TextView label(String text,int size,int color){TextView v=new TextView(this);v.setText(text);v.setTextSize(size);v.setTextColor(color);return v;}
     private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
     private TextView key(String title,String description,Runnable action) {
-        TextView v=label(title,14,TEXT);v.setGravity(Gravity.CENTER);v.setTypeface(Typeface.MONOSPACE);
+        TextView v=new ControlLabel();v.setText(title);v.setTextSize(14);v.setTextColor(TEXT);v.setGravity(Gravity.CENTER);v.setTypeface(Typeface.MONOSPACE);
         v.setSingleLine();v.setEllipsize(TextUtils.TruncateAt.END);v.setContentDescription(description);
         v.setFocusable(true);v.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),round(KEY,22),null));
         v.setOnClickListener(w->action.run());return v;
     }
     private TextView icon(String name,String description,Runnable action) {
-        TextView v=key("",description,action);v.setCompoundDrawablesWithIntrinsicBounds(null,new ToolbarIcon(name,dp(22),TEXT),null,null);
-        v.setPadding(0,dp(11),0,0);return v;
+        TextView v=key("",description,action);((ControlLabel)v).setIcon(new ToolbarIcon(name,dp(20),TEXT));
+        return v;
+    }
+    /** Center icons independently of font ascent/descent, including the small header buttons. */
+    private final class ControlLabel extends TextView {
+        private ToolbarIcon symbol;
+        ControlLabel(){super(MainActivity.this);setIncludeFontPadding(false);}
+        void setIcon(ToolbarIcon icon){symbol=icon;invalidate();}
+        @Override protected void onDraw(android.graphics.Canvas canvas){
+            android.graphics.drawable.Drawable icon=symbol;
+            if(icon==null){super.onDraw(canvas);return;}
+            int w=icon.getIntrinsicWidth(),h=icon.getIntrinsicHeight();
+            canvas.save();canvas.translate(getScrollX(),getScrollY());
+            icon.setBounds((getWidth()-w)/2,(getHeight()-h)/2,(getWidth()+w)/2,(getHeight()+h)/2);icon.draw(canvas);canvas.restore();
+        }
     }
     @Override protected void onDestroy(){
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);session.close();
