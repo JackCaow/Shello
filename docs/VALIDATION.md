@@ -28,7 +28,8 @@ The library, sample, and separate AAR consumer now declare Android 8.1 / API 27 
 - Final configuration builds the release AAR, debug/release sample, test APK, and separate R8 consumer against Maven Local. All three application APKs and the AAR declare minimum API 27. No remote Maven publication occurred.
 - ELF Android API note is 27. All 37 imported dynamic symbols are available in the NDK's API 27 libc/libm stubs. This is a link compatibility check, not an Android 8.1 runtime test.
 - Library lint: 0 errors / 6 warnings; sample lint: 0 errors / 14 warnings. The verification script now includes sample lint to catch unguarded newer Android APIs.
-- An intermediate build passed all four instrumentation tests on the API 36 phone. After explicitly lowering the Zig target to API 27, the final instrumentation install was blocked with `INSTALL_FAILED_USER_RESTRICTED`; no final-build device test pass is claimed.
+- The final API 27-targeted build passes all four instrumentation tests on the API 36 phone (model 25019PNF3C), including 85 Unicode assertions, stream/checkpoint/query/key behavior, ownership, and IME composing/commit/delete callbacks. Initial installation was blocked by the USB confirmation; the successful retry used the same final artifacts. [Runner output](evidence/api27-instrumentation.txt).
+- The separate R8-enabled MavenLocal AAR consumer runs on the API 36 phone and displays **AAR smoke OK**, verifying JNI loading, Unicode selection and checkpoint restore with the final artifact.
 - No API 27 device/emulator has been exercised. Old-system ICU/font rendering, complex emoji selection, and IME/window resize still need runtime acceptance.
 
 Current artifact hashes and compatibility checks are recorded in [api27-validation.json](evidence/api27-validation.json). The original screenshots and `validation.json` above describe the earlier API 31 artifacts.

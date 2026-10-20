@@ -24,9 +24,15 @@
     }
   },
   "instrumentation": {
-    "finalBuild": "blocked before test execution: INSTALL_FAILED_USER_RESTRICTED",
+    "finalBuild": "passed",
     "deviceApi": 36,
-    "priorIntermediateBuild": "4 tests passed before explicitly lowering Zig target from its default API 29 to API 27"
+    "deviceModel": "25019PNF3C",
+    "tests": 4,
+    "passed": 4,
+    "unicodeAssertions": 85,
+    "method": "adb am instrument; AndroidJUnitRunner",
+    "testApkSha256": "767770265ba4f2d473b84cb5f3bb5d6d16ed59c436e2575d4eb41c8bd470d5f2",
+    "installation": "Initial USB confirmation blocked installation; installed successfully after user confirmation."
   },
   "api27RuntimeValidated": false,
   "remoteMavenPublished": false,
@@ -47,5 +53,16 @@
       "path": "tests/consumer/app/build/outputs/apk/release/app-release.apk",
       "sha256": "3159b5e6d3dfcc385560476182c83f59d6b86597425efd17586e19358031cedf"
     }
+  },
+  "mavenConsumerRuntime": {
+    "result": "AAR smoke OK",
+    "deviceApi": 36,
+    "r8Enabled": true,
+    "verifiedBy": "Android UI hierarchy; exact success text in dev.ghostty.android.consumer",
+    "coverage": [
+      "JNI loading",
+      "Unicode selection",
+      "checkpoint restore"
+    ]
   }
 }
