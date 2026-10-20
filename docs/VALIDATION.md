@@ -5,7 +5,7 @@ The library is an extracted alpha, not a shipped package. Validation results bel
 
 ## SSH + tmux recovery
 
-Updated on 2026-10-21. The sample can attach to an isolated persistent tmux session via real SSH. [Reproduction and cleanup](LOCAL_SSH.md). **Physical Android acceptance is pending:** the phone disappeared from USB/ADB before installation. The earlier phone results below cover plain SSH, not this change.
+Updated on 2026-10-21. The sample can attach to an isolated persistent tmux session via real SSH. [Reproduction and cleanup](LOCAL_SSH.md). **This iteration is accepted on the API 27 emulator, per the requested scope.** Physical Android was not tested for this change and is not a remaining acceptance requirement. The earlier phone results below cover plain SSH, not tmux.
 
 - **Mac OpenSSH client:** two abrupt SSH drops retained shell PID `59117`, its exported variable and working directory. Vim PID `59192` survived the second drop; its unsaved buffer was redrawn on reattach and saved with an exact file-content comparison. [Result](evidence/ssh-tmux/mac-result.json). `scripts/verify-tmux-local.py` reproduces these assertions.
 - **Android 8.1 / API 27 ARM64 emulator UI:** commands were entered through the sample composer. Two abrupt SSH drops and manual menu reconnects retained shell PID `59117`, its variable/directory and vim PID `64237`. Force-stopping/relaunching the app while vim was still unsaved also reattached to that same process. The restored text was saved through the UI and checked on the Mac. [Result](evidence/ssh-tmux/api27-result.json), [before](evidence/ssh-tmux/api27-vim-before.png), [reconnected](evidence/ssh-tmux/api27-vim-restored.png), [after app force-stop](evidence/ssh-tmux/api27-vim-after-process-death.png).

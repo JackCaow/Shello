@@ -11,11 +11,12 @@
     "skipped": 1,
     "note": "Plain-shell test intentionally skipped in tmux mode; UI recovery checks recorded separately."
   },
-  "physical_android": "Pending. Phone disappeared from USB/ADB before this build could be installed. Previous plain-SSH phone evidence does not cover tmux.",
+  "physical_android": "Not tested for this change. Emulator-only Android acceptance was requested; physical-device testing is outside this iteration. Previous plain-SSH phone evidence does not cover tmux.",
   "fault_model": "SIGKILL fixture SSH handler processes; tmux/sshd listener remain alive. Also force-stop Android app. No roaming or silent packet-loss validation.",
   "sha256": {
     "sample/build/outputs/apk/debug/sample-debug.apk": "916dadcb3a0a45ea93eb6e80c741193d7680507f949fc1c25ffbe59d601a7155",
     "sample/build/outputs/apk/release/sample-release-unsigned.apk": "77719b27b01d545671b025f11f8ce7ec2a7e2f5b1581c3a25c005a006fb95c3e",
     "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "006b134f4b0753cd2561e3bce46f30b9b2da6f7ce10da93b1a5c919320f52cef"
-  }
+  },
+  "acceptance": "Complete for Mac + Android API 27 emulator scope."
 }

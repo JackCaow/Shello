@@ -10,5 +10,5 @@
   "unsaved_buffer_redrawn_after_reconnect": true,
   "saved_file_exact_match": true,
   "disconnected_send_retains_draft": true,
-  "physical_phone": "pending: absent from USB/ADB"
+  "physical_phone": "not tested; outside requested emulator-only acceptance scope"
 }
