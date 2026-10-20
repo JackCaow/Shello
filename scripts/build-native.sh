@@ -19,16 +19,16 @@ case "$(uname -s)-$(uname -m)" in
  *) echo 'macOS or Linux x86_64 build host required' >&2; exit 1 ;;
 esac
 ndk="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/$host/bin"
-[[ -x "$ndk/aarch64-linux-android31-clang" ]] || { echo 'Install Android NDK 28.2.13676358' >&2; exit 1; }
+[[ -x "$ndk/aarch64-linux-android27-clang" ]] || { echo 'Install Android NDK 28.2.13676358' >&2; exit 1; }
 mkdir -p "$root/.native"
 patched=$(mktemp -d "$root/.native/source.XXXXXX")
 trap 'rm -rf "$patched"' EXIT
 git -C "$GHOSTTY_SOURCE" archive "$commit" | tar -x -C "$patched"
 patch -s -d "$patched" -p1 < "$root/patches/legacy-keycap-selectors.patch"
-(cd "$patched" && "$ZIG_BIN" build -Demit-lib-vt -Dtarget=aarch64-linux-android -Doptimize=ReleaseFast -Dsimd=false -Dvt-features=-kitty_graphics --prefix "$root/.native/install")
+(cd "$patched" && "$ZIG_BIN" build -Demit-lib-vt -Dtarget=aarch64-linux-android.27 -Doptimize=ReleaseFast -Dsimd=false -Dvt-features=-kitty_graphics --prefix "$root/.native/install")
 output="$root/terminal/src/main/jniLibs/arm64-v8a/libghostty_android.so"
 mkdir -p "$(dirname "$output")"
-"$ndk/aarch64-linux-android31-clang" -shared -fPIC -O2 -Wl,-z,max-page-size=16384 -I"$patched/include" \
+"$ndk/aarch64-linux-android27-clang" -shared -fPIC -O2 -Wl,--no-undefined -Wl,-z,max-page-size=16384 -I"$patched/include" \
  "$root/terminal/src/main/cpp/ghostty_android.c" "$root/.native/install/lib/libghostty-vt.a" -lm -o "$output"
 if "$ndk/llvm-nm" "$output" | grep -E ' [tTwW] (calloc|free)$'; then echo 'Unexpected hidden allocator stub' >&2; exit 1; fi
 printf 'Built %s\n' "$output"

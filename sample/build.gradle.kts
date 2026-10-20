@@ -5,7 +5,7 @@ android {
     ndkVersion = "28.2.13676358"
     defaultConfig {
         applicationId = "dev.ghostty.android.sample"
-        minSdk = 31
+        minSdk = 27
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-alpha01"

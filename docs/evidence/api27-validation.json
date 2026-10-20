@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-20",
+  "minimumAndroidApi": 27,
+  "abi": "arm64-v8a",
+  "nativeTargets": {
+    "zig": "aarch64-linux-android.27",
+    "clang": "aarch64-linux-android27-clang"
+  },
+  "nativeValidation": {
+    "elfAndroidApiNote": 27,
+    "importedSymbolCount": 37,
+    "allImportsAvailableInApi27Stubs": true,
+    "undefinedSymbolsRejectedAtLink": true
+  },
+  "builds": "release AAR, debug/release sample, test APK, separate R8 MavenLocal consumer passed",
+  "lint": {
+    "terminal": {
+      "errors": 0,
+      "warnings": 6
+    },
+    "sample": {
+      "errors": 0,
+      "warnings": 14
+    }
+  },
+  "instrumentation": {
+    "finalBuild": "blocked before test execution: INSTALL_FAILED_USER_RESTRICTED",
+    "deviceApi": 36,
+    "priorIntermediateBuild": "4 tests passed before explicitly lowering Zig target from its default API 29 to API 27"
+  },
+  "api27RuntimeValidated": false,
+  "remoteMavenPublished": false,
+  "artifacts": {
+    "aar": {
+      "path": "terminal/build/outputs/aar/terminal-release.aar",
+      "sha256": "f8da8cf94241fc0a622fd8f23bc780bcca9532b9639289ae445ba7fcd8e47623"
+    },
+    "sampleDebug": {
+      "path": "sample/build/outputs/apk/debug/sample-debug.apk",
+      "sha256": "0eab9677de9165eae837578f2cd184c56815a017bf04d98f6c6f6964ad2f115b"
+    },
+    "sampleRelease": {
+      "path": "sample/build/outputs/apk/release/sample-release-unsigned.apk",
+      "sha256": "60dfc9e939950a9f887885eb881e9c1d1b063a24d841f34bc4f8258ed666025d"
+    },
+    "consumer": {
+      "path": "tests/consumer/app/build/outputs/apk/release/app-release.apk",
+      "sha256": "3159b5e6d3dfcc385560476182c83f59d6b86597425efd17586e19358031cedf"
+    }
+  }
+}

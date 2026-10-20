@@ -2,6 +2,7 @@ package dev.ghostty.android.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Build;
 import android.view.*;
 import android.widget.*;
 import android.content.*;
@@ -18,11 +19,10 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);
-        root.setOnApplyWindowInsetsListener((v,insets)->{
-            android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
-            android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
-            v.setPadding(bars.left,bars.top,bars.right,Math.max(bars.bottom,ime.bottom));return insets;
-        });
+        // Older Android uses decor fitting plus manifest adjustResize for the IME.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            applyModernInsets(root);
+        }
         setContentView(root);
         status=new TextView(this);status.setText("Offline echo — no shell or network");root.addView(status);
         LinearLayout actions=new LinearLayout(this);root.addView(actions);
@@ -56,6 +56,14 @@ public final class MainActivity extends Activity {
         button(keys,"Bottom",terminal::scrollToBottom);
         input=new TerminalInputView(this);input.setTerminalView(terminal);root.addView(input);
         write("Ghostty Android · offline echo\r\n中文 👨‍👩‍👧‍👦 👍🏽 🇨🇳 1️⃣\r\nLong press to select; type below.\r\n");
+    }
+    @android.annotation.TargetApi(30)
+    private void applyModernInsets(LinearLayout root) {
+        root.setOnApplyWindowInsetsListener((v,insets)->{
+            android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
+            android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
+            v.setPadding(bars.left,bars.top,bars.right,Math.max(bars.bottom,ime.bottom));return insets;
+        });
     }
     private void write(String text){session.write(text.getBytes(StandardCharsets.UTF_8));}
     private void button(LinearLayout row,String title,Runnable action){Button b=new Button(this);b.setText(title);row.addView(b,new LinearLayout.LayoutParams(0,-2,1));b.setOnClickListener(v->action.run());}

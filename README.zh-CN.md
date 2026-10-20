@@ -7,7 +7,7 @@
 - `TerminalInputView`：可选输入控件；拼音候选保留在本地，确认后发送 UTF-8。
 - `sample`：无网络权限的离线回显示例，不提供真实 shell。
 
-首版只声明 Android API 31+、ARM64，API 仍可能变化。SSH/WebSocket、鉴权、流控和断线恢复协议由使用方实现。库不包含 DimRemote 的业务代码或实验 HTTP 服务。
+最低构建版本为 Android 8.1（API 27），目前仅提供 ARM64。真机回归覆盖 API 36，API 27 的运行、输入法和字体表现仍待补测，库 API 仍可能变化。SSH/WebSocket、鉴权、流控和断线恢复协议由使用方实现。库不包含 DimRemote 的业务代码或实验 HTTP 服务。
 
 完整构建命令和接入示例见 [README](README.md)，资源与线程约定见 [API](docs/API.md)。采用 MIT，保留来源版权和依赖声明；当前仅公开源码；CI 中的 Maven Local 用于 AAR 接入测试，不上传远程 Maven 仓库。
 

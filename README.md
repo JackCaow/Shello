@@ -20,7 +20,7 @@ TerminalSession ─────── TerminalView
                     TerminalInputView
 ```
 
-Android **API 31+ / arm64-v8a only**, Java 17. This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
+Android **8.1+ (API 27) / arm64-v8a only**, Java 17. API 27 is the build minimum; device regression currently covers API 36, with API 27 runtime/IME/font validation still pending. This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
 
 ## Build
 
