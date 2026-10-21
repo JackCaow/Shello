@@ -34,6 +34,7 @@ public final class SshSessionService extends Service {
     private PowerManager.WakeLock wakeLock;
     private boolean foreground,destroyed,mutating;
     private SharedPreferences state;
+    private SessionPreviewStore previews;
 
     static String requestConnect(Context context){return requestConnect(context,null);}
     static String requestConnect(Context context,String profile){return requestConnect(context,profile,false);}
@@ -45,7 +46,7 @@ public final class SshSessionService extends Service {
         }
     }
     @Override public void onCreate(){
-        super.onCreate();state=getSharedPreferences("terminal_tabs",0);
+        super.onCreate();previews=new SessionPreviewStore(this);state=getSharedPreferences("terminal_tabs",0);
         getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL,"终端会话",NotificationManager.IMPORTANCE_LOW));
         wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"ghostty:SSHSession");wakeLock.setReferenceCounted(false);
         try{JSONArray ids=new JSONArray(state.getString("order","[]"));for(int i=0;i<ids.length();i++)add(ids.getString(i));}catch(JSONException ignored){}
@@ -53,6 +54,7 @@ public final class SshSessionService extends Service {
             if(new SshResumeState(this).pending())add(profileId());else add("local");
         }
         selected=find(state.getString("selected",null));if(selected==null&&!tabs.isEmpty())selected=tabs.get(0);persist();
+        ArrayList<String> retained=new ArrayList<>();for(Tab tab:tabs)retained.add(tab.id);previews.retain(retained);
     }
     private String profileId(){String id=new SshProfileStore(this).activeId();return id==null?"fixture":id;}
     private Tab add(String id){
@@ -71,7 +73,13 @@ public final class SshSessionService extends Service {
                 public void detach(){if(selected!=null&&selected.id.equals(id)&&observer!=null)observer.detach();}
             }));
         }
-        tab.caption=getSharedPreferences("terminal_titles",0).getString(id,"");tabs.add(tab);return tab;
+        tab.caption=getSharedPreferences("terminal_titles",0).getString(id,"");tabs.add(tab);
+        previews.load(id,bitmap->{if(bitmap==null)return;if(destroyed||find(id)!=tab||tab.preview!=null){bitmap.recycle();return;}tab.preview=bitmap;if(observer!=null)observer.changed();});
+        return tab;
+    }
+    void rememberPreview(Tab tab,Bitmap bitmap){
+        if(destroyed||find(tab.id)!=tab){bitmap.recycle();return;}
+        tab.preview=bitmap;previews.save(tab.id,bitmap);
     }
     List<Tab> tabs(){return new ArrayList<>(tabs);}
     Tab selected(){return selected;}
@@ -88,7 +96,7 @@ public final class SshSessionService extends Service {
         Tab tab=find(id);if(tab==null)return;
         mutating=true;
         if(selected==tab){if(observer!=null)observer.detach();selected=null;}
-        tabs.remove(tab);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
+        tabs.remove(tab);previews.remove(id);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
         if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
         if(tab.preview!=null){tab.preview.recycle();tab.preview=null;}
         if(id.equals(profileId()))new SshResumeState(this).clear();

@@ -47,6 +47,8 @@ public final class MainActivity extends Activity {
     private TextView protocolBadge;
     private SessionOverview overview;
     private SshSessionService.Tab shownTab;
+    private final android.os.Handler previewHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable previewCheckpoint=new Runnable(){public void run(){rememberTab();previewHandler.postDelayed(this,5000);}};
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
     private TerminalInputView directInput;
@@ -365,12 +367,12 @@ public final class MainActivity extends Activity {
     private void rememberTab(){
         if(shownTab==null)return;
         shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;
-        if(terminal.getWidth()>0&&terminal.getHeight()>0&&terminal.getVisibility()==View.VISIBLE&&session!=null){
+        if(!minimized&&sheet.isShown()&&terminal.getWidth()>0&&terminal.getHeight()>0&&session!=null&&sshService!=null){
             android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(480,480,android.graphics.Bitmap.Config.ARGB_8888);
             android.graphics.Canvas canvas=new android.graphics.Canvas(bitmap);canvas.drawColor(SURFACE);
             float scale=480f/terminal.getWidth();canvas.scale(scale,scale);terminal.draw(canvas);
             // Existing ImageViews can still reference the previous preview until the next layout.
-            shownTab.preview=bitmap;
+            sshService.rememberPreview(shownTab,bitmap);
         }
     }
     private void minimize() {
@@ -480,12 +482,15 @@ public final class MainActivity extends Activity {
         bound=bindService(new Intent(this,SshSessionService.class),serviceConnection,BIND_AUTO_CREATE);
     }
     @Override protected void onResume(){
-        super.onResume();if(home!=null&&guideShown!=getSharedPreferences("appearance",0).getBoolean("guide",true)){overview.dismiss();stage.removeView(home);stage.removeView(addConnection);buildHome();if(minimized)minimize();}refreshSavedConnections();applyAppearance();
+        super.onResume();previewHandler.removeCallbacks(previewCheckpoint);previewHandler.postDelayed(previewCheckpoint,5000);if(home!=null&&guideShown!=getSharedPreferences("appearance",0).getBoolean("guide",true)){overview.dismiss();stage.removeView(home);stage.removeView(addConnection);buildHome();if(minimized)minimize();}refreshSavedConnections();applyAppearance();
         if(sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
         super.onRequestPermissionsResult(request,permissions,results);
         if(request==41&&sshService!=null){sshService.refreshNotification();updateSshView();}
+    }
+    @Override protected void onPause(){
+        previewHandler.removeCallbacks(previewCheckpoint);rememberTab();super.onPause();
     }
     @Override protected void onStop(){
         if(tmuxDialog!=null&&!tmuxDialog.isShowing())tmuxDialog.dismiss();

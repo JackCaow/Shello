@@ -1,5 +1,13 @@
 # Validation
 
+## Persistent session thumbnails
+
+2026-10-21: thumbnails now use atomic PNG writes in private `noBackupFilesDir/session-previews`, with hashed per-tab keys, serial background IO and a 24 MiB disk cap. The service asynchronously restores saved thumbnails without waiting for SSH. Visible terminals checkpoint every five seconds, on minimize/switch and before backgrounding; hidden terminal views cannot overwrite a cached preview. Explicit tab close deletes its cache, startup prunes orphaned tabs, and corrupt/oversized images fall back safely. Drafts and VT state are not persisted by this cache.
+
+- Four storage regression tests passed on each of [API 27](evidence/session-previews/api27-tests.txt) and [API 35](evidence/session-previews/api35-tests.txt): fresh-store pixel recovery after recycling the source, latest-write/delete ordering, session isolation/orphan cleanup, and corrupt/oversized image fallback.
+- Debug, instrumentation, R8 release and release lint builds passed.
+- Xiaomi API 36: opened the existing shell and Claude Code tabs, observed both private PNG files, force-stopped the app while the second terminal was visible, and reopened home. Both thumbnails restored; no “暂无预览” label remained. Personal terminal screenshots stay local under `build/preview-review/`. This does not repeat the full SSH recovery or performance matrix. No Maven publication.
+
 ## Shello project rename
 
 2026-10-21: renamed the application label, Gradle root project, UI branding, repository links and icon exports to Shello. The application ID, API packages, pairing scheme and connection storage identifiers are unchanged. Debug APK, R8 release APK, release AAR and release lint builds passed. Python sources parse and the icon exporter produces `build/Shello-icons.zip`. A replacement install succeeded on the Xiaomi API 36 phone; all 71 existing preference files matched their pre-install SHA-256 hashes before relaunch, and the home screen displayed “发现 Shello” with saved connections retained. APK metadata reports the label `Shello`. This branding check did not repeat the SSH/TUI regression matrix. No Maven package was published.
