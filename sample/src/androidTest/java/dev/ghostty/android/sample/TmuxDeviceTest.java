@@ -19,6 +19,40 @@ public class TmuxDeviceTest {
     final Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     final Context context=inst.getTargetContext();
     String run(String profile,String command)throws Exception{try(SshCommand ssh=new SshCommand()){return ssh.run(context,profile,command,null);}}
+    @Test public void newSessionHasColorAndReconnectPreservesItsShell()throws Exception{
+        String host=InstrumentationRegistry.getArguments().getString("tmuxHost");assumeNotNull(host);
+        String profile=null;for(SshProfileStore.Entry e:new SshProfileStore(context).list())if(host.equals(e.host))profile=e.id;
+        assertNotNull("Expected saved SSH profile",profile);
+        String target=SessionTarget.fresh(true),quoted=SshCommand.quote("="+target);
+        String lookup=SshConnectionSetup.TMUX_LOOKUP;
+        String globalCommand=lookup+"\"$T\" show-environment -g NO_COLOR 2>/dev/null || true";
+        String before=run(profile,globalCommand),pid=null;
+        try{
+            for(int attempt=0;attempt<2;attempt++){
+                CountDownLatch connected=new CountDownLatch(1),output=new CountDownLatch(1);
+                StringBuilder text=new StringBuilder();
+                SshTransport transport=new SshTransport(context,new SshProfileStore(context).directory(profile),80,24,new SshTransport.Listener(){
+                    public void onState(String state,boolean yes){if(yes)connected.countDown();}
+                    public void onOutput(byte[] bytes){
+                        text.append(new String(bytes,StandardCharsets.UTF_8));
+                        if(text.toString().contains("SHELLO_COLOR:<>:<truecolor>"))output.countDown();
+                    }
+                }).target(target);
+                try{
+                    transport.connect();assertTrue("SSH connection",connected.await(15,TimeUnit.SECONDS));
+                    // Split the marker so PTY echo cannot satisfy the output assertion.
+                    transport.send("printf '\\033[38;2;200;120;60mSHELLO_%s:<%s>:<%s>\\033[0m\\n' COLOR \"$NO_COLOR\" \"$COLORTERM\"\r".getBytes(StandardCharsets.UTF_8));
+                    assertTrue("New shell must enable color",output.await(10,TimeUnit.SECONDS));
+                    String actual=run(profile,lookup+"\"$T\" display-message -p -t "+quoted+" '#{pane_pid}'").trim();
+                    if(pid==null)pid=actual;else assertEquals("Reconnect must keep the shell",pid,actual);
+                }finally{transport.close();}
+                if(attempt==0)run(profile,lookup+"\"$T\" set-environment -t "+quoted+" NO_COLOR SHELLO_KEEP");
+            }
+            assertEquals("Attach must not overwrite an existing session's environment","NO_COLOR=SHELLO_KEEP",
+                    run(profile,lookup+"\"$T\" show-environment -t "+quoted+" NO_COLOR").trim());
+            assertEquals("Do not change global server preferences",before,run(profile,globalCommand));
+        }finally{run(profile,lookup+"\"$T\" kill-session -t "+quoted);}
+    }
     @Test public void existingSessionIsListedVisibleSelectableAndAttachable()throws Exception{
         String host=InstrumentationRegistry.getArguments().getString("tmuxHost");assumeNotNull(host);
         String id=null;for(SshProfileStore.Entry e:new SshProfileStore(context).list())if(host.equals(e.host))id=e.id;

@@ -357,7 +357,10 @@ def resume_agent(provider, ident, attach=True):
             os.execv(tmux, [tmux, '-u', 'attach-session', '-t', '=' + target])
         resume_plan(provider, ident)
         command = shlex.join([sys.executable, str(Path(__file__).resolve()), 'agent-run', provider, ident])
-        os.execv(tmux, [tmux, '-u', 'new-session', '-A', '-s', target, command])
+        # Do not inherit a background launcher's NO_COLOR from the tmux server.
+        # These session-local values apply only at creation; attach preserves it.
+        os.execv(tmux, [tmux, '-u', 'new-session', '-A', '-s', target,
+                       '-e', 'NO_COLOR=', '-e', 'COLORTERM=truecolor', command])
     else:
         cwd, argv = resume_plan(provider, ident)
         os.chdir(cwd)

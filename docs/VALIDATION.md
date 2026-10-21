@@ -1,5 +1,13 @@
 # Validation
 
+## Claude Code color environment
+
+2026-10-21: the phone's Claude Code process inherited `NO_COLOR=1` from the host's long-lived tmux server. Its captured output contained no color sequences even though the tmux status line remained colored. Restarting the idle Claude process with an empty `NO_COLOR` restored its colored logo and mode indicator on the physical Xiaomi phone. New Shello shell and agent tmux sessions now set session-local `NO_COLOR=` and `COLORTERM=truecolor`; existing-session attachment does not rewrite the session environment or restart its shell. This does not migrate already-running processes or previously installed host helpers; the helper change takes effect when reinstalled through Hook setup.
+
+- Physical phone over saved, pinned Tailscale SSH: two tmux tests passed, including new-shell color environment, reconnect retaining the same shell PID, preserving a later session environment change, unchanged server-global `NO_COLOR=1`, and existing Unicode session listing/selection/attachment. Disposable test sessions were removed.
+- API 27: all six terminal color tests passed, covering ANSI/indexed/RGB, erase backgrounds, inverse and actual Canvas pixels. Twelve companion Python tests and debug build/lint passed.
+- The compatible debug APK was installed with replacement, preserving the saved connection and existing Claude tmux session. No release or Maven publication.
+
 ## v0.1.0-alpha02 APK release
 
 2026-10-21: packaged the standalone `companion/pair.sh` launcher, migrated the default theme label to Shello, and bumped the sample to versionCode 2. Debug, R8 release and release lint builds passed. The signed release APK uses the dedicated certificate documented in [RELEASING](RELEASING.md); APK metadata confirms API 27+, arm64-v8a and no debuggable flag. A separate clean API 35 emulator installed and cold-launched the signed artifact successfully; its theme page selected Shello and its pairing page displayed the Raw launcher command. The existing phone received the compatible debug build; its migrated theme displayed Shello.

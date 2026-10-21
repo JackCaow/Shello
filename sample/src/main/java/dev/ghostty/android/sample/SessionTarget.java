@@ -13,6 +13,17 @@ final class SessionTarget {
     static String fresh(boolean tmux){return (tmux?"ghostty_":"plain_")+UUID.randomUUID().toString().replace("-","");}
     static boolean agent(String target){return target!=null&&target.matches("agent:(claude|codex):[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}");}
     static String storageKey(String id){if(!id.contains("@"))return id;try{return "target_"+PairingClient.hex(java.security.MessageDigest.getInstance("SHA-256").digest(id.getBytes(StandardCharsets.UTF_8)));}catch(java.security.NoSuchAlgorithmException e){throw new AssertionError(e);}}
-    // SSH exec channels may have no UTF-8 locale; our terminal always accepts UTF-8.
-    static String command(String target){validate(target);if(agent(target)){String[] parts=target.split(":");return AgentHub.COMMAND+"resume "+SshCommand.quote(parts[1])+" "+SshCommand.quote(parts[2]);}return SshConnectionSetup.TMUX_LOOKUP+"exec \"$T\" -u "+(target.startsWith("=")?"attach-session -t "+SshCommand.quote(target):"new-session -A -s "+SshCommand.quote(target));}
+    static String command(String target){
+        validate(target);
+        if(agent(target)){
+            String[] parts=target.split(":");
+            return AgentHub.COMMAND+"resume "+SshCommand.quote(parts[1])+" "+SshCommand.quote(parts[2]);
+        }
+        // Our PTY accepts UTF-8 and truecolor. A long-lived tmux server may have
+        // inherited NO_COLOR from a noninteractive launcher. Override it only
+        // when creating our session; -A and explicit attach preserve live shells.
+        return SshConnectionSetup.TMUX_LOOKUP+"exec \"$T\" -u "+(target.startsWith("=")
+                ?"attach-session -t "+SshCommand.quote(target)
+                :"new-session -A -s "+SshCommand.quote(target)+" -e NO_COLOR= -e COLORTERM=truecolor");
+    }
 }
