@@ -12,9 +12,9 @@
 </p>
 
 <p align="center">
-  <img src="assets/readme/preview.gif" width="960" alt="Shello 真实截图轮播：Claude Code、Vim、SSH 连接、主题和工具栏">
+  <img src="assets/readme/preview.png" width="960" alt="在 Shello 中通过 SSH 运行 Claude Code">
 </p>
-<p align="center"><sub>真实应用截图轮播，部分画面来自早期开发版本。<a href="assets/readme/preview.png">查看静态预览</a></sub></p>
+<p align="center"><sub>在 Shello 中通过 SSH 运行 Claude Code。</sub></p>
 
 Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原生绘制**。从手机连接自己的电脑或服务器，使用 shell、Vim、less 和远端 CLI；通过 tmux 保留远端工作现场，也可查找并恢复 Claude Code / Codex 历史会话。
 

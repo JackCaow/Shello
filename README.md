@@ -12,9 +12,9 @@
 </p>
 
 <p align="center">
-  <img src="assets/readme/preview.gif" width="960" alt="Real Shello screenshots: Claude Code, Vim, SSH connections, themes and toolbar">
+  <img src="assets/readme/preview.png" width="960" alt="Shello running Claude Code over SSH">
 </p>
-<p align="center"><sub>A slideshow of real app screenshots, including earlier development builds. <a href="assets/readme/preview.png">Static preview</a></sub></p>
+<p align="center"><sub>Claude Code over SSH in Shello.</sub></p>
 
 Shello is an open-source Android SSH terminal powered by **Ghostty VT and native Android rendering**. Connect to your computer or server, use shell tools and terminal applications, and keep remote work in tmux. You can also browse and resume remote Claude Code / Codex sessions.
 
