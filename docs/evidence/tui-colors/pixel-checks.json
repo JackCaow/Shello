@@ -1,0 +1,77 @@
+{
+  "per_channel_tolerance": 2,
+  "checks": [
+    {
+      "screenshot": "claude-dark-diff.png",
+      "expected_srgb": "#5f0000",
+      "matching_pixels": 39170,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "claude-dark-diff.png",
+      "expected_srgb": "#005f00",
+      "matching_pixels": 33211,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "claude-dark-diff.png",
+      "expected_srgb": "#008700",
+      "matching_pixels": 5725,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-normal.png",
+      "expected_srgb": "#1c1c1c",
+      "matching_pixels": 858877,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-normal.png",
+      "expected_srgb": "#303030",
+      "matching_pixels": 93265,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-normal.png",
+      "expected_srgb": "#005f87",
+      "matching_pixels": 40098,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-incsearch.png",
+      "expected_srgb": "#ffff00",
+      "matching_pixels": 23868,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-incsearch.png",
+      "expected_srgb": "#ffffff",
+      "matching_pixels": 19173,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-incsearch.png",
+      "expected_srgb": "#303030",
+      "matching_pixels": 84243,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-visual-inverse.png",
+      "expected_srgb": "#ffff00",
+      "matching_pixels": 25026,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-visual-inverse.png",
+      "expected_srgb": "#ffaf5f",
+      "matching_pixels": 14965,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    },
+    {
+      "screenshot": "vim-visual-inverse.png",
+      "expected_srgb": "#5fd7ff",
+      "matching_pixels": 6917,
+      "source_profile": "Display P3 Gamut with sRGB Transfer"
+    }
+  ]
+}
