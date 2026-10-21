@@ -27,7 +27,7 @@ public class SessionOverviewTest {
         ArrayList<String> ids=new ArrayList<>();ArrayList<TerminalSession> terminals=new ArrayList<>();
         Application app=(Application)context.getApplicationContext();BlockingQueue<Activity> resumed=new LinkedBlockingQueue<>();
         Application.ActivityLifecycleCallbacks callback=new Application.ActivityLifecycleCallbacks(){
-            public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){if(a instanceof MainActivity)resumed.add(a);}
+            public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){if(a instanceof MainActivity){ui.current=a;resumed.add(a);}}
             public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
         };app.registerActivityLifecycleCallbacks(callback);
         try{
@@ -39,7 +39,10 @@ public class SessionOverviewTest {
                 });assertTrue(trust.await(15,TimeUnit.SECONDS));setup.close();assertNotNull(pin.get());d.knownHosts=pin.get();ids.add(store.save(d));
             }
             try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -n dev.ghostty.android.sample/.MainActivity -f 0x10008000");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
-            ui.current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(ui.current);ui.await(()->ui.service()!=null,10000);
+            ui.current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(ui.current);ui.await(()->{
+                Activity latest;while((latest=resumed.poll())!=null)ui.current=latest;
+                return !ui.current.isDestroyed()&&ui.service()!=null;
+            },10000);
             // Detach existing client tabs for this isolated close-all test, then restore their metadata below.
             inst.runOnMainSync(()->ui.service().closeAll());
             for(String id:ids){

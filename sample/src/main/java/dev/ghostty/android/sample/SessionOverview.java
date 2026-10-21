@@ -35,6 +35,15 @@ final class SessionOverview {
         done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));header.addView(done,new LinearLayout.LayoutParams(dp(64),dp(36)));done.setVisibility(View.GONE);
         scroll=new HorizontalScrollView(activity);scroll.setHorizontalScrollBarEnabled(false);scroll.setClipToPadding(false);
         cards=row();cards.setGravity(Gravity.TOP);scroll.addView(cards,new HorizontalScrollView.LayoutParams(-2,-2));root.addView(scroll);
+        scroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
+            if(r-l==or-ol)return;
+            int width=cardWidth();
+            for(int i=0;i<cards.getChildCount();i++){
+                LinearLayout card=(LinearLayout)cards.getChildAt(i);
+                ViewGroup.LayoutParams cp=card.getLayoutParams();cp.width=width;card.setLayoutParams(cp);
+                View thumb=card.getChildAt(0);ViewGroup.LayoutParams tp=thumb.getLayoutParams();tp.width=width;tp.height=width;thumb.setLayoutParams(tp);
+            }
+        });
         hint=SampleUi.text(activity,"",12,0xff777c82);hint.setIncludeFontPadding(false);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);hint.setMaxWidth(dp(260));header.addView(hint);
         scroll.setOnDragListener((v,event)->{
             if(!(event.getLocalState() instanceof String)||!ordering)return false;
@@ -152,7 +161,11 @@ final class SessionOverview {
         }
         bitmap.setPixels(pixels,0,w,0,0,w,h);return bitmap;
     }
-    private int cardWidth(){return Math.round((activity.getResources().getDisplayMetrics().widthPixels-48*activity.getResources().getDisplayMetrics().density)/2f);}
+    private int cardWidth(){
+        int available=scroll.getWidth()>0?scroll.getWidth():dp(activity.getResources().getConfiguration().screenWidthDp-32);
+        boolean landscape=activity.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        return Math.max(dp(80),Math.min(dp(landscape?160:240),(available-dp(12))/2));
+    }
     private int dp(int n){return SampleUi.dp(activity,n);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private LinearLayout row(){LinearLayout l=new LinearLayout(activity);l.setGravity(Gravity.CENTER_VERTICAL);return l;}

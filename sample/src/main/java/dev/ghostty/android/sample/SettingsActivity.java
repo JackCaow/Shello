@@ -25,6 +25,21 @@ public final class SettingsActivity extends ScreenActivity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         prefs=getSharedPreferences("appearance",0);
+        boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        body.setPadding(dp(16),dp(landscape?12:24),dp(16),dp(32));
+        // Keep labels and accessories within one readable column on wide windows.
+        scroll.removeView(body);
+        FrameLayout content=new FrameLayout(this){
+            @Override protected void onMeasure(int widthSpec,int heightSpec){
+                int width=Math.min(View.MeasureSpec.getSize(widthSpec),dp(640));
+                body.getLayoutParams().width=width;
+                int side=Math.max(0,(View.MeasureSpec.getSize(widthSpec)-width)/2);
+                if(header.getPaddingLeft()!=side)header.setPadding(side,0,side,0);
+                super.onMeasure(widthSpec,heightSpec);
+            }
+        };
+        content.addView(body,new FrameLayout.LayoutParams(-1,-2,Gravity.CENTER_HORIZONTAL));
+        scroll.addView(content,new ScrollView.LayoutParams(-1,-2));
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setId(android.R.id.list);
         homeScroll=state==null?0:state.getInt("homeScroll");
@@ -62,7 +77,8 @@ public final class SettingsActivity extends ScreenActivity {
         group=null;
         TextView caption=label(title,13,SampleUi.MUTED);
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);
-        p.topMargin=body.getChildCount()==0?0:dp(24);p.bottomMargin=dp(10);
+        boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        p.topMargin=body.getChildCount()==0?0:dp(landscape?16:24);p.bottomMargin=dp(10);
         body.addView(caption,p);
     }
     @Override TextView copy(String value){
@@ -183,7 +199,8 @@ public final class SettingsActivity extends ScreenActivity {
         GradientDrawable gradient=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff063a18,0xff164d48});gradient.setCornerRadius(dp(12));canvas.setBackground(gradient);
         TextView caption=label(tr(R.string.live_toolbar_preview),16,SampleUi.MUTED);caption.setGravity(Gravity.CENTER);canvas.addView(caption,new LinearLayout.LayoutParams(-1,0,1));
         toolbarPreview=row();toolbarPreview.setPadding(dp(6),dp(6),dp(6),dp(6));toolbarPreview.setBackground(SampleUi.surface(this,Color.BLACK,32));toolbarPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-        canvas.addView(toolbarPreview,new LinearLayout.LayoutParams(-1,dp(52)));body.addView(canvas,new LinearLayout.LayoutParams(-1,dp(276)));refreshToolbar();
+        boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        canvas.addView(toolbarPreview,new LinearLayout.LayoutParams(-1,dp(52)));body.addView(canvas,new LinearLayout.LayoutParams(-1,dp(landscape?132:276)));refreshToolbar();
         section(tr(R.string.visible_buttons));
         for(String[] tool:new String[][]{{"pad",tr(R.string.direction_pad)},{"history",tr(R.string.input_history)},{"paste",tr(R.string.paste)},{"chat",tr(R.string.text_draft)}})
             toggle(tool[1],null,null,"appearance","tool_"+tool[0],true,this::refreshToolbar);

@@ -19,8 +19,26 @@ public class SettingsActivityTest {
     private final Context context=inst.getTargetContext();
     private SettingsActivity current;
     private SettingsActivity open(String page){
-        current=(SettingsActivity)inst.startActivitySync(new Intent(context,SettingsActivity.class).putExtra("page",page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        inst.waitForIdleSync();return current;
+        Application app=(Application)context.getApplicationContext();BlockingQueue<SettingsActivity> resumed=new LinkedBlockingQueue<>();
+        Application.ActivityLifecycleCallbacks callback=new Application.ActivityLifecycleCallbacks(){
+            public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}
+            public void onActivityResumed(Activity a){if(a instanceof SettingsActivity)resumed.add((SettingsActivity)a);}
+            public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
+        };app.registerActivityLifecycleCallbacks(callback);
+        try{
+            inst.startActivitySync(new Intent(context,SettingsActivity.class).putExtra("page",page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            long deadline=android.os.SystemClock.uptimeMillis()+10000;boolean[] ready={false};
+            do{
+                SettingsActivity next;while((next=resumed.poll())!=null)current=next;
+                inst.runOnMainSync(()->{
+                    boolean landscape="landscape".equals(InstrumentationRegistry.getArguments().getString("settingsOrientation"));
+                    ready[0]=current!=null&&!current.isDestroyed()&&current.hasWindowFocus()
+                            &&(!landscape||current.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE);
+                });
+                if(!ready[0])android.os.SystemClock.sleep(50);
+            }while(!ready[0]&&android.os.SystemClock.uptimeMillis()<deadline);
+            assertTrue("Settings did not finish orientation recreation",ready[0]);inst.waitForIdleSync();return current;
+        }finally{app.unregisterActivityLifecycleCallbacks(callback);}
     }
     private View find(View view,String description){
         if(description.contentEquals(view.getContentDescription()==null?"":view.getContentDescription()))return view;
@@ -70,7 +88,7 @@ public class SettingsActivityTest {
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{
         try{for(String page:new String[]{"","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts"}){
-            open(page);inst.runOnMainSync(()->checkLabels(current.body));
+            open(page);inst.runOnMainSync(()->{checkLabels(current.body);assertTrue("Settings column stretched across the window",current.body.getWidth()<=current.dp(640));});
             if("true".equals(InstrumentationRegistry.getArguments().getString("settingsScreenshots"))){
                 Thread.sleep(700);inst.runOnMainSync(()->assertTrue("Settings must be in the foreground for screenshots",current.hasWindowFocus()));Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);
                 File dir=new File(context.getCacheDir(),"settings-review");assertTrue(dir.isDirectory()||dir.mkdirs());
@@ -83,7 +101,8 @@ public class SettingsActivityTest {
         assertTrue("View exceeds content width",view.getWidth()<=current.body.getWidth());
         if(view instanceof TextView){TextView text=(TextView)view;if(text.getLayout()!=null&&text.getEllipsize()==null){
             assertTrue("Text clipped vertically: "+text.getText(),text.getLayout().getHeight()<=text.getHeight()-text.getCompoundPaddingTop()-text.getCompoundPaddingBottom()+1);
-            for(int i=0;i<text.getLayout().getLineCount();i++)assertTrue("Text clipped horizontally: "+text.getText(),text.getLayout().getLineWidth(i)<=text.getWidth()-text.getCompoundPaddingLeft()-text.getCompoundPaddingRight()+1);
+            // LineWidth includes trailing wrap spaces; LineMax measures the visible glyphs.
+            for(int i=0;i<text.getLayout().getLineCount();i++)assertTrue("Text clipped horizontally: "+text.getText(),text.getLayout().getLineMax(i)<=text.getWidth()-text.getCompoundPaddingLeft()-text.getCompoundPaddingRight()+1);
         }}
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)checkLabels(group.getChildAt(i));}
     }
