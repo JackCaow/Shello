@@ -24,11 +24,11 @@ Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原�
 
 | 项目 | 说明 |
 | --- | --- |
-| 当前预发布版 | [v0.1.0-alpha04](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha04) |
-| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha04/Shello-0.1.0-alpha04-arm64-v8a.apk) |
+| 当前预发布版 | [v0.1.0-alpha05](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha05) |
+| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha05/Shello-0.1.0-alpha05-arm64-v8a.apk) |
 | Android 要求 | Android 8.1 / API 27 及以上 |
 | 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
-| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha04/SHA256SUMS) |
+| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha05/SHA256SUMS) |
 | 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
 
 下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。
@@ -79,7 +79,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 使用与当前 APK 对应的固定版本：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0-alpha04/companion/pair.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0-alpha05/companion/pair.sh | bash
 ```
 
 查看全部参数：

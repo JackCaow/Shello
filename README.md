@@ -24,11 +24,11 @@ The project includes an embeddable terminal library. It is currently **Alpha**: 
 
 | Item | Details |
 | --- | --- |
-| Current prerelease | [v0.1.0-alpha04](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha04) |
-| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha04/Shello-0.1.0-alpha04-arm64-v8a.apk) |
+| Current prerelease | [v0.1.0-alpha05](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha05) |
+| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha05/Shello-0.1.0-alpha05-arm64-v8a.apk) |
 | Android | Android 8.1 / API 27 or newer |
 | Architecture | arm64-v8a only; no 32-bit ARM or x86 APK |
-| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha04/SHA256SUMS) |
+| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha05/SHA256SUMS) |
 | Future versions | [All releases](https://github.com/JackCaow/Shello/releases) |
 
 Open the downloaded APK on your phone and follow Android's installation prompts. Public releases use a different certificate from early debug builds and **cannot overwrite those debug installs**. Uninstalling removes local connections and credentials; preserve development installs containing important data. See [signing and upgrade notes](docs/RELEASING.md).
@@ -67,7 +67,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
   | bash -s -- --host 192.168.1.10 --ssh-port 2222
 ```
 
-Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.0-alpha04`.
+Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.0-alpha05`.
 
 ### 3. Scan from Shello
 
