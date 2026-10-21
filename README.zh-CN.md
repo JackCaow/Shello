@@ -141,6 +141,6 @@ Codex 历史恢复已支持，Codex 审批 Hook 尚未实现。具体行为与�
 
 `terminal` 提供 VT、原生视图与 IME 输入；`sample` 包含 Shello 的 SSH、tmux 与应用界面。库的传输层由接入方提供，**尚未发布 Maven 包**。
 
-Shello 原名 `ghostty-android`，保留已有包名和协议标识以兼容升级。项目独立于 Ghostty，使用其终端内核，并非 Ghostty 官方 Android 客户端。
+Shello 是使用 Ghostty 终端内核的独立项目，并非 Ghostty 官方客户端。
 
-采用 [MIT License](LICENSE)，保留源码版权及[第三方声明](THIRD_PARTY_NOTICES.md)。
+采用 [MIT License](LICENSE)。依赖许可证见[第三方声明](THIRD_PARTY_NOTICES.md)。

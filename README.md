@@ -111,6 +111,6 @@ Run `claude` or `codex` in the terminal, or use **最近** to find and resume ex
 
 `terminal` contains VT, native views and IME input; `sample` contains the Shello app, SSH and tmux integration. Library consumers supply their own transport. **No Maven package is publicly published.**
 
-Shello was previously named `ghostty-android`; existing package names and protocol identifiers are retained for compatibility. It is an independent project using the Ghostty terminal engine, not an official Ghostty Android client.
+Shello is an independent project powered by the Ghostty terminal engine. It is not an official Ghostty client.
 
-[MIT License](LICENSE), with retained copyrights and [third-party notices](THIRD_PARTY_NOTICES.md).
+Licensed under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
