@@ -3,6 +3,8 @@ package dev.ghostty.android.sample;
 import android.os.Handler;
 import android.os.Looper;
 import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import java.io.*;
@@ -21,18 +23,20 @@ final class SshTransport implements AutoCloseable {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Listener listener;
     private final File directory;
+    private final android.content.Context context;
     private final AtomicBoolean closed = new AtomicBoolean();
     // Bound both directions: a fast PTY must not enqueue unlimited Android UI work.
     private final Semaphore outputSlots = new Semaphore(4);
     private final ThreadPoolExecutor writer = new ThreadPoolExecutor(1, 1, 0,
             TimeUnit.SECONDS, new ArrayBlockingQueue<>(128));
     private volatile Session connection;
-    private volatile ChannelShell channel;
+    private volatile Channel channel;
     private volatile OutputStream input;
     private volatile int columns, rows;
     private Thread reader;
 
-    SshTransport(File directory, int columns, int rows, Listener listener) {
+    SshTransport(android.content.Context context,File directory, int columns, int rows, Listener listener) {
+        this.context=context.getApplicationContext();
         this.directory = directory; this.columns = columns; this.rows = rows; this.listener = listener;
     }
     void connect() {
@@ -48,20 +52,25 @@ final class SshTransport implements AutoCloseable {
                 config.load(source);
             }
             JSch jsch = new JSch();
-            jsch.setKnownHosts(new File(directory, "known_hosts").getPath());
-            jsch.addIdentity(new File(directory, "client_key").getPath());
+            SshProfileStore.Draft profile=new SshProfileStore(context).read(directory);
+            jsch.setKnownHosts(new ByteArrayInputStream(profile.knownHosts));
             profileLoaded = true;
-            Session ssh = jsch.getSession(config.getProperty("user"), config.getProperty("host"),
-                    Integer.parseInt(config.getProperty("port", "22")));
+            Session ssh = SshConnectionSetup.session(jsch,profile);
             connection = ssh;
-            ssh.setConfig("StrictHostKeyChecking", "yes");
-            ssh.setConfig("PreferredAuthentications", "publickey");
-            ssh.setServerAliveInterval(10000); ssh.setServerAliveCountMax(3);
             if (closed.get()) return;
             ssh.connect(10000);
             if (closed.get()) return;
-            ChannelShell shell = (ChannelShell) ssh.openChannel("shell"); channel = shell;
-            shell.setPtyType("xterm-256color", columns, rows, 0, 0);
+            Channel shell;
+            String tmuxSession=config.getProperty("tmuxSession");
+            if("tmux".equals(config.getProperty("sessionMode"))&&tmuxSession!=null){
+                if(!tmuxSession.matches("ghostty_[0-9a-f]{32}"))throw new IllegalArgumentException("Invalid tmux session");
+                ChannelExec exec=(ChannelExec)ssh.openChannel("exec");exec.setPty(true);
+                exec.setPtyType("xterm-256color",columns,rows,0,0);
+                exec.setCommand(SshConnectionSetup.TMUX_LOOKUP+"exec \"$T\" new-session -A -s "+tmuxSession);shell=exec;
+            }else{
+                ChannelShell login=(ChannelShell)ssh.openChannel("shell");login.setPtyType("xterm-256color",columns,rows,0,0);shell=login;
+            }
+            channel=shell;
             InputStream output = shell.getInputStream(); input = shell.getOutputStream();
             shell.connect(10000);
             if (closed.get()) return;
@@ -90,7 +99,7 @@ final class SshTransport implements AutoCloseable {
             if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport failure: "+error.getClass().getSimpleName()
                     +" cause="+(error.getCause()==null?"none":error.getCause().getClass().getSimpleName())+" retry="+retryable);
             // No credentials, hostnames, or raw server errors in the terminal/logcat.
-            end = "连接失败：" + error.getClass().getSimpleName();
+            end = SshConnectionSetup.message(error);
         } finally {
             if (channel != null) channel.disconnect();
             if (connection != null) connection.disconnect();
@@ -109,7 +118,10 @@ final class SshTransport implements AutoCloseable {
     void resize(int columns, int rows) {
         this.columns = columns; this.rows = rows;
         if (closed.get() || channel == null || !channel.isConnected()) return;
-        enqueue(() -> channel.setPtySize(this.columns, this.rows, 0, 0));
+        enqueue(() -> {
+            if(channel instanceof ChannelShell)((ChannelShell)channel).setPtySize(this.columns,this.rows,0,0);
+            else if(channel instanceof ChannelExec)((ChannelExec)channel).setPtySize(this.columns,this.rows,0,0);
+        });
     }
     private void enqueue(Runnable operation) {
         try { writer.execute(operation); }

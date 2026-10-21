@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-21",
+  "scope": "sample SSH connection creation; no business integration or Maven publication",
+  "devices": [
+    "API 27 ARM64 emulator",
+    "API 35 ARM64 emulator"
+  ],
+  "builds": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "0b36e565fdd1f94a95559462fb5ca1d05f8bc9b1b179692fd85402819c529729",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "9debaaa448e64dd8df7b07598a67e0897000c516418799ef53cf3aedfdc57826",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "9ca9145800522d8f91951c6ee0d6bed33ec7245bfcf8eaa2588cb16a04d3b722"
+  },
+  "release_lint": {
+    "errors": 0,
+    "warnings": 29
+  },
+  "release_manual_api35": [
+    "Password form, independently verified Ed25519 SHA-256 fingerprint, save, connected echo shell",
+    "System document picker imported disposable OpenSSH Ed25519 key; tmux preflight, trust, save, real macOS zsh prompt visible"
+  ],
+  "fixtures": "Disposable local loopback echo/password server and OpenSSH/public-key server; no existing SSH identities used",
+  "limits": [
+    "No physical device available",
+    "Encrypted-key auth tested via instrumentation; manual system-picker acceptance used an unencrypted generated key",
+    "No MFA/keyboard-interactive or saved-profile editing",
+    "UIAutomator reported a transient null root after connection; screenshot independently confirmed the live tmux shell"
+  ],
+  "cleanup": "Disposable release profiles, imported Download key and generated remote tmux session removed",
+  "instrumentation": {
+    "API 27": "6 passed, 9.402 seconds",
+    "API 35": "6 passed, 29.387 seconds"
+  }
+}

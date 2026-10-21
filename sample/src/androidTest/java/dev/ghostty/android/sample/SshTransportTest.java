@@ -40,7 +40,7 @@ public class SshTransportTest {
         try (InputStream in = new FileInputStream(new File(profile(), "connection.properties"))) { config.load(in); }
         assumeTrue("Plain-shell test must not exit the tmux fixture", !"tmux".equals(config.getProperty("sessionMode")));
         Probe probe = new Probe();
-        SshTransport ssh = new SshTransport(profile(), 80, 24, probe);
+        SshTransport ssh = new SshTransport(context,profile(), 80, 24, probe);
         try {
             ssh.connect();assertTrue(probe.state, probe.connected.await(15, TimeUnit.SECONDS));
             send(ssh, "stty -echo; printf '\\nPTY_SIZE='; stty size; printf 'TERM_VALUE=%s\\n' \"$TERM\"\r");
@@ -57,7 +57,7 @@ public class SshTransportTest {
             send(ssh,"exit\r");assertTrue(probe.ended.await(10,TimeUnit.SECONDS));
         } finally { ssh.close(); }
         Probe reconnect = new Probe();
-        SshTransport second = new SshTransport(profile(),80,24,reconnect);
+        SshTransport second = new SshTransport(context,profile(),80,24,reconnect);
         try {
             second.connect();assertTrue(reconnect.connected.await(15,TimeUnit.SECONDS));
             send(second,"printf '\\nRECONNECTED_OK\\n'\r");reconnect.expect("\r\nRECONNECTED_OK\r\n");
@@ -69,10 +69,10 @@ public class SshTransportTest {
         for(String name:new String[]{"connection.properties","client_key"})
             Files.copy(new File(profile(),name).toPath(),new File(invalid,name).toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         Files.write(new File(invalid,"known_hosts").toPath(),new byte[0]);
-        Probe probe = new Probe();SshTransport ssh = new SshTransport(invalid,80,24,probe);
+        Probe probe = new Probe();SshTransport ssh = new SshTransport(context,invalid,80,24,probe);
         try {
             ssh.connect();assertTrue(probe.ended.await(15,TimeUnit.SECONDS));
-            assertEquals(1L,probe.connected.getCount());assertTrue(probe.state.startsWith("连接失败"));
+            assertEquals(1L,probe.connected.getCount());assertTrue(probe.state.contains("指纹"));
             assertFalse("Host-key rejection must not auto-retry", probe.retryable);
         } finally {
             ssh.close();for(File file:invalid.listFiles())file.delete();invalid.delete();
@@ -92,7 +92,7 @@ public class SshTransportTest {
         java.util.Properties config=new java.util.Properties();
         try(InputStream in=new FileInputStream(new File(profile(),"connection.properties"))){config.load(in);}
         assumeTrue("Do not terminate a non-persistent test shell", "tmux".equals(config.getProperty("sessionMode")));
-        Probe probe=new Probe();SshTransport ssh=new SshTransport(profile(),80,24,probe);
+        Probe probe=new Probe();SshTransport ssh=new SshTransport(context,profile(),80,24,probe);
         try{
             ssh.connect();assertTrue(probe.connected.await(15,TimeUnit.SECONDS));
             java.lang.reflect.Field channelField=SshTransport.class.getDeclaredField("channel");channelField.setAccessible(true);

@@ -1,5 +1,17 @@
 # Validation
 
+## SSH connection creation
+
+2026-10-21: the sample now completes manual/LAN-selected host → username/authentication → explicit SHA-256 host trust → encrypted profile → foreground SSH terminal. Saved profiles support reconnect and confirmed deletion. Optional tmux uses an exec PTY and a stable per-profile session name on the remote server. [Workflow and reproducible fixture](LOCAL_SSH.md#create-a-connection-in-the-app).
+
+- **API 27 and API 35: 6 tests passed each** ([API 27](evidence/ssh-connection-flow/api27-tests.txt), [API 35](evidence/ssh-connection-flow/api35-tests.txt)), covering validation, AES-GCM roundtrip/tamper rejection, cancelled trust, wrong password, changed host key rejection, Ed25519 password/key authentication, passphrase-protected OpenSSH keys, real OpenSSH/tmux shell reattachment, Activity recreation, new-profile switching while a terminal exists, saved-profile reconnect and deletion.
+- **API 35 R8 release:** operated the password form through fingerprint confirmation into the echo SSH shell; imported an Ed25519 key through the system file picker, enabled tmux, confirmed its fingerprint and reached the real Mac zsh prompt. UIAutomator briefly returned a null accessibility root after connecting; the captured screen independently showed the live shell. Screenshots remain local. [Build hashes and scope](evidence/ssh-connection-flow/validation.json).
+- The fixture generates disposable keys and credentials. Password auth uses a loopback echo-only SSH server; public-key auth and tmux use local macOS OpenSSH. No existing user SSH configuration or remote tmux session is modified.
+- Debug, instrumentation and R8 release builds passed; sample release lint reported **0 errors / 29 warnings**. Bouncy Castle is included only in the sample to supply Ed25519 support on Android; its upstream license is packaged with the APK.
+
+This remains the sample connection flow, with one active connection and password/public-key authentication. Existing-profile editing and keyboard-interactive/MFA are not implemented. The phone was not connected for this acceptance run. No Maven publication or business integration.
+
+
 ## Live SSH cursor acceptance
 
 2026-10-21: used the physical API 36 Xiaomi phone over Wi-Fi to a local macOS SSH/tmux fixture. Created separate test windows for Vim 9.1 and Claude Code 2.1.296, preserving the original unsaved Vim session. Input went through the Android app (direct key events, its floating direction pad, and actual taps on the phone's Pinyin keyboard); tmux pane captures and phone screenshots checked the result.

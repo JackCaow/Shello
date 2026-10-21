@@ -10,20 +10,22 @@ import java.util.Properties;
 /** Only remembers a successfully attached tmux profile; never stores terminal input or credentials. */
 final class SshResumeState {
     private final File directory;
+    private final Context context;
     private final SharedPreferences preferences;
     SshResumeState(Context context) {
-        this(new File(context.getFilesDir(), "ssh"), context.getSharedPreferences("ssh_resume", Context.MODE_PRIVATE));
+        this.context=context.getApplicationContext();this.directory=null;this.preferences=context.getSharedPreferences("ssh_resume",Context.MODE_PRIVATE);
     }
     SshResumeState(File directory, SharedPreferences preferences) {
-        this.directory=directory;this.preferences=preferences;
+        this.context=null;this.directory=directory;this.preferences=preferences;
     }
     String identity() {
         try {
+            File directory=context==null?this.directory:new SshProfileStore(context).activeDirectory();
             Properties profile=new Properties();
             try(InputStream in=new FileInputStream(new File(directory,"connection.properties"))){profile.load(in);}
             if(!"tmux".equals(profile.getProperty("sessionMode")))return null;
             MessageDigest digest=MessageDigest.getInstance("SHA-256");
-            for(String name:new String[]{"connection.properties","known_hosts","client_key"}) {
+            for(String name:new String[]{"connection.properties","known_hosts",new File(directory,"credentials.enc").isFile()?"credentials.enc":"client_key"}) {
                 byte[] bytes=java.nio.file.Files.readAllBytes(new File(directory,name).toPath());
                 digest.update(java.nio.ByteBuffer.allocate(4).putInt(bytes.length).array());
                 digest.update(bytes);

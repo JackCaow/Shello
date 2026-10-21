@@ -4,3 +4,4 @@
 -keep class com.jcraft.jsch.** extends com.jcraft.jsch.UserAuth { *; }
 -keep class com.jcraft.jsch.jce.** { *; }
 -keep class com.jcraft.jsch.jzlib.** { *; }
+-keep class com.jcraft.jsch.bc.** { *; }

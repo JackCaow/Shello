@@ -2,7 +2,32 @@
 
 The sample can run a real SSH PTY against your Mac using mwiede/JSch 2.28.8. The terminal AAR has no SSH dependency. This is a development fixture, not the full remote-session product flow.
 
-## Run
+## Create a connection in the app
+
+From the minimized session home, tap **+** (or terminal tools → **新建连接 · 局域网发现**):
+
+1. Select a discovered LAN server or enter a hostname/IP and port manually. Set a display name and SSH username.
+2. Choose **密码** or **私钥**. Import an OpenSSH/PEM private key using the system document picker; supply its passphrase when needed. Private-key imports are limited to 1 MiB.
+3. Optionally enable **保持远端会话（tmux）**. Setup checks that tmux is installed, including the standard Homebrew locations. New profiles get a unique remote session on the server's default tmux socket. Reconnecting uses `tmux new-session -A -s SESSION`; if the session was explicitly terminated, a new shell is created. This differs from the isolated debug fixture described below.
+4. Tap **保存并连接**. On first contact, compare the SHA-256 server fingerprint through a trusted channel before choosing **信任并连接**. Credentials are sent only after confirmation. Authentication failures stay in the form for correction; cancelled or failed verification does not save a profile. Changed pinned host keys are rejected.
+5. After verification, the app saves the profile and opens the SSH terminal. **已保存的连接** on the home screen supports reconnect and confirmed deletion. Deleting the active profile disconnects it; it does not kill a remote tmux session.
+
+Connection metadata and host pins are in app-private `files/ssh-profiles/UUID/`; passwords, private keys and passphrases are encrypted with AES-GCM using a non-exportable Android Keystore key. App backup is disabled. Secrets are not passed in Activity Intents, logs or saved-instance-state Bundles. After Activity recreation during setup, credentials must be entered/imported again. Leaving setup cancels pending verification.
+
+The sample currently owns one active SSH session, with password or public-key authentication. Editing existing profiles, keyboard-interactive/MFA, jump hosts and business/account integration are not included. To change a saved connection, delete and recreate it. SSH and Bouncy Castle are sample-only dependencies; the terminal AAR stays transport-independent. Bouncy Castle supplies JSch's Ed25519 support on older Android runtimes ([upstream requirements](https://github.com/mwiede/jsch)).
+
+### Reproduce the connection-flow checks
+
+On macOS with tmux installed and an ARM64 Android emulator running:
+
+```sh
+./gradlew :sample:assembleDebug :sample:assembleDebugAndroidTest
+uv run --with paramiko==5.1.0 python scripts/verify-connection-flow.py --serial emulator-5580
+```
+
+The opt-in script installs debug/test APKs, creates disposable Ed25519 keys and local loopback servers, and removes its credentials/servers afterward. The password server is an echo-only test server; key authentication and tmux use real local OpenSSH. It does not read or modify `~/.ssh`. Tests cover validation, cancelled trust, wrong credentials, encrypted key import data, host-key changes, encrypted storage, tmux shell restoration, Activity recreation and saved-profile reconnect/deletion. Use a test emulator: starting the flow replaces its active sample session. It restores the selected profile but does not reconnect a pre-existing session.
+
+## Run the isolated debug fixture
 
 Build/install the debug sample, unlock an authorized Android device, then run:
 
@@ -30,7 +55,7 @@ less -R unicode-no-flag.txt
 
 Direct keyboard input, Ctrl combinations, Escape, Tab, direction keys and submitted drafts go to SSH. Output goes to the VT engine on the UI thread, terminal replies go back to the PTY, and view/keyboard resizes send SSH window-change requests. The transport bounds pending output to four 16 KiB chunks and queued writes to 128 operations. Offline output-injection/checkpoint tools are disabled while in SSH mode.
 
-Use **会话工具 → 断开 SSH / 重新连接本机 SSH / 返回离线演示**. In **tmux mode**, the fixture starts one persistent session on its own private socket. Every SSH connection runs `tmux attach-session -d -t SESSION`: it attaches to the existing shell and detaches an older client. It never creates a replacement shell during reconnect. A missing/exited session fails attachment. The sample displays `已连接 · tmux` when its SSH channel opens; this label is not a separate tmux readiness acknowledgment.
+Use **会话工具 → 断开 SSH / 重新连接 SSH / 返回离线演示**. In **tmux mode**, the fixture starts one persistent session on its own private socket. Every SSH connection runs `tmux attach-session -d -t SESSION`: it attaches to the existing shell and detaches an older client. It never creates a replacement shell during reconnect. A missing/exited session fails attachment. The sample displays `已连接 · tmux` when its SSH channel opens; this label is not a separate tmux readiness acknowledgment.
 
 In tmux mode, transport failures automatically retry with delays of 1, 2, 4, 8, then at most 15 seconds between attempts. A connection that stays open for 10 seconds resets the delay. The last screen remains visible during an outage; the first output from the new connection resets the local VT and tmux redraws the current screen, including a running vim's unsaved buffer. The remote shell, current directory and environment survive SSH disconnection. The sample foreground service owns SSH, retries and the main-thread VT. Backgrounding, normal screen-off and Activity recreation detach/rebind the view without closing the connection or parser. App process death/force-stop still ends the service; tmux independently retains remote processes. After a successful tmux connection, opening the app normally automatically starts a new service and reattaches that same configured session. No debug launch extra or reconnect tap is required. Only a SHA-256 fingerprint of the app-private profile, host trust file and client identity is persisted as resume intent; credentials and terminal input are not copied into preferences. Changing/removing any of those files invalidates the intent. Plain SSH is never auto-resumed. Explicit disconnect, returning offline, normal remote exit and fatal authentication/host-key/configuration errors clear the intent. Network retry waits preserve it, including a further process death before reconnection succeeds. This does not restore Android drafts, local selection or complete local scrollback after process death. Disconnected direct input is dropped; pressing Send while disconnected retains the draft. No disconnected keystrokes are replayed. Delivery of input sent just before failure detection remains uncertain; it is never resubmitted on the next SSH connection.
 

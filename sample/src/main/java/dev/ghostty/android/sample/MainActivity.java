@@ -35,7 +35,7 @@ public final class MainActivity extends Activity {
             sshService.observe(serviceObserver);
             if(connectOnBind||sshService.shouldResume()){
                 boolean explicitConnect=connectOnBind;connectOnBind=false;
-                if(sshService.terminal()==null)connectSsh(explicitConnect);
+                if(explicitConnect||sshService.terminal()==null)connectSsh(explicitConnect);
             }
         }
         public void onServiceDisconnected(ComponentName name){
@@ -44,12 +44,13 @@ public final class MainActivity extends Activity {
             subtitle.setText("本机 · 服务已停止");
         }
     };
-    private TextView protocolBadge, homeBadge;
+    private TextView protocolBadge, homeBadge, homeTitle;
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
     private TerminalInputView directInput;
     private EditText draft;
-    private LinearLayout root, sheet, composer, toolbar, pad, selectionBar;
+    private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
+    private String pendingProfile;
     private FrameLayout stage, viewport;
     private ScrollView home;
     private ImageView sessionPreview;
@@ -104,7 +105,12 @@ public final class MainActivity extends Activity {
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
         write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› "); root.requestFocus();
-        connectOnBind=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
+        pendingProfile=state==null?null:state.getString("pendingProfile");
+        boolean legacyFixture=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
+        // Explicit debug fixture launches select files/ssh without deleting saved UI profiles.
+        if(legacyFixture)getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
+        connectOnBind=pendingProfile!=null||legacyFixture;
+        if(state==null&&!connectOnBind&&!new SshProfileStore(this).list().isEmpty())minimize();
         if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);}
     }
 
@@ -277,13 +283,13 @@ public final class MainActivity extends Activity {
     private void buildHome() {
         home=new ScrollView(this);LinearLayout content=column();content.setPadding(dp(16),dp(12),dp(16),dp(24));home.addView(content);
         LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        TextView add=icon("plus","新建 SSH 连接",()->startActivity(new Intent(this,SshDiscoveryActivity.class)));
+        TextView add=icon("plus","新建 SSH 连接",()->startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73));
         top.addView(add,new LinearLayout.LayoutParams(dp(44),dp(44)));
         TextView settings=icon("settings","会话工具",()->tools(top));settings.setBackgroundColor(Color.TRANSPARENT);
         top.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(44)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(60)));
         TextView heading=label("会话",13,MUTED);heading.setPadding(0,dp(8),0,dp(12));content.addView(heading);
         LinearLayout cards=row();cards.setGravity(Gravity.TOP);content.addView(cards);
-        LinearLayout card=column();card.setContentDescription("恢复 Ghostty 本地会话");card.setOnClickListener(v->resumeSession());
+        LinearLayout card=column();card.setContentDescription("恢复当前终端会话");card.setOnClickListener(v->resumeSession());
         int width=(getResources().getDisplayMetrics().widthPixels-dp(44))/2;
         cards.addView(card,new LinearLayout.LayoutParams(width,-2));
         FrameLayout thumbnail=new FrameLayout(this);thumbnail.setBackground(round(SURFACE,14));thumbnail.setClipToOutline(true);
@@ -292,12 +298,40 @@ public final class MainActivity extends Activity {
         sessionPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         thumbnail.addView(sessionPreview,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout caption=row();caption.setPadding(dp(8),dp(6),dp(8),dp(6));caption.setBackgroundColor(0xcc1e1e1e);
-        TextView title=label("本地终端",12,TEXT);caption.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        homeTitle=label("本地终端",12,TEXT);caption.addView(homeTitle,new LinearLayout.LayoutParams(0,-2,1));
         TextView badge=label("LOCAL",10,0xff75b6ff);homeBadge=badge;badge.setBackground(round(0xff173247,9));badge.setPadding(dp(4),dp(2),dp(4),dp(2));caption.addView(badge);
         thumbnail.addView(caption,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
         TextView name=label("Ghostty",15,TEXT);name.setPadding(0,dp(6),0,0);card.addView(name);
         TextView prompt=label("›_ local",13,GREEN);prompt.setTypeface(Typeface.MONOSPACE);card.addView(prompt);
+        TextView savedTitle=label("已保存的连接",15,MUTED);savedTitle.setPadding(0,dp(24),0,dp(12));content.addView(savedTitle);
+        savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
         stage.addView(home,new FrameLayout.LayoutParams(-1,-1));home.setVisibility(View.GONE);
+    }
+    private void refreshSavedConnections(){
+        if(savedConnections==null)return;savedConnections.removeAllViews();
+        SshProfileStore store=new SshProfileStore(this);
+        for(SshProfileStore.Entry entry:store.list()){
+            LinearLayout card=row();card.setPadding(dp(16),dp(12),dp(8),dp(12));card.setBackground(round(KEY,16));
+            LinearLayout labels=column();labels.addView(label(entry.name,17,TEXT));labels.addView(label(entry.user+"@"+entry.host+":"+entry.port,13,MUTED));
+            card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+            card.setContentDescription("连接 SSH "+entry.name);card.setFocusable(true);card.setOnClickListener(v->{pendingProfile=entry.id;connectSsh();});
+            TextView remove=icon("close","删除连接 "+entry.name,()->new android.app.AlertDialog.Builder(this).setTitle("删除连接？")
+                    .setMessage("删除 "+entry.name+" 的本机连接配置和登录凭据。")
+                    .setNegativeButton("取消",null).setPositiveButton("删除",(dialog,which)->{
+                        try{if(entry.id.equals(store.activeId())){
+                                returnOffline();sshMode=false;sshConnected=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");
+                                sessionPreview.setImageDrawable(null);new SshResumeState(this).clear();
+                            }
+                            store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
+                    }).show());
+            card.addView(remove,new LinearLayout.LayoutParams(dp(44),dp(44)));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(10);savedConnections.addView(card,p);
+        }
+        if(savedConnections.getChildCount()==0)savedConnections.addView(label("点击 + 新建 SSH 连接",14,MUTED));
+    }
+    @Override protected void onActivityResult(int request,int result,Intent data){
+        super.onActivityResult(request,result,data);
+        if(request==73&&result==RESULT_OK&&data!=null){pendingProfile=data.getStringExtra("profile");if(pendingProfile!=null)connectSsh();}
     }
     private void minimize() {
         if(terminal.getWidth()>0&&terminal.getHeight()>0){
@@ -361,7 +395,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<titles.length;i++)menu.getMenu().add(0,i,i,titles[i]);
         menu.getMenu().findItem(4).setEnabled(checkpoint!=null && !sshMode);
         for(int id=1;id<=3;id++)menu.getMenu().findItem(id).setEnabled(!sshMode);
-        menu.getMenu().add(0,5,5,sshMode?"重新连接本机 SSH":"连接本机 SSH");
+        menu.getMenu().add(0,5,5,sshMode?"重新连接 SSH":"连接 SSH");
         menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(sshService!=null&&sshService.active());
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.getMenu().add(0,8,8,"通知设置");
@@ -370,7 +404,7 @@ public final class MainActivity extends Activity {
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
                 case 5:connectSsh();break;
-                case 10:startActivity(new Intent(this,SshDiscoveryActivity.class));break;
+                case 10:startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73);break;
                 case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
                 case 9:new android.app.AlertDialog.Builder(this).setTitle("后台会话与省电限制")
@@ -382,7 +416,7 @@ public final class MainActivity extends Activity {
                                 android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 android.net.Uri.parse("package:"+getPackageName())))).show();break;
                 case 6:disconnectSsh();break;
-                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
+                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");demo();break;
                 case 0:terminal.scrollToBottom();break;
                 case 1:demo();break;
                 case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
@@ -397,7 +431,7 @@ public final class MainActivity extends Activity {
         bound=bindService(new Intent(this,SshSessionService.class),serviceConnection,BIND_AUTO_CREATE);
     }
     @Override protected void onResume(){
-        super.onResume();
+        super.onResume();refreshSavedConnections();
         if(sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
@@ -411,7 +445,7 @@ public final class MainActivity extends Activity {
         super.onStop();
     }
     @Override protected void onSaveInstanceState(Bundle state){
-        state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
+        state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
         super.onSaveInstanceState(state);
     }
     private void updateSshView(){
@@ -424,10 +458,10 @@ public final class MainActivity extends Activity {
                 if(session!=null&&!serviceSession)session.close();
                 session=remote;serviceSession=true;terminal.setSession(session);
             }
-            protocolBadge.setText("SSH");homeBadge.setText("SSH");
+            protocolBadge.setText("SSH");homeBadge.setText("SSH");homeTitle.setText(sshService.profileName());
         }
         sshConnected=sshService.connected();
-        if(sshMode||!sshService.status().equals("已断开"))subtitle.setText("本机 · "+sshService.status()
+        if(sshMode||!sshService.status().equals("已断开"))subtitle.setText(sshService.profileName()+" · "+sshService.status()
                 +(sshService.active()&&!notificationsVisible()?" · 通知已关闭":""));
     }
     private void detachServiceView(){
@@ -441,13 +475,14 @@ public final class MainActivity extends Activity {
     private void connectSsh(){connectSsh(true);}
     private void connectSsh(boolean requestNotification){
         if(sshService==null){connectOnBind=true;return;}
-        if(!new java.io.File(getFilesDir(),"ssh/connection.properties").isFile()){
-            toast("请先通过 scripts/local-ssh.py 配置本机 SSH");return;
+        if(pendingProfile==null&&!new java.io.File(new SshProfileStore(this).activeDirectory(),"connection.properties").isFile()){
+            startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73);return;
         }
         if(requestNotification&&Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},41);
         // Permission denial does not prevent an SSH foreground service; automatic recovery never re-prompts.
-        String rejected=SshSessionService.requestConnect(this);
+        String rejected=SshSessionService.requestConnect(this,pendingProfile);
+        if(rejected==null){pendingProfile=null;resumeSession();}
         if(rejected!=null){subtitle.setText("本机 · 系统暂不允许启动会话");toast("请回到应用后重新连接 SSH");}
     }
     private void disconnectSsh(){if(sshService!=null)sshService.disconnect();}

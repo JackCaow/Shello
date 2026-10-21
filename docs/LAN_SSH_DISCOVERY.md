@@ -2,7 +2,7 @@
 
 The sample provides a Moshi-inspired **New connection → discovery count → bottom sheet** interaction. Open **新建 SSH 连接** using the plus button on the minimized session home, or **新建连接 · 局域网发现** from terminal tools. Discovery starts on entry; tap the green count to see **本地 SSH 服务器**. Selecting a card fills the name, host and port in an in-memory draft.
 
-This is a discovery prototype, not a new login flow. Selection does not authenticate, save a connection, replace the private SSH fixture profile, or interrupt the service-owned terminal. No credentials are requested. The terminal AAR has no discovery or networking dependency.
+Discovery itself does not authenticate or interrupt the current terminal. The same form now continues into [SSH authentication, fingerprint confirmation, encrypted profile storage and connection](LOCAL_SSH.md#create-a-connection-in-the-app). Only pressing **保存并连接** starts verification; a successful verified profile replaces the active sample connection. The terminal AAR has no discovery or networking dependency.
 
 ## Discovery contract
 

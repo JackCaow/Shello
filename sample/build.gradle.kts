@@ -3,6 +3,7 @@ android {
     buildFeatures { buildConfig = true }
     namespace = "dev.ghostty.android.sample"
     compileSdk = 35
+    packaging.resources.excludes += "META-INF/versions/**/OSGI-INF/MANIFEST.MF"
     ndkVersion = "28.2.13676358"
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -19,6 +20,8 @@ android {
 dependencies {
     implementation(project(":terminal"))
     implementation("com.github.mwiede:jsch:2.28.8")
+    // JSch uses the lightweight BC implementations for Ed25519 on Android / Java 8.
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")

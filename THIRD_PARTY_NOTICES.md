@@ -22,3 +22,5 @@ Upstream source locations:
 - https://github.com/gradle/gradle
 
 The sample application (not the terminal AAR) uses [mwiede/JSch 2.28.8](https://github.com/mwiede/jsch) for SSH. Its BSD-style JSch/JZlib and jBCrypt notices are retained in `sample/src/main/assets/third_party/jsch/` and packaged in the sample APK. No Moshi source code or artwork is included.
+
+The sample also includes [Bouncy Castle bcprov-jdk18on 1.86](https://www.bouncycastle.org/download/bouncy-castle-java/) (MIT) for JSch Ed25519 support on Android, including API 27. Its upstream notice is packaged at `assets/third_party/bouncycastle/LICENSE.md`. This dependency is not included in the terminal AAR.

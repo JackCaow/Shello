@@ -26,6 +26,8 @@ public final class SshSessionService extends Service {
     private SshTransport ssh;
     private SshResumeState resumeState;
     private String profileIdentity;
+    private File profileDirectory;
+    private String profileName="本机";
     private PowerManager.WakeLock wakeLock;
     private ConnectivityManager.NetworkCallback networkCallback;
     private Network activeNetwork;
@@ -36,7 +38,10 @@ public final class SshSessionService extends Service {
 
     /** A visibility change can race the request; let the user retry rather than crash the app. */
     static String requestConnect(Context context){
-        try{context.startForegroundService(new Intent(context,SshSessionService.class).setAction(CONNECT));return null;}
+        return requestConnect(context,null);
+    }
+    static String requestConnect(Context context,String profile){
+        try{context.startForegroundService(new Intent(context,SshSessionService.class).setAction(CONNECT).putExtra("profile",profile));return null;}
         catch(IllegalStateException|SecurityException rejected){
             String reason=rejected.getClass().getSimpleName();
             android.util.Log.i("GhosttySsh","Foreground service request rejected: "+reason);
@@ -64,6 +69,8 @@ public final class SshSessionService extends Service {
                 finish("系统暂不允许启动会话",false);return START_NOT_STICKY;
             }
             foreground=true;
+            String selected=intent.getStringExtra("profile");
+            if(selected!=null)try{new SshProfileStore(this).activate(selected);}catch(Exception error){finish("连接配置不存在");return START_NOT_STICKY;}
             connect();
         }else if(intent!=null&&DISCONNECT.equals(intent.getAction()))disconnect();
         // Do not silently recreate a terminated app/session after process death or force-stop.
@@ -74,6 +81,7 @@ public final class SshSessionService extends Service {
     boolean active(){return foreground;}
     boolean shouldResume(){return terminal==null&&!foreground&&resumeState.pending();}
     String status(){return status;}
+    String profileName(){return profileName;}
     void observe(Observer value){
         if(observer!=null&&observer!=value)observer.detach();
         // A vendor may suspend retries while locked. Do not make a visible user wait for backoff.
@@ -142,10 +150,15 @@ public final class SshSessionService extends Service {
     }
     private void connect(){
         cancelConnection();
+        File nextDirectory=new SshProfileStore(this).activeDirectory();
+        if(profileDirectory!=null&&!profileDirectory.equals(nextDirectory)&&terminal!=null){
+            if(observer!=null)observer.detach();terminal.close();terminal=null;
+        }
+        profileDirectory=nextDirectory;
         profileIdentity=resumeState.identity();
         Properties config=new Properties();
-        try(InputStream in=new FileInputStream(new File(getFilesDir(),"ssh/connection.properties"))){
-            config.load(in);autoReconnect="tmux".equals(config.getProperty("sessionMode"));
+        try(InputStream in=new FileInputStream(new File(profileDirectory,"connection.properties"))){
+            config.load(in);profileName=config.getProperty("name","本机");autoReconnect="tmux".equals(config.getProperty("sessionMode"));
         }catch(IOException|IllegalArgumentException error){finish("配置无效");return;}
         if(terminal==null)terminal=new TerminalSession(40,20);
         // Deliberately held only for a user-started, notified session; released on every terminal stop.
@@ -159,7 +172,7 @@ public final class SshSessionService extends Service {
         if(networkCallback!=null&&activeNetwork==null){status="网络不可用，等待恢复";changed();return;}
         final int attempt=++generation;
         final boolean[] firstOutput={true};
-        ssh=new SshTransport(new File(getFilesDir(),"ssh"),terminal.getColumns(),terminal.getRows(),new SshTransport.Listener(){
+        ssh=new SshTransport(this,profileDirectory,terminal.getColumns(),terminal.getRows(),new SshTransport.Listener(){
             private boolean current(){return !destroyed&&attempt==generation;}
             @Override public void onState(String value,boolean ready){
                 if(!current())return;
