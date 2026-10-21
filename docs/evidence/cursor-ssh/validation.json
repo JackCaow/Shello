@@ -59,7 +59,7 @@
   "fix": "New/default-reset sessions use a blinking block; explicit remote steady/hidden modes retain priority. This does not override tmux steady instructions.",
   "automated": {
     "api27": "15 instrumentation tests passed",
-    "phone": "Live SSH checks on installed fix completed; standalone instrumentation not rerun after USB detached"
+    "phone": "5 focused cursor tests passed after USB reconnection (phone-cursor-final.txt); live SSH checks also passed"
   },
   "build": "Debug sample, release sample, release AAR and release lint passed",
   "installed_debug_apk_sha256": "dbc5199857be959da33881cc6646c94d92ef613716de9194c6e5b4dbff26e99f",
@@ -68,5 +68,16 @@
     "No Claude model generation or latency benchmark",
     "Stock macOS vim expands ZWJ to <200d> in its own PTY output; this is not terminal cursor corruption"
   ],
-  "publication": "No Maven publication; no business-flow changes"
+  "publication": "No Maven publication; no business-flow changes",
+  "follow_up_2026_10_21": {
+    "source_revision": "92a8003",
+    "phone_cursor_tests": "5 passed; phone reconnected over USB",
+    "sample_apk_sha256": "0b36e565fdd1f94a95559462fb5ca1d05f8bc9b1b179692fd85402819c529729",
+    "terminal_test_apk_sha256": "a41a283f185dad55ef0b45a82e23340b8b4bd9298e23b8deea6cadec63a15124",
+    "claude": "Phone input appended CURSOR, moved left twice, inserted X, and restored original /exit text without submitting",
+    "vim": "Fresh isolated cursor-final window: phone direct input, toolbar Escape, normal block / insert bar / replace underline, and right-arrow movement from 中 to 文 verified in screenshots and recording",
+    "original_vim_window": "Window 0 untouched; experiments limited to cursor-vim window",
+    "recording": "Local vim-modes.mp4; first mixed-input diagnostic recording excluded from acceptance",
+    "cleanup": "Closed only newly created cursor-final window; Claude prompt restored without submitting; original window 0 untouched"
+  }
 }

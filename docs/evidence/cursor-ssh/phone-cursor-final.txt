@@ -1,0 +1,8 @@
+
+dev.ghostty.android.TerminalCursorTest:.....
+
+Time: 0.054
+
+OK (5 tests)
+
+
