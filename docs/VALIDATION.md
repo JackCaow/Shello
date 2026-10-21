@@ -1,5 +1,13 @@
 # Validation
 
+## v0.1.0-alpha02 APK release
+
+2026-10-21: packaged the standalone `companion/pair.sh` launcher, migrated the default theme label to Shello, and bumped the sample to versionCode 2. Debug, R8 release and release lint builds passed. The signed release APK uses the dedicated certificate documented in [RELEASING](RELEASING.md); APK metadata confirms API 27+, arm64-v8a and no debuggable flag. A separate clean API 35 emulator installed and cold-launched the signed artifact successfully; its theme page selected Shello and its pairing page displayed the Raw launcher command. The existing phone received the compatible debug build; its migrated theme displayed Shello.
+
+- [API 27](evidence/releases/alpha02/api27-tests.txt) and [API 35](evidence/releases/alpha02/api35-tests.txt): eight settings/cache tests each, including legacy theme migration.
+- [Pairing launcher](evidence/releases/alpha02/pair-tests.txt): embedded-source/help check and real local HTTPS test with temporary keys, pinned certificate, invalid-token rejection, idempotent public-key install and interruption cleanup. No real authorized_keys file was modified.
+- [Release signing verification](evidence/releases/alpha02/signature.txt): RSA-4096, APK v2/v3 signatures. No Maven package publication. The full SSH/TUI and OEM battery matrix was not rerun for this release.
+
 ## Persistent session thumbnails
 
 2026-10-21: thumbnails now use atomic PNG writes in private `noBackupFilesDir/session-previews`, with hashed per-tab keys, serial background IO and a 24 MiB disk cap. The service asynchronously restores saved thumbnails without waiting for SSH. Visible terminals checkpoint every five seconds, on minimize/switch and before backgrounding; hidden terminal views cannot overwrite a cached preview. Explicit tab close deletes its cache, startup prunes orphaned tabs, and corrupt/oversized images fall back safely. Drafts and VT state are not persisted by this cache.

@@ -8,13 +8,19 @@ The host helper reads Claude project indexes and bounded JSONL headers, or the C
 
 ## Pairing
 
-On an SSH-enabled Mac/Linux host with Python 3, OpenSSL and tmux:
+On an SSH-enabled Mac/Linux host with Python 3.9+, OpenSSL and tmux, run as your SSH user:
 
 ```sh
-python3 -m venv ~/.local/share/ghostty-pair-venv
-~/.local/share/ghostty-pair-venv/bin/pip install qrcode==8.2
-~/.local/share/ghostty-pair-venv/bin/python companion/pair.py
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash
 ```
+
+The standalone script embeds the Python helper, creates a private virtual environment under `~/.local/share/shello/pair`, installs `qrcode==8.2`, and starts the temporary pairing service. It does not enable SSH or install system packages. On Linux, `python3-venv` may be needed. To select an interface or custom SSH port:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash -s -- --host 192.168.1.10 --ssh-port 22
+```
+
+Use `--help` for all options. Ctrl-C stops the service and removes its temporary helper/certificate. Regenerate the checked-in launcher with `python3 scripts/generate-pair-script.py` whenever `companion/pair.py` changes. The release-tag URL (`v0.1.0-alpha02` in place of `main`) selects that version's script.
 
 Open Add → Scan to pair on Android. The QR pins an ephemeral HTTPS certificate and a short-lived one-use token. The phone generates its RSA key locally and sends only the public key. The helper appends it to `authorized_keys`, returns SSH host keys, and the phone verifies SSH and tmux before saving the encrypted profile. Camera scanning and scanning from a selected image are supported. QR/token files must never be committed or shared. This is Shello's own protocol, not compatible with Moshi QR codes.
 

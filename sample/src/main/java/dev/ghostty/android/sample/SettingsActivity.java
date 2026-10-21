@@ -113,7 +113,7 @@ public final class SettingsActivity extends ScreenActivity {
     }
     private void home(){
         heading.setText("设置");section("终端");
-        navigation("主题",prefs.getString("theme","Moshi"),"palette","theme");
+        navigation("主题",ThemePreferences.current(prefs),"palette","theme");
         navigation("字体与大小",prefs.getInt("fontSize",14)+" sp","font","font");navigation("高级",null,"sliders","advanced");
         section("代理");navigation("Hook",null,"hook","hook");navigation("通知",null,"bell","notifications");navigation("文本草稿",null,"chat","chat");
         section("输入");navigation("工具栏",null,"toolbox","toolbar");navigation("快捷键",null,"keyboard","shortcuts");navigation("手势",null,"pad","gestures");
@@ -147,8 +147,8 @@ public final class SettingsActivity extends ScreenActivity {
         section("预览");preview.setText("$ echo 'Hello, 终端'\nHello, 终端\n❯ 中文输入 👩🏽‍💻 🚀");preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));refresh.run();
     }
     private void theme(){
-        heading.setText("主题");section("终端主题");String selected=prefs.getString("theme","Moshi");
-        for(String name:new String[]{"Moshi","黑色","浅色"}){
+        heading.setText("主题");section("终端主题");String selected=ThemePreferences.current(prefs);
+        for(String name:new String[]{"Shello","黑色","浅色"}){
             ImageView check=SampleUi.icon(this,"check",SampleUi.GREEN);check.setMinimumWidth(dp(20));check.setMinimumHeight(dp(20));check.setVisibility(selected.equals(name)?View.VISIBLE:View.INVISIBLE);
             LinearLayout row=settingRow(name,null,"palette",check,()->{prefs.edit().putString("theme",name).apply();show("theme");});row.setSelected(selected.equals(name));row.setContentDescription(name+(selected.equals(name)?"，已选中":""));
         }

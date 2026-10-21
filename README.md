@@ -2,7 +2,7 @@
 
 Shello was previously named `ghostty-android`. The Android application ID, Java API packages, pairing protocol and existing connection storage remain unchanged for upgrade compatibility. The terminal engine is still Ghostty; Shello is an independent project.
 
-Experimental Android terminal library: **libghostty-vt + native Canvas rendering + touch selection + IME input**. Unofficial; not affiliated with the Ghostty project. No published release or Maven Central coordinates yet.
+Experimental Android terminal library: **libghostty-vt + native Canvas rendering + touch selection + IME input**. Unofficial; not affiliated with the Ghostty project. Installable alpha APKs are available on [GitHub Releases](https://github.com/JackCaow/Shello/releases). No Maven Central coordinates are published.
 
 [Source repository](https://github.com/JackCaow/Shello) · [中文说明](README.zh-CN.md) · [API contract](docs/API.md) · [Validation](docs/VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
@@ -33,6 +33,16 @@ The sample uses a Moshi-inspired mobile terminal layout (visual parity is still 
 [Local SSH auto-discovery](docs/LAN_SSH_DISCOVERY.md): the sample scans the current Wi-Fi subnet, displays a server-count entry and a bottom-sheet picker, then fills a connection draft. Continue with a username and password or imported private key (including passphrase-protected keys), verify the server fingerprint, then save and connect. Credentials are encrypted with Android Keystore. Tap saved profiles to connect; long-press for the Moshi-style Edit/Delete menu. Edits verify authentication before atomically replacing the encrypted profile; optional tmux preserves remote sessions. See the [connection workflow](docs/LOCAL_SSH.md#create-a-connection-in-the-app).
 
 [UI screenshots and validation](docs/VALIDATION.md#moshi-inspired-sample-ui)
+
+## Install and pair
+
+Download the signed Android 8.1+ **arm64-v8a** APK from [Releases](https://github.com/JackCaow/Shello/releases). On your SSH-enabled Mac/Linux computer with Python 3.9+, OpenSSL and tmux, run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash
+```
+
+Then open **+ → 扫码轻松配对** in Shello. See [pairing options](docs/HOME_AND_AGENTS.md#pairing) and [APK signing/upgrade notes](docs/RELEASING.md).
 
 ## Build
 

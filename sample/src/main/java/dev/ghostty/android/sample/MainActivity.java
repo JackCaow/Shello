@@ -17,7 +17,7 @@ import android.widget.*;
 import dev.ghostty.android.*;
 import java.nio.charset.StandardCharsets;
 
-/** Moshi-inspired terminal controls around offline echo or a sample SSH shell. */
+/** Shello terminal controls around offline echo or a sample SSH shell. */
 public final class MainActivity extends Activity {
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
@@ -529,7 +529,7 @@ public final class MainActivity extends Activity {
     private void applyAppearance(){
         if(terminal==null)return;android.content.SharedPreferences prefs=getSharedPreferences("appearance",0);terminal.setFontSize(prefs.getInt("fontSize",14));terminal.setSelectionEnabled(prefs.getBoolean("selection",true));
         for(int i=0;i<toolbar.getChildCount();i++){View tool=toolbar.getChildAt(i);Object tag=tool.getTag();if(tag instanceof String&&java.util.Arrays.asList("history","paste","chat","pad").contains(tag))tool.setVisibility(prefs.getBoolean("tool_"+tag,true)?View.VISIBLE:View.GONE);}
-        String theme=prefs.getString("theme","Moshi");if(session!=null&&!theme.equals(appliedTheme)){appliedTheme=theme;String fg=theme.equals("浅色")?"#202124":"#d4d4d4",bg=theme.equals("浅色")?"#f5f5f5":theme.equals("黑色")?"#000000":"#1e1e1e";session.write(("\033]10;"+fg+"\007\033]11;"+bg+"\007").getBytes(StandardCharsets.UTF_8));}
+        String theme=ThemePreferences.current(prefs);if(session!=null&&!theme.equals(appliedTheme)){appliedTheme=theme;String fg=theme.equals("浅色")?"#202124":"#d4d4d4",bg=theme.equals("浅色")?"#f5f5f5":theme.equals("黑色")?"#000000":"#1e1e1e";session.write(("\033]10;"+fg+"\007\033]11;"+bg+"\007").getBytes(StandardCharsets.UTF_8));}
     }
     private void detachServiceView(){
         if(serviceSession){terminal.setSession(null);session=null;serviceSession=false;}

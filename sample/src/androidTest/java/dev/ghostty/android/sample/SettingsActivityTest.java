@@ -52,11 +52,21 @@ public class SettingsActivityTest {
     @Test public void toolbarSwitchAndThemePersistAcrossPages(){
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object tool=prefs.getAll().get("tool_paste"),theme=prefs.getAll().get("theme");
         try{
-            prefs.edit().putBoolean("tool_paste",true).putString("theme","Moshi").commit();open("toolbar");click("粘贴");assertFalse(prefs.getBoolean("tool_paste",true));
+            prefs.edit().putBoolean("tool_paste",true).putString("theme","Shello").commit();open("toolbar");click("粘贴");assertFalse(prefs.getBoolean("tool_paste",true));
             inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click("工具栏");inst.runOnMainSync(()->assertFalse(((CheckBox)find(current.root,"粘贴")).isChecked()));
             inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click("主题");click("浅色");assertEquals("浅色",prefs.getString("theme",""));
             inst.runOnMainSync(()->assertTrue(find(current.root,"浅色，已选中").isSelected()));
         }finally{finish();restore(prefs,"tool_paste",tool);restore(prefs,"theme",theme);}
+    }
+    @Test public void legacyThemeMigratesAndNewInstallUsesShello(){
+        SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object before=prefs.getAll().get("theme");
+        try{
+            prefs.edit().putString("theme","Moshi").commit();open("theme");
+            assertEquals("Shello",prefs.getString("theme",""));
+            inst.runOnMainSync(()->{assertNotNull(find(current.root,"Shello，已选中"));assertNull(find(current.root,"Moshi"));});
+            finish();prefs.edit().remove("theme").commit();open("theme");
+            inst.runOnMainSync(()->assertNotNull(find(current.root,"Shello，已选中")));
+        }finally{finish();restore(prefs,"theme",before);}
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{
         try{for(String page:new String[]{"","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts"}){

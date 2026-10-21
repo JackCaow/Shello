@@ -7,3 +7,9 @@ local.properties
 *.iml
 
 __pycache__/
+
+# Release signing material must stay outside version control.
+*.keystore
+*.jks
+*.p12
+signing.properties

@@ -4,6 +4,18 @@ Shello 原名 `ghostty-android`。为兼容覆盖升级，保留 Android 应用 
 
 实验性的 Android 原生终端库：Ghostty VT 内核、Canvas 绘制、触摸选择和中文 IME 输入。非 Ghostty 官方项目；源码仓库为 [JackCaow/Shello](https://github.com/JackCaow/Shello)，尚未发布 Maven 包。
 
+## 安装与配对
+
+从 [GitHub Releases](https://github.com/JackCaow/Shello/releases) 下载签名 APK，支持 Android 8.1+、arm64-v8a。在已启用 SSH 并装有 Python 3.9+、OpenSSL 和 tmux 的 Mac/Linux 电脑上执行：
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash
+```
+
+随后在 Shello 中选择 **+ → 扫码轻松配对**。脚本自动准备独立 Python 环境并显示临时配对二维码。详见[配对参数](docs/HOME_AND_AGENTS.md#pairing)和[签名与升级说明](docs/RELEASING.md)。
+
+## 项目组成
+
 - `TerminalSession`：输出字节流、按键编码、查询应答、历史和内存快照。
 - `TerminalView`：原生显示、长按选择、双手柄、边缘自动滚动。
 - `TerminalInputView`：可选输入控件；拼音候选保留在本地，确认后发送 UTF-8。

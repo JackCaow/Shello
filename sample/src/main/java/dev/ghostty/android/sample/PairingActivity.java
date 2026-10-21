@@ -13,7 +13,7 @@ import java.util.*;
 public final class PairingActivity extends ScreenActivity {
     private DecoratedBarcodeView scanner;private boolean busy,active;private TextView status;
     private SshConnectionSetup verify;private SshProfileStore.Draft paired;
-    static final String COMMAND="python3 -m venv ~/.local/share/ghostty-pair\n~/.local/share/ghostty-pair/bin/pip install 'qrcode==8.2'\ncurl -fL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.py -o ~/.local/share/ghostty-pair/pair.py\n~/.local/share/ghostty-pair/bin/python ~/.local/share/ghostty-pair/pair.py";
+    static final String COMMAND="curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash";
     @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText("Easy Pair");
         scanner=new DecoratedBarcodeView(this);scanner.setStatusText("");scanner.getBarcodeView().setDecoderFactory(new DefaultDecoderFactory(Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE)));
         body.addView(scanner,new LinearLayout.LayoutParams(-1,dp(340)));status=copy("在电脑上运行下面的命令，然后扫描二维码。");

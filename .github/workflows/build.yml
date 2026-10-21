@@ -21,6 +21,8 @@ jobs:
         with:
           version: '0.16.0'
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.2.13676358'
+      - run: python3 scripts/generate-pair-script.py && git diff --exit-code -- companion/pair.sh
+      - run: bash -n companion/pair.sh scripts/package-apk.sh
       - run: ./scripts/verify.sh
       - run: ./scripts/check-artifact.sh
       - uses: actions/upload-artifact@v4
