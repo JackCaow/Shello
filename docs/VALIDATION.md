@@ -3,6 +3,19 @@
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
 
+## Background SSH session ownership
+
+Validated on 2026-10-21 in the Android 8.1 / API 27 ARM64 emulator. `SshSessionService` owns the live connection, retry timers, partial CPU wake lock and main-thread VT. The Activity only binds the view/input while started. [Behavior and boundaries](LOCAL_SSH.md#background-lifetime-and-notification).
+
+- **Shell and vim each passed Home/background, 45 seconds of normal screen-off, and configuration-driven Activity recreation/restoration.** App PID `9455`, service record `4964cf4` and SSH client PID `12112` stayed unchanged across those operations. Shell PID `59117`, its directory and exported variable survived; vim PID `19015` and its unsaved buffer survived and the file saved through the UI matched exactly. Background shell output was processed while the UI was absent. [Results](evidence/ssh-background/result.json), [recreated vim](evidence/ssh-background/vim-recreated.png).
+- Service dumps during Home and screen-off showed an active foreground service **without Activity connection bindings**. Screen-off assertions confirmed `mWakefulness=Asleep` and a held `ghostty:SSHSession` partial wake lock. [Background service](evidence/ssh-background/shell-background-service.txt), [screen-off service](evidence/ssh-background/shell-lock-service.txt). Configuration changes produced actual `am_relaunch_resume_activity`/destroy lifecycle events: [shell](evidence/ssh-background/shell-recreated-lifecycle.txt), [vim](evidence/ssh-background/vim-recreated-lifecycle.txt).
+- An additional abrupt SSH drop **while backgrounded with no Activity observer** reconnected through the service; returning to the UI restored the original unsaved vim buffer. [Service](evidence/ssh-background/background-reconnected-service.txt), [restored buffer](evidence/ssh-background/vim-background-reconnected.png).
+- **3 instrumentation tests passed / 1 skipped.** The new test explicitly called `Activity.recreate()`, asserted a new Activity instance, retained the same service-owned `TerminalSession` object and connected state, then verified explicit disconnect. The plain-shell destructive test remains skipped in tmux mode. [Output](evidence/ssh-background/instrumentation.txt).
+- The notification **断开** action was tapped while the app was backgrounded. It removed the foreground service, released the wake lock and left zero SSH clients. [Notification](evidence/ssh-background/notification.png), [cleanup assertions](evidence/ssh-background/disconnect.json).
+- Debug, R8 release, test builds and release lint passed: **0 errors / 16 warnings**, including the deliberately service-scoped non-timeout wake lock. [Hashes and scope](evidence/ssh-background/validation.json).
+
+These are emulator tests of ordinary screen-off and Activity lifetime. Deep Doze, vendor battery restrictions, real phones, long-duration battery usage and newer Android foreground-service runtime rules are not certified. Force-stop/process death ends the service; the remote tmux process can survive independently. No business integration or Maven publication was added.
+
 ## Automatic SSH + tmux recovery
 
 Validated on 2026-10-21 in the Android 8.1 / API 27 ARM64 emulator. Only the sample owns retry behavior; the terminal AAR remains transport-independent. [Reproduction](LOCAL_SSH.md#verify-automatic-recovery-with-silent-packet-loss).
@@ -13,7 +26,7 @@ Validated on 2026-10-21 in the Android 8.1 / API 27 ARM64 emulator. Only the sam
 - **2 instrumentation tests passed / 1 skipped**: host-key rejection also asserted non-retryability; transport failure classification covered refused/timed-out/EOF connections versus invalid profile/auth/config errors. The existing plain-shell test is intentionally skipped for a persistent tmux fixture. [Output](evidence/ssh-auto-reconnect/instrumentation.txt).
 - Debug/release/test APK builds and release lint passed: **0 errors, 17 warnings** (including the sample's untranslated UI strings). [Hashes and scope](evidence/ssh-auto-reconnect/validation.json).
 
-Retry delays are 1, 2, 4, 8 and at most 15 seconds, reset after a connection stays open for 10 seconds. Normal exit, connection-setup authentication/host-key/configuration failures, explicit disconnect, offline mode and Activity destruction stop retries. The screen/draft remain during a detected outage; direct input is not replayed into the next transport. This tests a silent TCP outage on the `adb reverse` path, not device-wide Wi-Fi/cellular roaming. Background service ownership, process-death auto-launch and host-reboot persistence remain outside this sample.
+Retry delays are 1, 2, 4, 8 and at most 15 seconds, reset after a connection stays open for 10 seconds. Normal exit, connection-setup authentication/host-key/configuration failures, explicit disconnect, offline mode and Activity destruction stop retries. The screen/draft remain during a detected outage; direct input is not replayed into the next transport. This tests a silent TCP outage on the `adb reverse` path, not device-wide Wi-Fi/cellular roaming. At this checkpoint retry ownership was limited to the Activity; the background-service section above supersedes that limitation. Process-death auto-launch and host-reboot persistence remain outside this sample.
 
 ## SSH + tmux recovery
 
@@ -24,7 +37,7 @@ Updated on 2026-10-21. The sample can attach to an isolated persistent tmux sess
 - **Disconnected draft fix:** Send retains text instead of clearing a draft when SSH is disconnected. Verified in the emulator UI. [Evidence](evidence/ssh-tmux/api27-disconnected-draft.png).
 - Debug/release/instrumentation builds pass; release lint has 0 errors / 15 warnings. In tmux mode the host-key rejection instrumentation test passed and the destructive plain-shell test was **skipped**, not counted as recovery coverage. [Test output](evidence/ssh-tmux/api27-instrumentation.txt), [artifact hashes and scope](evidence/ssh-tmux/validation.json).
 
-The injected failure kills the fixture's SSH handler processes while preserving its listener and tmux server. It is not Wi-Fi/cellular roaming or silent packet loss. At this checkpoint reconnection was manual; the automatic-recovery section above supersedes that limitation. tmux recreates the visible screen while keeping remote processes alive. Android drafts/selection/full local scrollback after process death, server reboot recovery and background service ownership are not provided. Existing emoji-width compatibility findings below remain open.
+The injected failure kills the fixture's SSH handler processes while preserving its listener and tmux server. It is not Wi-Fi/cellular roaming or silent packet loss. At this checkpoint reconnection was manual; the automatic-recovery section above supersedes that limitation. tmux recreates the visible screen while keeping remote processes alive. Android drafts/selection/full local scrollback after process death, server reboot recovery are not provided; background ownership was added later as described above. Existing emoji-width compatibility findings below remain open.
 
 ## Real local SSH
 

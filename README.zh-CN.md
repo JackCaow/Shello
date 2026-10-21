@@ -13,4 +13,4 @@
 
 [验证记录](docs/VALIDATION.md)区分新库验收和历史原型证据。字符簇边界使用固定版本的 Ghostty 规则，避免旧 Android ICU 拆分 emoji；继续保留程序的列坐标，支持应用主动开启 mode 2027。旧系统缺少的新 emoji 字形不会因此补齐，不承诺所有字体、TUI 和输入法完全兼容。
 
-示例中点击发送会附加回车，长按仅发送文字；粘贴先进入本地草稿。离线模式的控制键显示按键反馈，SSH 模式控制真实 PTY；最小化保留本次会话和草稿，退出 Activity 后本地状态不持久化；tmux 模式的远端进程继续存活，可手动重新挂接。[界面截图与验证](docs/VALIDATION.md#moshi-inspired-sample-ui)。[本机 SSH 操作说明](docs/LOCAL_SSH.md)。
+示例中点击发送会附加回车，长按仅发送文字；粘贴先进入本地草稿。离线模式的控制键显示按键反馈，SSH 模式控制真实 PTY；最小化保留本次会话和草稿，SSH 模式由带常驻通知的前台服务持有连接和终端状态，切后台、普通锁屏及 Activity 重建时继续保留；主动断开会停止服务保活。App 进程死亡后可重新挂接远端 tmux 会话。[界面截图与验证](docs/VALIDATION.md#moshi-inspired-sample-ui)。[本机 SSH 操作说明](docs/LOCAL_SSH.md)。

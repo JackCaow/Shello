@@ -1,0 +1,7 @@
+{
+  "notification_disconnect_tested": true,
+  "foreground_service_destroyed": true,
+  "wake_lock_released": true,
+  "ssh_clients_remaining": 0,
+  "notification_open_reattaches_ui_without_new_ssh": true
+}

@@ -1,0 +1,15 @@
+{
+  "device": "API 27 ARM64 emulator",
+  "app_pid": 9455,
+  "service_record": "4964cf4",
+  "ssh_client_pid_across_background_lock_recreate": 12112,
+  "shell_pid_before_after": 59117,
+  "vim_pid_before_after": 19015,
+  "background_output_processed": true,
+  "shell_and_vim_each_screen_off_seconds": 45,
+  "configuration_recreations": 4,
+  "background_reconnect_without_activity": true,
+  "shell_environment_cwd_preserved": true,
+  "vim_unsaved_saved_exactly": true,
+  "fault_scope": "Home, normal screen-off, wm size configuration recreation and restoration, then abrupt SSH loss while backgrounded; no forced Doze"
+}

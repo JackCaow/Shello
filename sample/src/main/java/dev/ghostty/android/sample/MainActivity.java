@@ -22,12 +22,25 @@ public final class MainActivity extends Activity {
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
     private TerminalSession session;
-    private SshTransport ssh;
-    private boolean sshMode, sshConnected, destroyed;
-    private int sshGeneration, retryAttempt;
-    private boolean autoReconnect;
-    private final android.os.Handler reconnectHandler=new android.os.Handler(android.os.Looper.getMainLooper());
-    private Runnable retryTask, stableTask;
+    private SshSessionService sshService;
+    private boolean sshMode, sshConnected, destroyed, serviceSession, bound, connectOnBind;
+    private final SshSessionService.Observer serviceObserver=new SshSessionService.Observer(){
+        public void changed(){updateSshView();}
+        public void detach(){detachServiceView();}
+    };
+    private final ServiceConnection serviceConnection=new ServiceConnection(){
+        public void onServiceConnected(ComponentName name,android.os.IBinder binder){
+            if(destroyed||!bound)return;
+            sshService=((SshSessionService.LocalBinder)binder).service();
+            sshService.observe(serviceObserver);
+            if(connectOnBind){connectOnBind=false;if(sshService.terminal()==null)connectSsh();}
+        }
+        public void onServiceDisconnected(ComponentName name){
+            if(destroyed||!bound)return;
+            detachServiceView();sshService=null;sshConnected=false;
+            subtitle.setText("本机 · 服务已停止");
+        }
+    };
     private TextView protocolBadge, homeBadge;
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
@@ -72,7 +85,7 @@ public final class MainActivity extends Activity {
             @Override public void onInput(byte[] bytes) { sendInput(bytes); }
             @Override public void onResize(int columns,int rows) {
                 subtitle.setContentDescription((sshMode?"SSH 终端":"本地终端")+"，"+columns+" 列，"+rows+" 行");
-                if(ssh!=null)ssh.resize(columns,rows);
+                if(sshMode&&sshService!=null)sshService.resize(columns,rows);
                 if(directInput.hasFocus()||draft.hasFocus())terminal.post(terminal::scrollToBottom);
             }
             @Override public void onSelectionChanged(String text) {
@@ -88,8 +101,8 @@ public final class MainActivity extends Activity {
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
         write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› "); root.requestFocus();
-        if(BuildConfig.DEBUG && getIntent().getBooleanExtra("connectLocalSsh",false))
-            terminal.post(this::connectSsh);
+        connectOnBind=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
+        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);}
     }
 
     private void buildHeader() {
@@ -331,13 +344,13 @@ public final class MainActivity extends Activity {
         menu.getMenu().findItem(4).setEnabled(checkpoint!=null && !sshMode);
         for(int id=1;id<=3;id++)menu.getMenu().findItem(id).setEnabled(!sshMode);
         menu.getMenu().add(0,5,5,sshMode?"重新连接本机 SSH":"连接本机 SSH");
-        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(ssh!=null||autoReconnect);
+        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(sshService!=null&&sshService.active());
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
                 case 5:connectSsh();break;
                 case 6:disconnectSsh();break;
-                case 7:disconnectSsh();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
+                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
                 case 0:terminal.scrollToBottom();break;
                 case 1:demo();break;
                 case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
@@ -347,71 +360,56 @@ public final class MainActivity extends Activity {
             }return true;
         });menu.show();
     }
-    private void connectSsh() {
-        java.io.File directory=new java.io.File(getFilesDir(),"ssh");
-        if(!new java.io.File(directory,"connection.properties").isFile()){
+    @Override protected void onStart(){
+        super.onStart();
+        bound=bindService(new Intent(this,SshSessionService.class),serviceConnection,BIND_AUTO_CREATE);
+    }
+    @Override protected void onStop(){
+        if(sshService!=null)sshService.removeObserver(serviceObserver);
+        detachServiceView();sshService=null;sshConnected=false;
+        if(bound){unbindService(serviceConnection);bound=false;}
+        super.onStop();
+    }
+    @Override protected void onSaveInstanceState(Bundle state){
+        state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
+        super.onSaveInstanceState(state);
+    }
+    private void updateSshView(){
+        if(destroyed||sshService==null)return;
+        TerminalSession remote=sshService.terminal();
+        if(remote!=null){
+            sshMode=true;
+            if(session!=remote){
+                terminal.setSession(null);
+                if(session!=null&&!serviceSession)session.close();
+                session=remote;serviceSession=true;terminal.setSession(session);
+            }
+            protocolBadge.setText("SSH");homeBadge.setText("SSH");
+        }
+        sshConnected=sshService.connected();
+        if(sshMode||sshService.status().equals("配置无效"))subtitle.setText("本机 · "+sshService.status());
+    }
+    private void detachServiceView(){
+        if(serviceSession){terminal.setSession(null);session=null;serviceSession=false;}
+    }
+    private void connectSsh(){
+        if(sshService==null){connectOnBind=true;return;}
+        if(!new java.io.File(getFilesDir(),"ssh/connection.properties").isFile()){
             toast("请先通过 scripts/local-ssh.py 配置本机 SSH");return;
         }
-        disconnectSsh();sshMode=true;sshConnected=false;
-        java.util.Properties config=new java.util.Properties();
-        try(java.io.InputStream in=new java.io.FileInputStream(new java.io.File(directory,"connection.properties"))){
-            config.load(in);autoReconnect="tmux".equals(config.getProperty("sessionMode"));
-        }catch(java.io.IOException|IllegalArgumentException error){subtitle.setText("本机 · 配置无效");toast("无法读取 SSH 配置");return;}
-        protocolBadge.setText("SSH");homeBadge.setText("SSH");
-        startSshAttempt();
+        if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},41);
+        startForegroundService(new Intent(this,SshSessionService.class).setAction(SshSessionService.CONNECT));
     }
-    private void startSshAttempt(){
-        if(destroyed)return;
-        retryTask=null;
-        final int generation=++sshGeneration;
-        final boolean[] firstOutput={true};
-        ssh=new SshTransport(new java.io.File(getFilesDir(),"ssh"),session.getColumns(),session.getRows(),new SshTransport.Listener(){
-            private boolean current(){return !destroyed && generation==sshGeneration;}
-            public void onState(String state,boolean connected){
-                if(!current())return;
-                sshConnected=connected;subtitle.setText("本机 · "+state);
-                if(connected){
-                    // A brief successful socket connection must not erase outage backoff.
-                    stableTask=()->{if(current()&&sshConnected)retryAttempt=0;};
-                    reconnectHandler.postDelayed(stableTask,10000);
-                }
-            }
-            public void onClosed(String state,boolean retryable){
-                if(!current())return;
-                ssh=null;sshConnected=false;
-                if(stableTask!=null){reconnectHandler.removeCallbacks(stableTask);stableTask=null;}
-                if(autoReconnect&&retryable){
-                    long delay=Math.min(15000,1000L<<Math.min(retryAttempt++,4));
-                    subtitle.setText("本机 · 已断开，"+(delay/1000)+" 秒后重连");
-                    retryTask=()->{if(current()&&autoReconnect)startSshAttempt();};
-                    reconnectHandler.postDelayed(retryTask,delay);
-                }else{
-                    autoReconnect=false;subtitle.setText("本机 · "+state);toast(state);
-                }
-            }
-            public void onOutput(byte[] bytes){
-                if(!current())return;
-                // Keep the last screen during outages; rebuild VT when new output arrives.
-                if(firstOutput[0]){
-                    firstOutput[0]=false;
-                    write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007");
-                }
-                byte[] replies=session.write(bytes);if(replies.length>0&&ssh!=null)ssh.send(replies);
-            }
-        });
-        ssh.connect();
-    }
-    private void disconnectSsh(){
-        autoReconnect=false;retryAttempt=0;sshGeneration++;
-        if(retryTask!=null){reconnectHandler.removeCallbacks(retryTask);retryTask=null;}
-        if(stableTask!=null){reconnectHandler.removeCallbacks(stableTask);stableTask=null;}
-        if(ssh!=null){ssh.close();ssh=null;}sshConnected=false;
-        if(sshMode)subtitle.setText("本机 · 已断开");
+    private void disconnectSsh(){if(sshService!=null)sshService.disconnect();}
+    private void returnOffline(){
+        if(sshService!=null){sshService.removeObserver(serviceObserver);detachServiceView();sshService.clearSession();sshService.observe(serviceObserver);}
+        if(session==null){session=new TerminalSession(40,20);terminal.setSession(session);}
     }
     private void sendInput(byte[] bytes) {
         String text=new String(bytes,StandardCharsets.UTF_8);
         if(ctrlArmed){setCtrl(false);if(text.length()==1&&text.charAt(0)>=64&&text.charAt(0)<128)text=Character.toString((char)(text.charAt(0)&31));}
-        if(sshMode){if(sshConnected&&ssh!=null)ssh.send(text.getBytes(StandardCharsets.UTF_8));else toast("SSH 未连接");return;}
+        if(sshMode){if(sshConnected&&sshService!=null)sshService.send(text.getBytes(StandardCharsets.UTF_8));else toast("SSH 未连接");return;}
         if(text.equals("\r")||text.equals("\n")){write("\r\n");return;}
         if(text.equals("\f")){write("\033[2J\033[H");return;}
         if(text.equals("\u007f")||text.equals("\b")){toast("退格");return;}
@@ -471,8 +469,9 @@ public final class MainActivity extends Activity {
         }
     }
     @Override protected void onDestroy(){
-        destroyed=true;disconnectSsh();
-        directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);session.close();
+        destroyed=true;
+        directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);
+        if(session!=null&&!serviceSession)session.close();
         sessionPreview.setImageDrawable(null);if(previewBitmap!=null)previewBitmap.recycle();
         super.onDestroy();
     }

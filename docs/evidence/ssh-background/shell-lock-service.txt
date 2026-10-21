@@ -1,0 +1,18 @@
+ACTIVITY MANAGER SERVICES (dumpsys activity services)
+  User 0 active services:
+  * ServiceRecord{4964cf4 u0 dev.ghostty.android.sample/.SshSessionService}
+    intent={cmp=dev.ghostty.android.sample/.SshSessionService}
+    packageName=dev.ghostty.android.sample
+    processName=dev.ghostty.android.sample
+    baseDir=/data/app/dev.ghostty.android.sample-ATUHaHmwq6KHV0BrIYFVkA==/base.apk
+    dataDir=/data/user/0/dev.ghostty.android.sample
+    app=ProcessRecord{eca62e1 9455:dev.ghostty.android.sample/u0a76}
+    isForeground=true foregroundId=41 foregroundNoti=Notification(channel=ssh_session pri=0 contentView=null vibrate=null sound=null defaults=0x0 flags=0x6a color=0x00000000 actions=1 vis=PRIVATE)
+    createTime=-6m33s692ms startingBgTimeout=--
+    lastActivity=-47s499ms restartTime=-6m33s692ms createdFromFg=true
+    startRequested=true delayedStop=false stopIfKilled=true callStart=true lastStartId=1
+    Bindings:
+    * IntentBindRecord{497cd97}:
+      intent={cmp=dev.ghostty.android.sample/.SshSessionService}
+      binder=android.os.BinderProxy@f10bb84
+      requested=true received=true hasBound=false doRebind=false

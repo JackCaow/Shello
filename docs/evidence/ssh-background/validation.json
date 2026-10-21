@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-21",
+  "scope": "Sample-only foreground SSH and main-thread VT ownership. API 27 ARM64 emulator; no business integration or Maven publication.",
+  "build": "Debug, R8 release, instrumentation APK and release lint passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 16,
+    "note": "Includes WakelockTimeout: the user-started notified session deliberately owns a non-timeout partial wake lock until disconnect/failure/destruction; notification-stop release was tested."
+  },
+  "instrumentation": {
+    "passed": 3,
+    "skipped": 1,
+    "note": "Explicit Activity.recreate() retained service/VT identity and a live connection; unknown host key rejection and error classification passed. Plain-shell exit test skipped for tmux."
+  },
+  "final_revision_note": "Added rejection of late Activity binding callbacks after the UI cycles. Final APK passed explicit recreate instrumentation and notification disconnect/resource cleanup. The UI-cycle installed APK hash is recorded separately.",
+  "limitations": [
+    "Normal screen-off only, 45 seconds per shell/vim; no forced deep Doze or vendor power policy test",
+    "API 33 notification permission and API 34 specialUse FGS path build but are not runtime-certified here",
+    "No automatic process resurrection; force-stop/process death stop the service",
+    "No long-duration battery/performance acceptance"
+  ],
+  "sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "4b0e9ada4b1e9fe97430809b0395cf87a36a088844f64805a47df27928739dbb",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "b0ff40ffbe630fe0866306c68d5aaf19b5dcdb37cac4a0f21644606e516a29c4",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "dfaa77328c8bf1f170429d452cd04f1c6c525db400088c722901f4c520aced66"
+  }
+}
