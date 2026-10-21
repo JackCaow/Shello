@@ -354,10 +354,10 @@ def resume_agent(provider, ident, attach=True):
         tmux = binary('tmux')
         # Existing process remains attachable even after its history falls outside the recent window.
         if subprocess.run([tmux, 'has-session', '-t', '=' + target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5).returncode == 0:
-            os.execv(tmux, [tmux, 'attach-session', '-t', '=' + target])
+            os.execv(tmux, [tmux, '-u', 'attach-session', '-t', '=' + target])
         resume_plan(provider, ident)
         command = shlex.join([sys.executable, str(Path(__file__).resolve()), 'agent-run', provider, ident])
-        os.execv(tmux, [tmux, 'new-session', '-A', '-s', target, command])
+        os.execv(tmux, [tmux, '-u', 'new-session', '-A', '-s', target, command])
     else:
         cwd, argv = resume_plan(provider, ident)
         os.chdir(cwd)

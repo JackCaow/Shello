@@ -53,6 +53,11 @@ class RecentTest(unittest.TestCase):
     def test_existing_tmux_attach_does_not_need_history(self):
         with patch.object(h,'binary',return_value='/test/tmux'),patch.object(h.subprocess,'run',return_value=Mock(returncode=0)),patch.object(h,'resume_plan',side_effect=AssertionError('must not read history')),patch.object(h.os,'execv',side_effect=SystemExit) as execute:
             with self.assertRaises(SystemExit):h.resume_agent('claude',C)
-        self.assertEqual(execute.call_args.args[1],['/test/tmux','attach-session','-t','=ghostty_agent_claude_'+C.replace('-','')])
+        self.assertEqual(execute.call_args.args[1],['/test/tmux','-u','attach-session','-t','=ghostty_agent_claude_'+C.replace('-','')])
+
+    def test_new_tmux_session_forces_utf8(self):
+        with patch.object(h,'binary',return_value='/test/tmux'),patch.object(h.subprocess,'run',return_value=Mock(returncode=1)),patch.object(h,'resume_plan',return_value=(str(self.cwd),[])),patch.object(h.os,'execv',side_effect=SystemExit) as execute:
+            with self.assertRaises(SystemExit):h.resume_agent('claude',C)
+        self.assertEqual(execute.call_args.args[1][:5],['/test/tmux','-u','new-session','-A','-s'])
 
 if __name__=='__main__':unittest.main()
