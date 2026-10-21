@@ -40,6 +40,18 @@ public final class TerminalApiTest {
             }
         }
     }
+    @Test public void testPasteFramingFollowsLiveTerminalMode(){
+        try(TerminalSession terminal=new TerminalSession(40,4)){
+            String text="中文 👨‍👩‍👧‍👦\nsecond line";
+            assertArrayEquals(bytes(text.replace('\n','\r')),terminal.encodePaste(text));
+            terminal.write(bytes("\033[?2004h"));assertArrayEquals(bytes("\033[200~"+text+"\033[201~"),terminal.encodePaste(text));
+            assertArrayEquals(new byte[0],terminal.encodePaste(""));
+            String filtered=new String(terminal.encodePaste("a\033[201~b\u0000c"),StandardCharsets.UTF_8);
+            assertEquals("\033[200~a [201~b c\033[201~",filtered);
+            assertArrayEquals(bytes("\r"),terminal.encodeKey(TerminalSession.Key.ENTER));
+            terminal.write(bytes("\033[?2004l"));assertArrayEquals(bytes(text.replace('\n','\r')),terminal.encodePaste(text));
+        }
+    }
     @Test public void testOwnershipAndClose() throws Exception {
         TerminalSession session=new TerminalSession(10,3);
         AtomicReference<Throwable> failure=new AtomicReference<>();

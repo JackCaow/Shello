@@ -15,6 +15,10 @@ final class ToolbarIcon extends Drawable {
     @Override public void draw(Canvas c){
         c.save();c.translate(getBounds().left,getBounds().top);c.scale(getBounds().width()/24f,getBounds().height()/24f);
         switch(name){
+            case "camera":c.drawRoundRect(2,6,22,21,3,3,p);line(c,7,6,9,3,15,3,17,6);c.drawCircle(12,13,4,p);break;
+            case "image":c.drawRoundRect(2,3,22,21,2,2,p);c.drawCircle(8,8,2,p);line(c,3,18,9,12,13,16,17,11,22,17);break;
+            case "file":line(c,14,2,5,2,5,22,20,22,20,8,14,2,14,8,20,8);line(c,9,13,16,13);line(c,9,17,16,17);break;
+            case "play":line(c,8,4,21,12,8,20,8,4);break;
             case "terminal":line(c,3,5,9,11,3,17);line(c,12,19,21,19);break;
             case "skip":line(c,3,3,16,12,3,21,3,3);line(c,21,3,21,21);break;
             case "inbox":line(c,3,3,21,3,23,14,23,21,1,21,1,14,3,3);line(c,1,14,8,14,10,17,14,17,16,14,23,14);break;

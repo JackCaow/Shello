@@ -1,0 +1,12 @@
+{
+  "claude": {
+    "phone_test_passed": true,
+    "reply_marker_seen": false,
+    "api_error_seen": true
+  },
+  "codex": {
+    "phone_test_passed": true,
+    "reply_marker_seen": true,
+    "api_error_seen": false
+  }
+}

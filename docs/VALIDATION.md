@@ -1,5 +1,13 @@
 # Validation
 
+## Staged attachments and actual Agent submission
+
+2026-10-22: the attachment + menu is now a styled source sheet with Camera, Photos or videos and Files. Up to four service-owned cards preserve draft text, show bounded image/video previews and progress/errors, and support individual removal. Attachments alone enable Send once uploads finish. Paths are composed only on explicit sending; rotation and tab switching retain the original attachment ownership. Camera output uses a non-exported, URI-granted provider and is cleaned after upload/cancellation.
+
+A real Codex TUI reproduced the reported failure: a literal text+Enter burst stayed in its input box. Mode-aware bracketed paste followed by a separate Enter submitted the same request. The library now exposes `TerminalSession.encodePaste` and `TerminalView.pasteText` through the upstream Ghostty encoder. Ordinary key/IME input remains literal. Two opt-in physical-phone SSH tests confirm actual submission to isolated Claude Code and Codex tmux windows. Codex returned the requested marker; Claude entered request processing but its upstream API failed, so a successful Claude model reply is not claimed.
+
+[Acceptance](evidence/attachments/README.md): all twelve attachment checks and six terminal API checks passed on Xiaomi API 36. API 27/API 35 each passed eight local attachment checks (four host-dependent checks skipped) and six terminal API checks. Physical host checks covered SFTP SHA-256/mode, host-pin rejection, card recreation/tab isolation/explicit Send, and synthetic camera/photo/video results uploaded to the local Mac over Tailscale. Media result callbacks are intercepted fixtures, not a claim of photographing real surroundings. Debug, instrumentation, release AAR, R8 release APK and debug lint builds passed. Fifteen original preference/profile files remained identical. No tag, release or Maven publication.
+
 ## Anchored composer menu and SFTP attachments
 
 2026-10-21: the composer menu anchors to the actual + button, retains keyboard state and follows visible-window changes, including landscape edge clamping. Attach file replaces the disabled placeholder and uses the system document picker, bounded streaming SFTP through the existing pinned SSH profile, progress/cancel/error states and a quoted path in the original session’s draft. Uploading never sends terminal input. Activity recreation now also preserves draft selection, and delayed window focus after dismissing a popup no longer loses the keyboard request.

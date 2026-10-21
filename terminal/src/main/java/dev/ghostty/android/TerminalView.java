@@ -73,6 +73,8 @@ public final class TerminalView extends FrameLayout {
     }
     public void scrollToBottom() { checkUi();touch.clear();if(session!=null)session.scroll(Integer.MAX_VALUE); }
     public void sendText(String text) { checkUi();emitInput(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+    /** Paste bulk text as one terminal operation; call sendKey(ENTER) separately to submit. */
+    public void pasteText(String text) { checkUi();if(session!=null)emitInput(session.encodePaste(text)); }
     public void sendKey(TerminalSession.Key key) { checkUi();if(session!=null)emitInput(session.encodeKey(key)); }
     private void sendKey(int index) { sendKey(TerminalSession.Key.values()[index]); }
     private void emitInput(byte[] bytes) {

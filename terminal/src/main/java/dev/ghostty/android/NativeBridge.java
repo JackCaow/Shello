@@ -13,6 +13,7 @@ final class NativeBridge {
     static native String frame(long handle);
     static native byte[] replies(long handle);
     static native byte[] key(long handle, int key);
+    static native byte[] paste(long handle, byte[] text);
     static native byte[] wheel(long handle, boolean down, float x, float y, int cellWidth, int cellHeight);
     static native byte[] selection(long handle, int start, int end);
     static native byte[] snapshot(long handle);

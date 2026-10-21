@@ -15,7 +15,10 @@ final class AttachmentTransfer implements AutoCloseable {
     static final long MAX_BYTES=50L*1024*1024;
     private final Context context;
     private final String profile;
-    private final Uri source;
+    final Uri source;
+    volatile String mime="application/octet-stream";
+    volatile android.graphics.Bitmap thumbnail;
+    private static final java.util.concurrent.ExecutorService WORKERS=java.util.concurrent.Executors.newFixedThreadPool(2);
     private final Runnable changed;
     private final Handler main=new Handler(Looper.getMainLooper());
     volatile String name="",path;
@@ -31,12 +34,12 @@ final class AttachmentTransfer implements AutoCloseable {
     AttachmentTransfer(Context context,String profile,Uri source,Runnable changed){
         this.context=context.getApplicationContext();this.profile=profile;this.source=source;this.changed=changed;
     }
-    void start(){new Thread(this::upload,"ssh-attachment").start();}
+    void start(){WORKERS.execute(this::upload);}
     private void signal(){main.post(()->{if(!cancelled)changed.run();});}
     private void upload(){
         String folder=null,partial=null;boolean complete=false;
         try{
-            if(!"content".equals(source.getScheme()))throw new IOException("Unsupported source");
+            check();if(!"content".equals(source.getScheme()))throw new IOException("Unsupported source");
             String display="attachment";long declared=-1;
             try(Cursor cursor=context.getContentResolver().query(source,new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE},null,null,null)){
                 if(cursor!=null&&cursor.moveToFirst()){
@@ -44,7 +47,9 @@ final class AttachmentTransfer implements AutoCloseable {
                     if(n>=0&&!cursor.isNull(n))display=cursor.getString(n);if(s>=0&&!cursor.isNull(s))declared=cursor.getLong(s);
                 }
             }
-            name=safeName(display);if(declared>MAX_BYTES)throw new TooLarge();signal();
+            name=safeName(display);if(declared>MAX_BYTES)throw new TooLarge();
+            String type=context.getContentResolver().getType(source);if(type!=null)mime=type;
+            thumbnail=thumbnail(context,source,mime);check();signal();
             input=context.getContentResolver().openInputStream(source);if(input==null)throw new IOException("Cannot read document");check();
             SshProfileStore store=new SshProfileStore(context);
             SshProfileStore.Draft credentials=store.read("fixture".equals(profile)?new File(context.getFilesDir(),"ssh"):store.directory(profile));
@@ -80,8 +85,34 @@ final class AttachmentTransfer implements AutoCloseable {
                 if(folder!=null)try{sftp.rmdir(folder);}catch(Exception ignored){}
             }
             if(sftp!=null)sftp.disconnect();Session ssh=session;if(ssh!=null)ssh.disconnect();
-            InputStream raw=input;if(raw!=null)try{raw.close();}catch(IOException ignored){}input=null;busy=false;signal();
+            InputStream raw=input;if(raw!=null)try{raw.close();}catch(IOException ignored){}input=null;AttachmentCameraProvider.remove(context,source);busy=false;signal();
         }
+    }
+    /** Decode on the transfer worker, keeping even large photos out of the UI heap. */
+    static android.graphics.Bitmap thumbnail(Context context,Uri source,String mime){
+        try{
+            if(mime.startsWith("image/")){
+                android.graphics.BitmapFactory.Options options=new android.graphics.BitmapFactory.Options();options.inJustDecodeBounds=true;
+                try(InputStream in=context.getContentResolver().openInputStream(source)){android.graphics.BitmapFactory.decodeStream(in,null,options);}
+                if(options.outWidth<=0||options.outHeight<=0)return null;
+                options.inSampleSize=1;while(Math.max(options.outWidth,options.outHeight)/(long)options.inSampleSize>512)options.inSampleSize*=2;
+                options.inJustDecodeBounds=false;
+                android.graphics.Bitmap decoded;try(InputStream in=context.getContentResolver().openInputStream(source)){decoded=android.graphics.BitmapFactory.decodeStream(in,null,options);}
+                if(decoded==null)return null;
+                try(InputStream in=context.getContentResolver().openInputStream(source)){
+                    int orientation=new android.media.ExifInterface(in).getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION,1);android.graphics.Matrix transform=new android.graphics.Matrix();
+                    switch(orientation){case 2:transform.setScale(-1,1);break;case 3:transform.setRotate(180);break;case 4:transform.setScale(1,-1);break;case 5:transform.setRotate(90);transform.postScale(-1,1);break;case 6:transform.setRotate(90);break;case 7:transform.setRotate(270);transform.postScale(-1,1);break;case 8:transform.setRotate(270);break;default:break;}
+                    if(!transform.isIdentity()){android.graphics.Bitmap rotated=android.graphics.Bitmap.createBitmap(decoded,0,0,decoded.getWidth(),decoded.getHeight(),transform,true);if(rotated!=decoded)decoded.recycle();decoded=rotated;}
+                }catch(Exception ignored){}
+                return decoded;
+            }
+            if(mime.startsWith("video/")){
+                android.media.MediaMetadataRetriever video=new android.media.MediaMetadataRetriever();
+                try{video.setDataSource(context,source);return video.getScaledFrameAtTime(-1,android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC,256,256);}
+                finally{video.release();} // close()/AutoCloseable is unavailable on API 27.
+            }
+        }catch(Exception|OutOfMemoryError ignored){/* A document remains attachable without a preview. */}
+        return null;
     }
     private void directory(String path)throws SftpException{
         SftpATTRS attributes;

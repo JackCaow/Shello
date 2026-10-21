@@ -21,7 +21,7 @@ public final class SshSessionService extends Service {
     final class LocalBinder extends Binder { SshSessionService service(){return SshSessionService.this;} }
     static final class Tab {
         final String id;final SshSessionConnection connection;
-        AttachmentTransfer attachment;
+        final ArrayList<AttachmentTransfer> attachments=new ArrayList<>();
         TerminalSession local;Bitmap preview;String caption="";String draft="";boolean draftMode;int draftSelectionStart=-1,draftSelectionEnd=-1;
         Tab(String id,SshSessionConnection connection){this.id=id;this.connection=connection;}
         boolean remote(){return connection!=null;}
@@ -99,17 +99,26 @@ public final class SshSessionService extends Service {
     }
     void openLocal(){Tab tab=add("local");select(tab.id);}
     void move(String id,int index){Tab tab=find(id);if(tab==null)return;tabs.remove(tab);tabs.add(Math.max(0,Math.min(index,tabs.size())),tab);persist();changed();}
+    static final int MAX_ATTACHMENTS=4;
     boolean startAttachment(String id,android.net.Uri uri){
-        Tab tab=find(id);if(tab==null||!tab.remote()||!tab.connection.connected||tab.attachment!=null&&tab.attachment.busy)return false;
+        Tab tab=find(id);if(tab==null||!tab.remote()||!tab.connection.connected||tab.attachments.size()>=MAX_ATTACHMENTS)return false;
         AttachmentTransfer upload=new AttachmentTransfer(this,tab.profile(),uri,()->{if(!destroyed&&find(id)==tab)changed();});
-        tab.attachment=upload;upload.start();changed();return true;
+        tab.attachments.add(upload);upload.start();changed();return true;
     }
-    void cancelAttachment(String id){Tab tab=find(id);if(tab!=null&&tab.attachment!=null){tab.attachment.close();tab.attachment=null;changed();}}
-    String takeAttachmentPath(String id){Tab tab=find(id);if(tab==null||tab.attachment==null||tab.attachment.busy||tab.attachment.path==null)return null;String path=tab.attachment.path;tab.attachment=null;return path;}
+    void removeAttachment(String id,AttachmentTransfer upload){Tab tab=find(id);if(tab!=null&&tab.attachments.remove(upload)){upload.close();changed();}}
+    void cancelAttachment(String id){Tab tab=find(id);if(tab!=null){for(AttachmentTransfer upload:tab.attachments)upload.close();tab.attachments.clear();changed();}}
+    static boolean attachmentsReady(Tab tab){if(tab==null)return true;for(AttachmentTransfer upload:tab.attachments)if(upload.busy||upload.path==null)return false;return true;}
+    /** No draft mutation or terminal input occurs before explicit Send. */
+    static String composeDraft(Tab tab,String text){
+        if(!attachmentsReady(tab))return null;
+        StringBuilder result=new StringBuilder(text);
+        if(tab!=null)for(AttachmentTransfer upload:tab.attachments){if(result.length()>0&&!Character.isWhitespace(result.charAt(result.length()-1)))result.append(' ');result.append(SshCommand.quote(upload.path));}
+        return result.toString();
+    }
     void close(String id){
         Tab tab=find(id);if(tab==null)return;
         mutating=true;
-        if(tab.attachment!=null){tab.attachment.close();tab.attachment=null;}
+        cancelAttachment(id);
         if(selected==tab){if(observer!=null)observer.detach();selected=null;}
         tabs.remove(tab);previews.remove(id);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
         if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
@@ -195,7 +204,7 @@ public final class SshSessionService extends Service {
         getSharedPreferences("language",0).unregisterOnSharedPreferenceChangeListener(languageChanged);
         AgentHub.get(this).keepAlive(false);
         destroyed=true;if(observer!=null){observer.detach();observer=null;}
-        for(Tab tab:tabs){if(tab.attachment!=null)tab.attachment.close();if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();tab.preview=null;}
+        for(Tab tab:tabs){for(AttachmentTransfer upload:tab.attachments)upload.close();if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();tab.preview=null;}
         if(wakeLock.isHeld())wakeLock.release();super.onDestroy();
     }
 }

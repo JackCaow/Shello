@@ -1,0 +1,8 @@
+
+dev.ghostty.android.sample.AttachmentTest:........
+
+Time: 11.164
+
+OK (12 tests)
+
+

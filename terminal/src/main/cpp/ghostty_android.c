@@ -198,6 +198,20 @@ JNIEXPORT jbyteArray JNICALL FN(replies)(JNIEnv *env,jclass cls,jlong h) {
     jbyteArray result=(*env)->NewByteArray(env,l->reply_len);
     if(result)(*env)->SetByteArrayRegion(env,result,0,l->reply_len,(jbyte *)l->replies);l->reply_len=0;return result;
 }
+JNIEXPORT jbyteArray JNICALL FN(paste)(JNIEnv *env,jclass cls,jlong h,jbyteArray text) {
+    jsize len=(*env)->GetArrayLength(env,text);
+    if(len>0x7fffffff-12){(*env)->ThrowNew(env,(*env)->FindClass(env,"java/lang/IllegalArgumentException"),"Paste is too large");return NULL;}
+    jbyte *data=(*env)->GetByteArrayElements(env,text,NULL);if(!data)return NULL;
+    size_t capacity=(size_t)len+12,written=0;char *buffer=malloc(capacity);
+    if(!buffer){(*env)->ReleaseByteArrayElements(env,text,data,JNI_ABORT);(*env)->ThrowNew(env,(*env)->FindClass(env,"java/lang/OutOfMemoryError"),"Paste encoding");return NULL;}
+    GhosttyTerminalModeConfig mode={.mode=GHOSTTY_MODE_BRACKETED_PASTE};
+    GhosttyResult result=ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_MODE,&mode);
+    if(result==GHOSTTY_SUCCESS)result=ghostty_paste_encode((char *)data,(size_t)len,mode.value,buffer,capacity,&written);
+    (*env)->ReleaseByteArrayElements(env,text,data,JNI_ABORT);check(env,result);
+    jbyteArray output=NULL;
+    if(result==GHOSTTY_SUCCESS){output=(*env)->NewByteArray(env,(jsize)written);if(output)(*env)->SetByteArrayRegion(env,output,0,(jsize)written,(jbyte *)buffer);}
+    free(buffer);return output;
+}
 JNIEXPORT jbyteArray JNICALL FN(key)(JNIEnv *env,jclass cls,jlong h,jint index) {
     GhosttyKey keys[]={GHOSTTY_KEY_ARROW_UP,GHOSTTY_KEY_ARROW_DOWN,GHOSTTY_KEY_ARROW_LEFT,GHOSTTY_KEY_ARROW_RIGHT,GHOSTTY_KEY_PAGE_UP,GHOSTTY_KEY_PAGE_DOWN,GHOSTTY_KEY_HOME,GHOSTTY_KEY_END,GHOSTTY_KEY_ENTER,GHOSTTY_KEY_TAB,GHOSTTY_KEY_ESCAPE,GHOSTTY_KEY_BACKSPACE};
     if(index<0||index>=12)return NULL;

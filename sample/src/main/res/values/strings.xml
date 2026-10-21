@@ -444,8 +444,21 @@
     <string name="attachment_requires_ssh">Connect to SSH before attaching a file.</string>
     <string name="file_picker_unavailable">No file picker is available.</string>
     <string name="attachment_uploaded">File uploaded. Review the path before sending.</string>
-    <string name="attachment_uploading">Uploading %1$s · %2$d KiB · Tap to cancel</string>
-    <string name="attachment_upload_failed">Upload failed. Check SFTP and network access, then try again. Tap to dismiss.</string>
-    <string name="attachment_too_large">Choose a file up to 50 MiB. Tap to dismiss.</string>
+    <string name="attachment_uploading">Uploading %1$s · %2$d KiB</string>
+    <string name="attachment_upload_failed">Upload failed. Check SFTP and network access, then try again. Remove the attachment to try again.</string>
+    <string name="attachment_too_large">Choose a file up to 50 MiB. Remove the attachment to try again.</string>
     <string name="dismiss">Dismiss</string>
+    <string name="add_attachment">Add attachment</string>
+    <string name="attachment_camera">Camera</string>
+    <string name="attachment_camera_hint">Take a new photo</string>
+    <string name="attachment_photos">Photos or videos</string>
+    <string name="attachment_photos_hint">Choose photos and videos</string>
+    <string name="attachment_file_hint">Upload a file to the host</string>
+    <string name="attachment_remove">Remove attachment: %1$s</string>
+    <string name="attachment_ready">Ready to send: %1$s</string>
+    <string name="attachment_limit">Add up to 4 attachments.</string>
+    <string name="attachment_camera_unavailable">Camera unavailable. Allow camera access or choose a file.</string>
+    <string name="attachment_preview">Attachment preview</string>
+    <string name="attachment_pending">Uploading…</string>
+    <string name="attachment_files">Files</string>
 </resources>

@@ -1,0 +1,8 @@
+
+dev.ghostty.android.sample.AgentSubmitDeviceTest:.
+
+Time: 4.802
+
+OK (1 test)
+
+

@@ -8,6 +8,7 @@
   <uses-permission android:name="android.permission.CAMERA"/>
   <uses-feature android:name="android.hardware.camera" android:required="false"/>
   <application android:name=".AppLanguage" android:localeConfig="@xml/locales_config" android:theme="@style/SampleTheme" android:label="Shello" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:supportsRtl="true">
+    <provider android:name=".AttachmentCameraProvider" android:authorities="${applicationId}.attachment-camera" android:exported="false" android:grantUriPermissions="true"/>
     <service android:name=".SshSessionService" android:exported="false" android:foregroundServiceType="specialUse">
       <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started interactive SSH terminal: maintain the remote session and terminal state while the UI is backgrounded; ongoing notification provides disconnect."/>
     </service>

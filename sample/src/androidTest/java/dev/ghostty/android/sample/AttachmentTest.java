@@ -17,46 +17,42 @@ import java.util.function.BooleanSupplier;
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
-public class AttachmentTest {
-    final Instrumentation inst=InstrumentationRegistry.getInstrumentation();final Context context=inst.getTargetContext();
-    MainActivity activity;
-    final Application.ActivityLifecycleCallbacks observer=new Application.ActivityLifecycleCallbacks(){
-        public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){if(a instanceof MainActivity)activity=(MainActivity)a;}
-        public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
-    };
-    @Before public void observe()throws Exception{
-        ((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(observer);
-        // OEM autostart restrictions otherwise block cold-starting this test-only app.
-        try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("content query --uri content://"+AttachmentTestProvider.AUTHORITY+"/normal");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
-    }
-    @After public void unobserve(){if(activity!=null)inst.runOnMainSync(()->{PopupWindow popup=(PopupWindow)field(activity,"connectionMenu");if(popup!=null)popup.dismiss();});((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(observer);}
-    Object field(Object target,String name){try{Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(target);}catch(Exception e){throw new AssertionError(e);}}
-    void call(Object target,String name){try{Method m=target.getClass().getDeclaredMethod(name);m.setAccessible(true);m.invoke(target);}catch(Exception e){throw new AssertionError(e);}}
-    void await(BooleanSupplier condition){long until=SystemClock.uptimeMillis()+20000;boolean[] ok={false};do{inst.runOnMainSync(()->ok[0]=condition.getAsBoolean());if(!ok[0])SystemClock.sleep(60);}while(!ok[0]&&SystemClock.uptimeMillis()<until);assertTrue("Destination/state did not settle",ok[0]);}
-    void open()throws Exception{try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -W -n dev.ghostty.android.sample/.MainActivity");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}await(()->activity!=null&&activity.hasWindowFocus()&&field(activity,"sshService")!=null);}
-    View find(View root,String description){if(description.contentEquals(root.getContentDescription()==null?"":root.getContentDescription()))return root;if(root instanceof ViewGroup)for(int i=0;i<((ViewGroup)root).getChildCount();i++){View v=find(((ViewGroup)root).getChildAt(i),description);if(v!=null)return v;}return null;}
-    void draftMode()throws Exception{inst.runOnMainSync(()->{call(activity,"resumeSession");try{Method m=MainActivity.class.getDeclaredMethod("setDraftMode",boolean.class,boolean.class);m.setAccessible(true);m.invoke(activity,true,false);}catch(Exception e){throw new AssertionError(e);}});SystemClock.sleep(250);}
-    void assertAnchored(){inst.runOnMainSync(()->{
-        PopupWindow popup=(PopupWindow)field(activity,"connectionMenu");assertTrue(popup.isShowing());View button=(View)field(activity,"addTextButton");int[] anchor=new int[2],bubble=new int[2];button.getLocationOnScreen(anchor);popup.getContentView().getLocationOnScreen(bubble);
-        int gap=anchor[1]-(bubble[1]+popup.getContentView().getHeight());assertTrue("Bubble must sit immediately above +, actual gap="+gap,gap>=0&&gap<=SampleUi.dp(activity,12));
-        Rect visible=new Rect();button.getWindowVisibleDisplayFrame(visible);int expectedX=Math.max(visible.left+SampleUi.dp(activity,12),Math.min(anchor[0],visible.right-popup.getWidth()-SampleUi.dp(activity,12)));
-        assertTrue("Bubble must align with + or clamp to the window edge: actual="+bubble[0]+", expected="+expectedX,Math.abs(expectedX-bubble[0])<=SampleUi.dp(activity,2));assertTrue("Bubble must avoid system bars",bubble[1]>=visible.top);assertNotNull(find(popup.getContentView(),AppLanguage.tr(R.string.attach_file)));
+public class AttachmentTest extends AttachmentTestSupport {
+    void assertSourceSheet(){inst.runOnMainSync(()->{
+        Dialog dialog=(Dialog)field(activity,"attachmentSheet");assertTrue(dialog.isShowing());View root=dialog.getWindow().getDecorView();
+        for(int id:new int[]{R.string.attachment_camera,R.string.attachment_photos,R.string.attachment_files}){View row=find(root,AppLanguage.tr(id));assertNotNull(row);Rect bounds=new Rect();assertTrue(row.getGlobalVisibleRect(bounds));assertTrue(bounds.height()>=SampleUi.dp(activity,64));}
+        int[] at=new int[2];root.getLocationOnScreen(at);assertTrue(at[1]>=0);assertTrue(root.getWidth()<=activity.getResources().getDisplayMetrics().widthPixels);
     });}
-    @Test public void menuStaysAtPlusWithKeyboardOpenAndClosed()throws Exception{
-        open();boolean[] original={false};inst.runOnMainSync(()->original[0]=(boolean)field(activity,"draftMode"));
-        try{draftMode();inst.runOnMainSync(()->call(activity,"hideKeyboard"));SystemClock.sleep(350);inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(350);assertAnchored();capture("menu-closed-keyboard");
-            inst.runOnMainSync(()->((PopupWindow)field(activity,"connectionMenu")).dismiss());await(()->activity.hasWindowFocus());inst.runOnMainSync(()->call(activity,"showKeyboard"));await(()->(boolean)field(activity,"imeVisible"));SystemClock.sleep(350);
-            inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(350);assertAnchored();capture("menu-open-keyboard");
-            inst.runOnMainSync(()->call(activity,"hideKeyboard"));SystemClock.sleep(350);assertAnchored();
-        }finally{inst.runOnMainSync(()->{PopupWindow popup=(PopupWindow)field(activity,"connectionMenu");if(popup!=null)popup.dismiss();call(activity,"hideKeyboard");try{Method m=MainActivity.class.getDeclaredMethod("setDraftMode",boolean.class,boolean.class);m.setAccessible(true);m.invoke(activity,original[0],false);}catch(Exception e){throw new AssertionError(e);}});}
+    void closeSheet(){inst.runOnMainSync(()->{Dialog dialog=(Dialog)field(activity,"attachmentSheet");if(dialog!=null)dialog.dismiss();});}
+    @Test public void sourceSheetShowsAllSourcesWithKeyboardOpenAndClosed()throws Exception{
+        open();draftMode();try{inst.runOnMainSync(()->call(activity,"hideKeyboard"));SystemClock.sleep(350);inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(350);assertSourceSheet();capture("sources-portrait");
+            inst.runOnMainSync(()->{Dialog dialog=(Dialog)field(activity,"attachmentSheet");View panel=((android.widget.ScrollView)((ViewGroup)dialog.getWindow().getDecorView().findViewById(android.R.id.content)).getChildAt(0)).getChildAt(0);long at=SystemClock.uptimeMillis();for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_MOVE,MotionEvent.ACTION_UP}){MotionEvent touch=MotionEvent.obtain(at,at+20,action,SampleUi.dp(activity,40),SampleUi.dp(activity,action==MotionEvent.ACTION_DOWN?10:90),0);panel.dispatchTouchEvent(touch);touch.recycle();}assertFalse("Dragging the sheet handle area must dismiss",dialog.isShowing());});closeSheet();
+            await(()->activity.hasWindowFocus());inst.runOnMainSync(()->call(activity,"showKeyboard"));await(()->(boolean)field(activity,"imeVisible"));inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(500);assertSourceSheet();
+        }finally{closeSheet();inst.runOnMainSync(()->call(activity,"hideKeyboard"));}
     }
-    void capture(String name)throws Exception{
-        android.graphics.Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);File dir=new File(context.getCacheDir(),"attachment-review");assertTrue(dir.isDirectory()||dir.mkdirs());try(FileOutputStream out=new FileOutputStream(new File(dir,name+".png"))){image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}finally{image.recycle();}
-    }
-    @Test public void menuStaysAtPlusInLandscape()throws Exception{
+    @Test public void sourceSheetFitsLandscape()throws Exception{
         open();int before=activity.getRequestedOrientation();
-        try{inst.runOnMainSync(()->activity.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));await(()->activity.hasWindowFocus()&&!activity.isDestroyed()&&activity.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE);draftMode();inst.runOnMainSync(()->call(activity,"hideKeyboard"));SystemClock.sleep(350);inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(350);assertAnchored();capture("landscape-menu");}
-        finally{inst.runOnMainSync(()->{PopupWindow menu=(PopupWindow)field(activity,"connectionMenu");if(menu!=null)menu.dismiss();activity.setRequestedOrientation(before);});SystemClock.sleep(500);}
+        try{inst.runOnMainSync(()->activity.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));await(()->activity.hasWindowFocus()&&!activity.isDestroyed()&&activity.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE);draftMode();inst.runOnMainSync(()->call(activity,"hideKeyboard"));SystemClock.sleep(350);inst.runOnMainSync(()->((View)field(activity,"addTextButton")).performClick());SystemClock.sleep(350);
+            inst.runOnMainSync(()->{Dialog dialog=(Dialog)field(activity,"attachmentSheet");assertTrue(dialog.isShowing());View decor=dialog.getWindow().getDecorView();int[] at=new int[2];decor.getLocationOnScreen(at);assertTrue(at[1]>=0);assertTrue(decor.getHeight()<=activity.getResources().getDisplayMetrics().heightPixels);});capture("sources-landscape");}
+        finally{closeSheet();inst.runOnMainSync(()->activity.setRequestedOrientation(before));SystemClock.sleep(500);}
+    }
+    @Test public void stagedAttachmentsComposeOnlyWhenReadyAndKeepTextIndependent(){
+        SshSessionService.Tab tab=new SshSessionService.Tab("local",null);AttachmentTransfer first=new AttachmentTransfer(context,"unused",AttachmentTestProvider.uri("normal"),()->{});tab.attachments.add(first);
+        assertNull(SshSessionService.composeDraft(tab,"draft"));first.busy=false;assertNull(SshSessionService.composeDraft(tab,"draft"));
+        first.path="/tmp/中文 ' file.png";assertEquals(SshCommand.quote(first.path),SshSessionService.composeDraft(tab,""));assertEquals("draft "+SshCommand.quote(first.path),SshSessionService.composeDraft(tab,"draft"));
+        AttachmentTransfer second=new AttachmentTransfer(context,"unused",AttachmentTestProvider.uri("normal"),()->{});second.busy=false;second.path="/tmp/two.mp4";tab.attachments.add(second);assertEquals("draft "+SshCommand.quote(first.path)+" "+SshCommand.quote(second.path),SshSessionService.composeDraft(tab,"draft "));assertEquals(2,tab.attachments.size());
+        tab.attachments.remove(first);assertEquals("draft "+SshCommand.quote(second.path),SshSessionService.composeDraft(tab,"draft"));
+    }
+    @Test public void cameraOutputIsNarrowAndThumbnailIsBounded()throws Exception{
+        android.net.Uri uri=AttachmentCameraProvider.create(context);
+        try{android.graphics.Bitmap image=android.graphics.Bitmap.createBitmap(2048,1024,android.graphics.Bitmap.Config.ARGB_8888);image.eraseColor(android.graphics.Color.GREEN);try(OutputStream out=context.getContentResolver().openOutputStream(uri)){assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.JPEG,90,out));}image.recycle();
+            android.media.ExifInterface exif=new android.media.ExifInterface(AttachmentCameraProvider.file(context,uri).getAbsolutePath());exif.setAttribute(android.media.ExifInterface.TAG_ORIENTATION,"6");exif.saveAttributes();
+            android.graphics.Bitmap preview=AttachmentTransfer.thumbnail(context,uri,"image/jpeg");assertNotNull(preview);assertTrue(preview.getWidth()<=512&&preview.getHeight()<=512);assertTrue("Photo orientation must follow EXIF",preview.getHeight()>preview.getWidth());preview.recycle();
+            for(String path:new String[]{"../shared_prefs/settings.xml","not-a-uuid.jpg","a/b.jpg"})try{AttachmentCameraProvider.file(context,android.net.Uri.parse("content://"+context.getPackageName()+".attachment-camera/"+path));fail("Camera provider accepted unrelated path");}catch(FileNotFoundException expected){}
+        }finally{AttachmentCameraProvider.remove(context,uri);assertFalse(AttachmentCameraProvider.file(context,uri).exists());}
+    }
+    @Test public void photoAndVideoThumbnailsDecodeOnSupportedApi(){
+        for(String fixture:new String[]{"photo","video"}){android.graphics.Bitmap preview=AttachmentTransfer.thumbnail(context,AttachmentTestProvider.uri(fixture),fixture.equals("photo")?"image/png":"video/mp4");assertNotNull(fixture+" thumbnail unavailable on API "+Build.VERSION.SDK_INT,preview);assertTrue(preview.getWidth()<=512&&preview.getHeight()<=512);preview.recycle();}
     }
     @Test public void cancelledTransferNeverPublishesAPath()throws Exception{
         java.util.concurrent.atomic.AtomicBoolean published=new java.util.concurrent.atomic.AtomicBoolean();AttachmentTransfer transfer=new AttachmentTransfer(context,"not-a-profile",AttachmentTestProvider.uri("normal"),()->published.set(true));transfer.close();transfer.start();await(()->!transfer.busy);assertNull(transfer.path);assertEquals(0,transfer.bytes);assertFalse(published.get());
@@ -71,8 +67,6 @@ public class AttachmentTest {
         AttachmentTransfer large=new AttachmentTransfer(context,"not-a-profile",AttachmentTestProvider.uri("oversize"),()->{});large.start();await(()->!large.busy);assertEquals(R.string.attachment_too_large,large.failure);assertNull(large.path);
         AttachmentTransfer missing=new AttachmentTransfer(context,"not-a-profile",AttachmentTestProvider.uri("missing"),()->{});missing.start();await(()->!missing.busy);assertNull(missing.path);
     }
-    String profile(){String host=InstrumentationRegistry.getArguments().getString("attachmentHost");assumeNotNull(host);for(SshProfileStore.Entry e:new SshProfileStore(context).list())if(host.equals(e.host))return e.id;throw new AssertionError("Saved SSH host missing");}
-    String run(String profile,String command)throws Exception{try(SshCommand ssh=new SshCommand()){return ssh.run(context,profile,command,null);}}
     void cleanup(String profile,String path)throws Exception{if(path==null)return;String parent=path.substring(0,path.lastIndexOf('/'));assertTrue(parent.matches(".*/shello/attachments/[0-9a-f-]{36}"));run(profile,"rm -f -- "+SshCommand.quote(path)+"; rmdir -- "+SshCommand.quote(parent));}
     void verify(String profile,String path)throws Exception{
         assertNotNull(path);assertTrue(path.endsWith("/"+AttachmentTransfer.safeName(AttachmentTestProvider.NAME)));
@@ -90,16 +84,57 @@ public class AttachmentTest {
         try{AttachmentTransfer transfer=new AttachmentTransfer(context,wrong,AttachmentTestProvider.uri("normal"),()->{});transfer.start();await(()->!transfer.busy);assertNull("Untrusted upload accepted",transfer.path);assertTrue(transfer.diagnostic,transfer.failure==R.string.server_fingerprint_mismatch_connection_stopped||transfer.failure==R.string.server_fingerprint_mismatch_connection_stopped_verify_the_key_wit);}
         finally{store.delete(wrong);}
     }
-    @Test public void pickerResultSurvivesActivityRecreationAndInsertsPathOnce()throws Exception{
-        String profile=profile();open();await(()->((SshSessionService)field(activity,"sshService")).connected());draftMode();SshSessionService[] service={null};SshSessionService.Tab[] original={null};String[] before={null},path={null};boolean[] mode={false};
-        inst.runOnMainSync(()->{service[0]=(SshSessionService)field(activity,"sshService");original[0]=service[0].selected();assertNotNull(original[0]);assertEquals(profile,original[0].profile());assertTrue(service[0].connected());EditText draft=(EditText)field(activity,"draft");before[0]=draft.getText().toString();mode[0]=(boolean)field(activity,"draftMode");draft.setText("inspect ");draft.setSelection(draft.length());});
+    @Test public void pickerResultSurvivesRecreationAsCardWithoutMutatingDraft()throws Exception{
+        String profile=profile();open();SshSessionService initial=(SshSessionService)field(activity,"sshService");String previousTab=initial.selected()==null?null:initial.selected().id;
+        String active=new SshProfileStore(context).activeId();boolean hadLocal=initial.find("local")!=null;
+        if(temporaryProfile!=null){inst.runOnMainSync(()->SshSessionService.requestConnect(context,profile));await(()->initial.selected()!=null&&profile.equals(initial.selected().profile())&&initial.connected());}else await(initial::connected);
+        draftMode();SshSessionService[] service={null};SshSessionService.Tab[] original={null};String[] before={null},path={null};boolean[] mode={false};
+        inst.runOnMainSync(()->{service[0]=(SshSessionService)field(activity,"sshService");original[0]=service[0].selected();assertNotNull(original[0]);assertEquals(profile,original[0].profile());assertTrue(original[0].attachments.isEmpty());EditText draft=(EditText)field(activity,"draft");before[0]=draft.getText().toString();mode[0]=(boolean)field(activity,"draftMode");draft.setText("inspect ");draft.setSelection(3);});
+        dev.ghostty.android.TerminalView terminal=(dev.ghostty.android.TerminalView)field(activity,"terminal");dev.ghostty.android.TerminalView.Listener prior=(dev.ghostty.android.TerminalView.Listener)field(terminal,"listener");ByteArrayOutputStream submitted=new ByteArrayOutputStream();
+        inst.runOnMainSync(()->terminal.setListener(new dev.ghostty.android.TerminalView.Listener(){public void onInput(byte[] bytes){submitted.write(bytes,0,bytes.length);}public void onResize(int c,int r){prior.onResize(c,r);}}));
         IntentFilter filter=new IntentFilter(Intent.ACTION_OPEN_DOCUMENT);filter.addCategory(Intent.CATEGORY_OPENABLE);filter.addDataType("*/*");
         Instrumentation.ActivityMonitor picker=inst.addMonitor(filter,new Instrumentation.ActivityResult(Activity.RESULT_OK,new Intent().setData(AttachmentTestProvider.uri("normal"))),true);
         try{
-            inst.runOnMainSync(()->call(activity,"chooseAttachment"));await(()->original[0].attachment!=null);assertTrue("Expected file picker interception",picker.getHits()>0);MainActivity previous=activity;inst.runOnMainSync(activity::recreate);await(()->activity!=previous&&activity.hasWindowFocus()&&field(activity,"sshService")!=null);
-            await(()->{String value=((EditText)field(activity,"draft")).getText().toString();return value.startsWith("inspect '")&&original[0].attachment==null;});
-            inst.runOnMainSync(()->{String value=((EditText)field(activity,"draft")).getText().toString();String quoted=value.substring("inspect ".length());assertTrue(quoted.endsWith("'"));path[0]=quoted.substring(1,quoted.length()-1).replace("'\\''","'");assertEquals("inspect "+SshCommand.quote(path[0]),value);assertTrue((boolean)field(activity,"draftMode"));});verify(profile,path[0]);
-            inst.runOnMainSync(()->call(activity,"updateSshView"));inst.runOnMainSync(()->assertEquals("inspect "+SshCommand.quote(path[0]),((EditText)field(activity,"draft")).getText().toString()));
-        }finally{inst.removeMonitor(picker);inst.runOnMainSync(()->{service[0].cancelAttachment(original[0].id);((EditText)field(activity,"draft")).setText(before[0]);original[0].draft=before[0];original[0].draftMode=mode[0];});cleanup(profile,path[0]);}
+            inst.runOnMainSync(()->call(activity,"chooseAttachment"));await(()->!original[0].attachments.isEmpty());assertTrue("Expected file picker interception",picker.getHits()>0);MainActivity previous=activity;inst.runOnMainSync(activity::recreate);await(()->activity!=previous&&activity.hasWindowFocus()&&field(activity,"sshService")!=null);
+            await(()->!original[0].attachments.get(0).busy);inst.runOnMainSync(()->{AttachmentTransfer upload=original[0].attachments.get(0);assertNotNull(upload.diagnostic,upload.path);path[0]=upload.path;assertEquals("inspect ",((EditText)field(activity,"draft")).getText().toString());assertEquals(3,((EditText)field(activity,"draft")).getSelectionStart());assertEquals(1,((LinearLayout)field(activity,"attachmentCards")).getChildCount());assertTrue(((View)field(activity,"sendButton")).isEnabled());});verify(profile,path[0]);capture("staged-file");
+            // Recreation installs a new terminal listener; replace it before the explicit Send check.
+            dev.ghostty.android.TerminalView current=(dev.ghostty.android.TerminalView)field(activity,"terminal");dev.ghostty.android.TerminalView.Listener currentPrior=(dev.ghostty.android.TerminalView.Listener)field(current,"listener");
+            inst.runOnMainSync(()->{current.setListener(new dev.ghostty.android.TerminalView.Listener(){public void onInput(byte[] bytes){submitted.write(bytes,0,bytes.length);}public void onResize(int c,int r){currentPrior.onResize(c,r);}});assertEquals(0,submitted.size());});
+            inst.runOnMainSync(()->{((EditText)field(activity,"draft")).setText("");assertTrue("Attachment-only Send must be enabled",((View)field(activity,"sendButton")).isEnabled());service[0].openLocal();assertEquals(1,original[0].attachments.size());assertEquals(0,((LinearLayout)field(activity,"attachmentCards")).getChildCount());service[0].select(original[0].id);assertEquals(1,((LinearLayout)field(activity,"attachmentCards")).getChildCount());assertEquals(0,submitted.size());
+                try{Method send=MainActivity.class.getDeclaredMethod("sendDraft",boolean.class);send.setAccessible(true);send.invoke(activity,true);}catch(Exception error){throw new AssertionError(error);}
+                assertEquals(new String(original[0].terminal().encodePaste(SshCommand.quote(path[0])),StandardCharsets.UTF_8)+new String(original[0].terminal().encodeKey(dev.ghostty.android.TerminalSession.Key.ENTER),StandardCharsets.UTF_8),new String(submitted.toByteArray(),StandardCharsets.UTF_8));assertTrue(original[0].attachments.isEmpty());assertFalse(((View)field(activity,"sendButton")).isEnabled());current.setListener(currentPrior);});
+        }finally{inst.removeMonitor(picker);inst.runOnMainSync(()->{service[0].select(original[0].id);service[0].cancelAttachment(original[0].id);((EditText)field(activity,"draft")).setText(before[0]);original[0].draft=before[0];original[0].draftMode=mode[0];if(!hadLocal)service[0].close("local");if(temporaryProfile!=null)service[0].closeProfile(temporaryProfile);if(previousTab!=null)service[0].select(previousTab);
+                context.getSharedPreferences("ssh_profiles",0).edit().putString("active",active).commit();});cleanup(profile,path[0]);}
     }
+    @Test public void mediaAndCameraResultsStageRemovablePreviews()throws Exception{
+        String profile=profile();open();SshSessionService service=(SshSessionService)field(activity,"sshService");String previous=service.selected()==null?null:service.selected().id;String active=new SshProfileStore(context).activeId();
+        if(temporaryProfile!=null){inst.runOnMainSync(()->SshSessionService.requestConnect(context,profile));await(()->service.selected()!=null&&profile.equals(service.selected().profile())&&service.connected());}else await(service::connected);
+        draftMode();SshSessionService.Tab tab=service.selected();assertTrue(tab.attachments.isEmpty());ArrayList<String> paths=new ArrayList<>();
+        try{
+            for(String fixture:new String[]{"photo","video"}){
+                IntentFilter filter=new IntentFilter(Build.VERSION.SDK_INT>=33?android.provider.MediaStore.ACTION_PICK_IMAGES:Intent.ACTION_OPEN_DOCUMENT);
+                if(Build.VERSION.SDK_INT<33){filter.addCategory(Intent.CATEGORY_OPENABLE);filter.addDataType("*/*");}
+                Instrumentation.ActivityMonitor picker=inst.addMonitor(filter,new Instrumentation.ActivityResult(Activity.RESULT_OK,new Intent().setData(AttachmentTestProvider.uri(fixture))),true);
+                try{inst.runOnMainSync(()->{try{Method method=MainActivity.class.getDeclaredMethod("chooseAttachmentSource",int.class);method.setAccessible(true);method.invoke(activity,1);}catch(Exception error){throw new AssertionError(error);}});await(()->!tab.attachments.isEmpty()&&!tab.attachments.get(tab.attachments.size()-1).busy);assertTrue(picker.getHits()>0);
+                    inst.runOnMainSync(()->{AttachmentTransfer transfer=tab.attachments.get(tab.attachments.size()-1);assertNotNull(transfer.diagnostic,transfer.path);paths.add(transfer.path);assertNotNull("Media thumbnail missing",transfer.thumbnail);assertTrue(transfer.mime.startsWith(fixture.equals("photo")?"image/":"video/"));assertEquals("",((EditText)field(activity,"draft")).getText().toString());});
+                }finally{inst.removeMonitor(picker);}
+            }
+            capture("staged-media");
+            // Camera result uses a private output URI instead of trusting a returned arbitrary file.
+            if(context.checkSelfPermission(android.Manifest.permission.CAMERA)==android.content.pm.PackageManager.PERMISSION_GRANTED){
+                Instrumentation.ActivityMonitor camera=new Instrumentation.ActivityMonitor(){@Override public Instrumentation.ActivityResult onStartActivity(Intent intent){
+                    if(!android.provider.MediaStore.ACTION_IMAGE_CAPTURE.equals(intent.getAction()))return null;
+                    android.net.Uri output=intent.getParcelableExtra(android.provider.MediaStore.EXTRA_OUTPUT);assertNotNull(output);assertNotNull(intent.getClipData());assertTrue((intent.getFlags()&Intent.FLAG_GRANT_WRITE_URI_PERMISSION)!=0);
+                    try(OutputStream out=context.getContentResolver().openOutputStream(output)){android.graphics.Bitmap image=android.graphics.Bitmap.createBitmap(120,80,android.graphics.Bitmap.Config.ARGB_8888);image.eraseColor(android.graphics.Color.BLUE);image.compress(android.graphics.Bitmap.CompressFormat.JPEG,90,out);image.recycle();}catch(IOException error){throw new AssertionError(error);}
+                    return new Instrumentation.ActivityResult(Activity.RESULT_OK,null);
+                }};inst.addMonitor(camera);
+                try{inst.runOnMainSync(()->{try{Method method=MainActivity.class.getDeclaredMethod("chooseAttachmentSource",int.class);method.setAccessible(true);method.invoke(activity,0);}catch(Exception error){throw new AssertionError(error);}});
+                    await(()->tab.attachments.size()==3&&!tab.attachments.get(2).busy);inst.runOnMainSync(()->{AttachmentTransfer transfer=tab.attachments.get(2);assertNotNull(transfer.diagnostic,transfer.path);paths.add(transfer.path);assertNotNull(transfer.thumbnail);assertFalse(AttachmentCameraProviderExists(transfer.source));});
+                }finally{inst.removeMonitor(camera);}
+            }
+            inst.runOnMainSync(()->{assertEquals(paths.size(),((LinearLayout)field(activity,"attachmentCards")).getChildCount());AttachmentTransfer first=tab.attachments.get(0);View remove=find((View)field(activity,"attachmentCards"),AppLanguage.tr(R.string.attachment_remove,first.name));assertNotNull(remove);remove.performClick();assertFalse(tab.attachments.contains(first));assertEquals(paths.size()-1,tab.attachments.size());});
+        }finally{inst.runOnMainSync(()->{service.cancelAttachment(tab.id);if(temporaryProfile!=null)service.closeProfile(temporaryProfile);if(previous!=null)service.select(previous);context.getSharedPreferences("ssh_profiles",0).edit().putString("active",active).commit();});for(String path:paths)cleanup(profile,path);}
+    }
+    boolean AttachmentCameraProviderExists(android.net.Uri uri){try{return AttachmentCameraProvider.file(context,uri).exists();}catch(IOException error){throw new AssertionError(error);}}
+
 }

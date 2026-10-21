@@ -51,6 +51,12 @@ public final class TerminalSession implements AutoCloseable {
     public void scroll(int delta) { checkOpen(); NativeBridge.scroll(handle, delta); changed(false); }
     public byte[] encodeKey(Key key) { checkOpen(); return NativeBridge.key(handle, Objects.requireNonNull(key).ordinal()); }
 
+    /** Encode a bulk text insertion using current bracketed-paste mode. Does not submit Enter. */
+    public byte[] encodePaste(String text) {
+        checkOpen();Objects.requireNonNull(text,"text");
+        return text.isEmpty()?new byte[0]:NativeBridge.paste(handle,text.getBytes(StandardCharsets.UTF_8));
+    }
+
     // View geometry is normalized to integer cell dimensions for the native encoder.
     byte[] encodeWheel(boolean down, float x, float y, int cellWidth, int cellHeight) {
         checkOpen();return NativeBridge.wheel(handle, down, x, y, cellWidth, cellHeight);
