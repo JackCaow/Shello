@@ -62,6 +62,7 @@ public final class MainActivity extends LocalizedActivity {
     private android.app.AlertDialog connectionDeleteDialog,infoDialog;
     private FrameLayout stage, viewport;
     private ScrollView home;
+    private LinearLayout homePage;
     private View addConnection;
     private android.app.Dialog newConnectionDialog,tmuxDialog;private String connectingProfile,sessionPickerProfile;
     private AgentHub agentHub;
@@ -326,13 +327,15 @@ public final class MainActivity extends LocalizedActivity {
         pad.setY(Math.max(0,Math.min(pad.getY(),viewport.getHeight()-pad.getHeight())));
     }
     private void buildHome() {
-        home=new ScrollView(this);home.setClipToPadding(false);home.setBackground(new HomeBackdrop());
+        homePage=column();homePage.setBackground(new HomeBackdrop());
+        home=new ScrollView(this);home.setClipToPadding(false);
         LinearLayout content=column();content.setClipChildren(false);int inset=dp(getResources().getConfiguration().screenWidthDp>=600?24:16);content.setPadding(inset,0,inset,dp(110));home.addView(AdaptiveLayout.centered(this,content,1200,null));
-        LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        LinearLayout top=row();top.setPadding(inset,0,inset,0);top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         top.addView(SampleUi.header(this,"inbox",tr(R.string.agent_inbox),MUTED,()->startActivity(new Intent(this,AgentActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));
-        top.addView(SampleUi.header(this,"settings",tr(R.string.settings),MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
+        top.addView(SampleUi.header(this,"settings",tr(R.string.settings),MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));homePage.addView(AdaptiveLayout.centered(this,top,1200,null),new LinearLayout.LayoutParams(-1,dp(56)));
+        homePage.addView(home,new LinearLayout.LayoutParams(-1,0,1));
         AdaptiveLayout.Columns homeColumns=new AdaptiveLayout.Columns(this,840,24);content.addView(homeColumns,new LinearLayout.LayoutParams(-1,-2));
-        overview=new SessionOverview(this,stage,home,new SessionOverview.Actions(){
+        overview=new SessionOverview(this,stage,homePage,new SessionOverview.Actions(){
             public void open(String id){openTab(id);}public void close(String id){closeTab(id);}public void closeAll(){closeAllTabs();}
             public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
         });homeColumns.addView(overview.view());
@@ -350,7 +353,7 @@ public final class MainActivity extends LocalizedActivity {
                 card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(new Intent(this,SettingsActivity.class).putExtra("page",index==3?"theme":index==4?"shortcuts":"gestures"));}});
                 LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(112),dp(100));cp.rightMargin=dp(8);cards.addView(card,cp);}
         }
-        stage.addView(home,new FrameLayout.LayoutParams(-1,-1));home.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);
+        stage.addView(homePage,new FrameLayout.LayoutParams(-1,-1));homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);
         addConnection=SampleUi.header(this,"plus",tr(R.string.new_ssh_connection),Color.BLACK,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
     }
     private final class HomeBackdrop extends android.graphics.drawable.Drawable {
@@ -410,7 +413,7 @@ public final class MainActivity extends LocalizedActivity {
         }
     }
     private void minimize() {
-        rememberTab();hideKeyboard();setCtrl(false);minimized=true;sheet.setVisibility(View.INVISIBLE);home.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
+        rememberTab();hideKeyboard();setCtrl(false);minimized=true;sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
         if(overview!=null&&sshService!=null)overview.refresh(sshService.tabs());
     }
     private void openTab(String id){
@@ -427,7 +430,7 @@ public final class MainActivity extends LocalizedActivity {
     private void closeAllTabs(){
         if(sshService==null)return;shownTab=null;draft.setText("");sshService.closeAll();minimize();
     }
-    private void resumeSession(){minimized=false;home.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
+    private void resumeSession(){minimized=false;homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
     @Override public void onBackPressed() {
         if(overview!=null&&overview.back())return;
         if(minimized){super.onBackPressed();return;}
@@ -516,7 +519,7 @@ public final class MainActivity extends LocalizedActivity {
         bound=bindService(new Intent(this,SshSessionService.class),serviceConnection,BIND_AUTO_CREATE);
     }
     @Override protected void onResume(){
-        super.onResume();previewHandler.removeCallbacks(previewCheckpoint);previewHandler.postDelayed(previewCheckpoint,5000);if(home!=null&&guideShown!=getSharedPreferences("appearance",0).getBoolean("guide",true)){overview.dismiss();stage.removeView(home);stage.removeView(addConnection);buildHome();if(minimized)minimize();}refreshSavedConnections();applyAppearance();
+        super.onResume();previewHandler.removeCallbacks(previewCheckpoint);previewHandler.postDelayed(previewCheckpoint,5000);if(home!=null&&guideShown!=getSharedPreferences("appearance",0).getBoolean("guide",true)){overview.dismiss();stage.removeView(homePage);stage.removeView(addConnection);buildHome();if(minimized)minimize();}refreshSavedConnections();applyAppearance();
         if(sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){

@@ -52,6 +52,35 @@ public class AdaptiveLayoutTest {
         SystemClock.sleep(350);Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);File dir=new File(context.getCacheDir(),"adaptive-review");assertTrue(dir.isDirectory()||dir.mkdirs());
         try(FileOutputStream out=new FileOutputStream(new File(dir,name+".png"))){image.compress(Bitmap.CompressFormat.PNG,100,out);}finally{image.recycle();}}
 
+    @Test public void homeNavigationStaysFixedWhileContentScrolls()throws Exception{
+        open(MainActivity.class);await(()->field(current,"sshService")!=null);
+        int[] before=new int[2];ScrollView[] scroller=new ScrollView[1];View[] settings=new View[1];
+        inst.runOnMainSync(()->{
+            call(current,"minimize");scroller[0]=(ScrollView)field(current,"home");
+            settings[0]=find(decor(),AppLanguage.tr(R.string.settings));assertNotNull(settings[0]);settings[0].getLocationOnScreen(before);
+            // Ensure real overflow even on an empty tablet; this fixture never touches saved profiles.
+            ViewGroup content=(ViewGroup)((ViewGroup)scroller[0].getChildAt(0)).getChildAt(0);
+            content.addView(new View(current),new ViewGroup.LayoutParams(1,dp(1400)));
+        });inst.waitForIdleSync();
+        inst.runOnMainSync(()->scroller[0].scrollTo(0,dp(400)));inst.waitForIdleSync();
+        inst.runOnMainSync(()->{
+            assertTrue("Content did not scroll",scroller[0].getScrollY()>0);
+            int[] after=new int[2];settings[0].getLocationOnScreen(after);assertArrayEquals("Navigation moved with content",before,after);
+            inside(settings[0]);inside(find(decor(),AppLanguage.tr(R.string.agent_inbox)));
+            call(current,"resumeSession");assertFalse("Home navigation leaked over terminal",settings[0].isShown());
+            call(current,"minimize");inside(settings[0]);assertTrue(settings[0].performClick());
+        });await(()->current instanceof SettingsActivity&&current.hasWindowFocus());
+        inst.runOnMainSync(()->{
+            ScreenActivity page=(ScreenActivity)current;page.header.getLocationOnScreen(before);
+            page.body.addView(new View(current),new LinearLayout.LayoutParams(1,dp(1400)));
+        });inst.waitForIdleSync();
+        inst.runOnMainSync(()->((ScreenActivity)current).scroll.scrollTo(0,dp(400)));inst.waitForIdleSync();
+        inst.runOnMainSync(()->{
+            ScreenActivity page=(ScreenActivity)current;assertTrue(page.scroll.getScrollY()>0);
+            int[] after=new int[2];page.header.getLocationOnScreen(after);assertArrayEquals(before,after);inside(page.header);
+        });
+    }
+
     @Test public void homeAndNewConnectionSheetFitWindow()throws Exception{
         open(MainActivity.class);await(()->field(current,"sshService")!=null);
         inst.runOnMainSync(()->{call(current,"minimize");View home=(View)field(current,"home");assertTrue(home.getWidth()>0);});
