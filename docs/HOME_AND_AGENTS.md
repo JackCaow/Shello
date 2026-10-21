@@ -24,6 +24,12 @@ Use `--help` for all options. Ctrl-C stops the service and removes its temporary
 
 Open Add → Scan to pair on Android. The QR pins an ephemeral HTTPS certificate and a short-lived one-use token. The phone generates its RSA key locally and sends only the public key. The helper appends it to `authorized_keys`, returns SSH host keys, and the phone verifies SSH and tmux before saving the encrypted profile. Camera scanning and scanning from a selected image are supported. QR/token files must never be committed or shared. This is Shello's own protocol, not compatible with Moshi QR codes.
 
+## Composer attachments
+
+In the terminal text editor, tap **+ → Attach file** and choose a document in the Android system picker. An active saved SSH connection with SFTP support is required. The sample uploads a stream of up to 50 MiB through the profile's existing pinned host key and authentication; it requests no broad storage permission. Each upload gets a private random directory under `~/.local/share/shello/attachments/`. Files use mode 0600 and are renamed into place after the stream completes, without overwriting another upload.
+
+The remote absolute path is shell-quoted and inserted into the originating session's draft at its current selection. It is not submitted automatically. Review/add text and tap Send, or long-press Send for text without Enter. Upload progress can be tapped to cancel; errors can be dismissed and retried through +. The SSH service owns the transfer across Activity recreation, and a result waits for its original session instead of entering a different session's draft. Completed files stay on the host. App-process termination does not resume an unfinished transfer; an interrupted connection may leave a partial file in its private upload directory.
+
 ## Hook and settings
 
 The settings index and its ten secondary pages are separate Android Activities. Language, Hook, notifications, font, theme, advanced, toolbar, gestures, text draft and shortcuts use normal system back-stack entries with matching page transitions. A nested Notifications → Hook visit returns to Notifications; a Hook shortcut from the inbox or Recent returns to that caller. Parent scroll position and existing preference keys are retained. Android 14+ uses Activity transition APIs compatible with system back gestures; API 27–33 uses window animations. See [navigation acceptance](evidence/settings-activities/README.md).

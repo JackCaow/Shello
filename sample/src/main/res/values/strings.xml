@@ -118,7 +118,6 @@
     <string name="voice_input_not_available_yet" formatted="false">"Voice input (not available yet)"</string>
     <string name="send_and_press_enter_long_press_to_send_text_only" formatted="false">"Send and press Enter; long-press to send text only"</string>
     <string name="paste_text" formatted="false">"Paste text"</string>
-    <string name="attachments_not_available_yet" formatted="false">"Attachments (not available yet)"</string>
     <string name="no_input_history" formatted="false">"No input history"</string>
     <string name="copy" formatted="false">"Copy"</string>
     <string name="copy_selection" formatted="false">"Copy selection"</string>
@@ -440,4 +439,13 @@
     <string name="agent_task_started" formatted="false">"Task started"</string>
     <string name="agent_task_interrupted" formatted="false">"Task interrupted"</string>
     <string name="agent_session_ended" formatted="false">"Session ended"</string>
+    <string name="attach_file">Attach file</string>
+    <string name="cancel_attachment_upload">Cancel upload</string>
+    <string name="attachment_requires_ssh">Connect to SSH before attaching a file.</string>
+    <string name="file_picker_unavailable">No file picker is available.</string>
+    <string name="attachment_uploaded">File uploaded. Review the path before sending.</string>
+    <string name="attachment_uploading">Uploading %1$s · %2$d KiB · Tap to cancel</string>
+    <string name="attachment_upload_failed">Upload failed. Check SFTP and network access, then try again. Tap to dismiss.</string>
+    <string name="attachment_too_large">Choose a file up to 50 MiB. Tap to dismiss.</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

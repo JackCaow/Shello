@@ -1,5 +1,11 @@
 # Validation
 
+## Anchored composer menu and SFTP attachments
+
+2026-10-21: the composer menu anchors to the actual + button, retains keyboard state and follows visible-window changes, including landscape edge clamping. Attach file replaces the disabled placeholder and uses the system document picker, bounded streaming SFTP through the existing pinned SSH profile, progress/cancel/error states and a quoted path in the original session’s draft. Uploading never sends terminal input. Activity recreation now also preserves draft selection, and delayed window focus after dismissing a popup no longer loses the keyboard request.
+
+[Acceptance](evidence/attachments/README.md): eight physical API 36 checks passed, including real Tailscale SFTP content/permission checks, host-pin rejection and recreation without duplicate insertion. API 27/API 35 each passed five local checks (three saved-host-dependent checks skipped). The user also confirmed selecting and sending an image through the real phone picker. All fifteen original preference/profile files remained byte-identical; compatible replacement APK is installed. Debug/instrumentation, R8 release and debug lint builds passed. No tag or Maven publication.
+
 ## Independent settings Activities and system back stack
 
 2026-10-21: all ten secondary settings pages now own distinct, non-exported Activities. The shared base retains the existing styled controls and preference keys; the index only launches destinations. Notifications → Hook returns through Notifications and the same index, while inbox/Recent shortcuts return to their actual caller. Old internal page intents/restored page state migrate once. Scroll and page state survive recreation, and entering settings hides the terminal keyboard.

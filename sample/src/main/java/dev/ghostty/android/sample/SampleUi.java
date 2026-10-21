@@ -116,13 +116,31 @@ final class SampleUi {
         }
         rows.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
         int height=Math.min(rows.getMeasuredHeight(),Math.max(dp(c,52),visible.height()-dp(c,32)));popup.setHeight(height);
-        int[] location=new int[2];anchor.getLocationOnScreen(location);
-        int x=Math.max(visible.left+dp(c,12),Math.min(location[0],visible.right-width-dp(c,12)));
-        int y=location[1]+anchor.getHeight()+dp(c,6);
-        if(y+height>visible.bottom-dp(c,12))y=location[1]-height-dp(c,6);
-        y=Math.max(visible.top+dp(c,12),Math.min(y,visible.bottom-height-dp(c,12)));
-        popup.showAtLocation(anchor,Gravity.TOP|Gravity.LEFT,x,y);return popup;
+        // Keep the IME as it is. A focusable popup must not resize/pan itself away
+        // from the button when the editor owns the keyboard.
+        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);
+        popup.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+        if(android.os.Build.VERSION.SDK_INT>=29)popup.setIsLaidOutInScreen(true);
+        int[] previous={Integer.MIN_VALUE,Integer.MIN_VALUE,0};
+        Runnable position=()->{
+            if(!anchor.isShown()){popup.dismiss();return;}
+            android.graphics.Rect frame=new android.graphics.Rect();anchor.getWindowVisibleDisplayFrame(frame);
+            int[] location=new int[2];anchor.getLocationOnScreen(location);
+            int h=Math.min(rows.getMeasuredHeight(),Math.max(1,frame.height()-dp(c,24)));
+            int x=Math.max(frame.left+dp(c,12),Math.min(location[0],frame.right-width-dp(c,12)));
+            int below=location[1]+anchor.getHeight()+dp(c,6);
+            int y=below+h<=frame.bottom-dp(c,12)?below:location[1]-h-dp(c,6);
+            y=Math.max(frame.top+dp(c,12),Math.min(y,frame.bottom-h-dp(c,12)));
+            if(android.os.Build.VERSION.SDK_INT<29){int[] screen=new int[2],window=new int[2];anchor.getRootView().getLocationOnScreen(screen);anchor.getRootView().getLocationInWindow(window);x-=screen[0]-window[0];y-=screen[1]-window[1];}
+            if(popup.isShowing()){if(previous[0]!=x||previous[1]!=y||previous[2]!=h)popup.update(x,y,width,h);}
+            else{popup.setHeight(h);popup.showAtLocation(anchor,Gravity.TOP|Gravity.LEFT,x,y);}
+            previous[0]=x;previous[1]=y;previous[2]=h;
+        };
+        View root=anchor.getRootView();android.view.ViewTreeObserver.OnGlobalLayoutListener follow=position::run;
+        popup.setOnDismissListener(()->{if(root.getViewTreeObserver().isAlive())root.getViewTreeObserver().removeOnGlobalLayoutListener(follow);});
+        position.run();if(popup.isShowing())root.getViewTreeObserver().addOnGlobalLayoutListener(follow);return popup;
     }
+
     static ConfirmDialog confirm(Activity activity,String title,String message,String detail,String cancel,String accept,boolean danger,Runnable cancelled,Runnable accepted){
         ConfirmDialog dialog=new ConfirmDialog(activity,title,message,detail,cancel,accept,danger,cancelled,accepted);dialog.show();return dialog;
     }

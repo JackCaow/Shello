@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Visibility of the synthetic document provider used by instrumentation. -->
+  <queries><provider android:authorities="dev.ghostty.android.sample.test.attachments" /></queries>
   <application>
     <!-- Emulator restriction probe only; this component is absent from release APKs. -->
     <receiver android:name=".BackgroundStartProbeReceiver" android:exported="true"/>

@@ -21,7 +21,8 @@ public final class SshSessionService extends Service {
     final class LocalBinder extends Binder { SshSessionService service(){return SshSessionService.this;} }
     static final class Tab {
         final String id;final SshSessionConnection connection;
-        TerminalSession local;Bitmap preview;String caption="";String draft="";boolean draftMode;
+        AttachmentTransfer attachment;
+        TerminalSession local;Bitmap preview;String caption="";String draft="";boolean draftMode;int draftSelectionStart=-1,draftSelectionEnd=-1;
         Tab(String id,SshSessionConnection connection){this.id=id;this.connection=connection;}
         boolean remote(){return connection!=null;}
         String name(){return remote()?connection.profileName:tr(R.string.local_terminal);}
@@ -98,9 +99,17 @@ public final class SshSessionService extends Service {
     }
     void openLocal(){Tab tab=add("local");select(tab.id);}
     void move(String id,int index){Tab tab=find(id);if(tab==null)return;tabs.remove(tab);tabs.add(Math.max(0,Math.min(index,tabs.size())),tab);persist();changed();}
+    boolean startAttachment(String id,android.net.Uri uri){
+        Tab tab=find(id);if(tab==null||!tab.remote()||!tab.connection.connected||tab.attachment!=null&&tab.attachment.busy)return false;
+        AttachmentTransfer upload=new AttachmentTransfer(this,tab.profile(),uri,()->{if(!destroyed&&find(id)==tab)changed();});
+        tab.attachment=upload;upload.start();changed();return true;
+    }
+    void cancelAttachment(String id){Tab tab=find(id);if(tab!=null&&tab.attachment!=null){tab.attachment.close();tab.attachment=null;changed();}}
+    String takeAttachmentPath(String id){Tab tab=find(id);if(tab==null||tab.attachment==null||tab.attachment.busy||tab.attachment.path==null)return null;String path=tab.attachment.path;tab.attachment=null;return path;}
     void close(String id){
         Tab tab=find(id);if(tab==null)return;
         mutating=true;
+        if(tab.attachment!=null){tab.attachment.close();tab.attachment=null;}
         if(selected==tab){if(observer!=null)observer.detach();selected=null;}
         tabs.remove(tab);previews.remove(id);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
         if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
@@ -186,7 +195,7 @@ public final class SshSessionService extends Service {
         getSharedPreferences("language",0).unregisterOnSharedPreferenceChangeListener(languageChanged);
         AgentHub.get(this).keepAlive(false);
         destroyed=true;if(observer!=null){observer.detach();observer=null;}
-        for(Tab tab:tabs){if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();tab.preview=null;}
+        for(Tab tab:tabs){if(tab.attachment!=null)tab.attachment.close();if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();tab.preview=null;}
         if(wakeLock.isHeld())wakeLock.release();super.onDestroy();
     }
 }

@@ -118,7 +118,6 @@
     <string name="voice_input_not_available_yet" formatted="false">"语音输入（暂未接入）"</string>
     <string name="send_and_press_enter_long_press_to_send_text_only" formatted="false">"发送并回车；长按仅发送"</string>
     <string name="paste_text" formatted="false">"粘贴文本"</string>
-    <string name="attachments_not_available_yet" formatted="false">"附件（暂未接入）"</string>
     <string name="no_input_history" formatted="false">"暂无输入历史"</string>
     <string name="copy" formatted="false">"复制"</string>
     <string name="copy_selection" formatted="false">"复制选中内容"</string>
@@ -432,4 +431,13 @@
     <string name="agent_task_started" formatted="false">"任务已开始"</string>
     <string name="agent_task_interrupted" formatted="false">"任务已中断"</string>
     <string name="agent_session_ended" formatted="false">"会话已结束"</string>
+    <string name="attach_file">添加附件</string>
+    <string name="cancel_attachment_upload">取消上传</string>
+    <string name="attachment_requires_ssh">请先连接 SSH，再添加附件。</string>
+    <string name="file_picker_unavailable">无法打开系统文件选择器。</string>
+    <string name="attachment_uploaded">文件已上传，确认路径后发送。</string>
+    <string name="attachment_uploading">正在上传 %1$s · %2$d KiB · 点按取消</string>
+    <string name="attachment_upload_failed">上传失败，请检查 SFTP 和网络后重试。点按关闭。</string>
+    <string name="attachment_too_large">请选择不超过 50 MiB 的文件。点按关闭。</string>
+    <string name="dismiss">关闭</string>
 </resources>

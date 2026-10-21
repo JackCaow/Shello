@@ -42,6 +42,7 @@ public final class MainActivity extends LocalizedActivity {
             if(destroyed||!bound)return;
             sshService=((SshSessionService.LocalBinder)binder).service();
             sshService.observe(serviceObserver);
+            uploadPickedAttachment();
             if(connectOnBind||sshService.shouldResume()){
                 boolean explicitConnect=connectOnBind;connectOnBind=false;
                 connectSsh(explicitConnect);
@@ -65,6 +66,7 @@ public final class MainActivity extends LocalizedActivity {
     private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
     private String pendingProfile,restoredDraftTab,restoredDraft;
     private boolean restoredDraftMode;
+    private int restoredDraftSelectionStart=-1,restoredDraftSelectionEnd=-1;
     private PopupWindow connectionMenu;
     private android.app.AlertDialog connectionDeleteDialog,infoDialog;
     private FrameLayout stage, viewport;
@@ -81,7 +83,11 @@ public final class MainActivity extends LocalizedActivity {
     private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
     private boolean padPositioned;
     private HorizontalScrollView toolScroll;
-    private LinearLayout composerActions;
+    private LinearLayout composerActions,draftPanel;
+    private TextView addTextButton,attachmentStatus;
+    private String attachmentTab;
+    private android.net.Uri attachmentUri;
+    private static final int PICK_ATTACHMENT=75;
     private boolean ctrlArmed, draftMode, imeVisible, minimized, padLocked;
 
     @Override public void onCreate(Bundle state) {
@@ -138,20 +144,21 @@ public final class MainActivity extends LocalizedActivity {
             boolean compact=b-t<dp(400)&&composerWidth>=dp(600);
             if(composer.getOrientation()!=(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL)){
                 composer.setOrientation(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);composer.setGravity(Gravity.CENTER_VERTICAL);
-                draft.setLayoutParams(new LinearLayout.LayoutParams(compact?0:-1,-2,compact?1:0));
+                draftPanel.setLayoutParams(new LinearLayout.LayoutParams(compact?0:-1,-2,compact?1:0));
                 composerActions.setLayoutParams(new LinearLayout.LayoutParams(compact?dp(220):-1,dp(44)));
             }
             draft.setMaxLines(compact?2:4);
         });
         write(tr(R.string.local_demo_banner)); root.requestFocus();
         pendingProfile=state==null?takeAgentTab():state.getString("pendingProfile");
-        if(state!=null){restoredDraftTab=state.getString("draftTab");restoredDraft=state.getString("draft","");restoredDraftMode=state.getBoolean("draftMode");}
+        if(state!=null){attachmentTab=state.getString("attachmentTab");String uri=state.getString("attachmentUri");if(uri!=null)attachmentUri=android.net.Uri.parse(uri);}
+        if(state!=null){restoredDraftTab=state.getString("draftTab");restoredDraft=state.getString("draft","");restoredDraftMode=state.getBoolean("draftMode");restoredDraftSelectionStart=state.getInt("draftSelectionStart",-1);restoredDraftSelectionEnd=state.getInt("draftSelectionEnd",-1);}
         boolean legacyFixture=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
         // Explicit debug fixture launches select files/ssh without deleting saved UI profiles.
         if(legacyFixture)getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
         connectOnBind=pendingProfile!=null||legacyFixture;
         if(state==null&&!connectOnBind)minimize();
-        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);if(state.getBoolean("minimized"))minimize();else if(state.getBoolean("keyboard"))root.post(this::showKeyboard);
+        if(state!=null){restoreDraft(state.getString("draft",""),restoredDraftSelectionStart,restoredDraftSelectionEnd);setDraftMode(state.getBoolean("draftMode"),false);if(state.getBoolean("minimized"))minimize();else if(state.getBoolean("keyboard"))root.post(this::showKeyboard);
             if(state.getBoolean("newConnectionShowing"))root.post(this::chooseConnection);
             String picker=state.getString("sessionPickerProfile");if(picker!=null)root.post(()->chooseSession(picker));}
     }
@@ -230,9 +237,11 @@ public final class MainActivity extends LocalizedActivity {
         draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         draft.setMinLines(1);draft.setMaxLines(4);draft.setPadding(dp(8),dp(10),dp(8),dp(8));
-        draft.setContentDescription(tr(R.string.local_text_draft));composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
+        draft.setContentDescription(tr(R.string.local_text_draft));draftPanel=column();composer.addView(draftPanel,new LinearLayout.LayoutParams(-1,-2));draftPanel.addView(draft,new LinearLayout.LayoutParams(-1,-2));
+        attachmentStatus=label("",12,MUTED);attachmentStatus.setPadding(dp(8),0,dp(8),dp(6));attachmentStatus.setVisibility(View.GONE);draftPanel.addView(attachmentStatus,new LinearLayout.LayoutParams(-1,-2));
+        attachmentStatus.setOnClickListener(v->{if(sshService!=null&&shownTab!=null)sshService.cancelAttachment(shownTab.id);});
         LinearLayout actions=row();composerActions=actions;composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView add=icon("plus",tr(R.string.add_text),this::addTextMenu);composerAction(actions,add);
+        addTextButton=icon("plus",tr(R.string.add_text),this::addTextMenu);composerAction(actions,addTextButton);
         composerAction(actions,icon("toolbox",tr(R.string.terminal_tools),()->tools(composer)));
         composerAction(actions,icon("close",tr(R.string.close_editor_and_keep_draft),()->setDraftMode(false,true)));
         actions.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
@@ -257,8 +266,37 @@ public final class MainActivity extends LocalizedActivity {
         if(connectionMenu!=null)connectionMenu.dismiss();connectionMenu=SampleUi.menu(this,anchor,actions);
     }
     private void addTextMenu(){
-        showMenu(composer,java.util.Arrays.asList(new SampleUi.Action(tr(R.string.paste_text),"paste",true,false,this::paste),
-                new SampleUi.Action(tr(R.string.attachments_not_available_yet),"plus",false,false,null)));
+        boolean busy=shownTab!=null&&shownTab.attachment!=null&&shownTab.attachment.busy;
+        showMenu(addTextButton,java.util.Arrays.asList(new SampleUi.Action(tr(R.string.paste_text),"paste",true,false,this::paste),
+                new SampleUi.Action(tr(busy?R.string.cancel_attachment_upload:R.string.attach_file),"plus",busy||sshMode&&sshConnected,false,busy?()->sshService.cancelAttachment(shownTab.id):this::chooseAttachment)));
+    }
+    private void chooseAttachment(){
+        if(sshService==null||shownTab==null||!shownTab.remote()||!sshConnected){toast(tr(R.string.attachment_requires_ssh));return;}
+        attachmentTab=shownTab.id;
+        try{startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),PICK_ATTACHMENT);}
+        catch(ActivityNotFoundException error){attachmentTab=null;toast(tr(R.string.file_picker_unavailable));}
+    }
+    private void uploadPickedAttachment(){
+        if(attachmentUri==null||sshService==null)return;
+        android.net.Uri uri=attachmentUri;String tab=attachmentTab;attachmentUri=null;attachmentTab=null;
+        if(tab==null||!sshService.startAttachment(tab,uri))toast(tr(R.string.attachment_requires_ssh));
+    }
+    private void updateAttachmentStatus(){
+        if(shownTab==null){attachmentStatus.setVisibility(View.GONE);return;}
+        String path=sshService.takeAttachmentPath(shownTab.id);
+        if(path!=null){
+            int start=Math.max(0,draft.getSelectionStart()),end=Math.max(0,draft.getSelectionEnd());
+            String insert=SshCommand.quote(path);int left=Math.min(start,end),right=Math.max(start,end);
+            if(left>0&&!Character.isWhitespace(draft.getText().charAt(left-1)))insert=" "+insert;
+            if(right<draft.length()&&!Character.isWhitespace(draft.getText().charAt(right)))insert+=" ";
+            draft.getText().replace(left,right,insert);draft.setSelection(left+insert.length());setDraftMode(true,false);
+            shownTab.draft=draft.getText().toString();shownTab.draftMode=true;toast(tr(R.string.attachment_uploaded));
+        }
+        AttachmentTransfer transfer=shownTab.attachment;
+        attachmentStatus.setVisibility(transfer==null?View.GONE:View.VISIBLE);
+        if(transfer!=null){String text=transfer.busy?tr(R.string.attachment_uploading,transfer.name,transfer.bytes/1024):tr(transfer.failure);
+            attachmentStatus.setText(text);attachmentStatus.setContentDescription(text+" · "+tr(transfer.busy?R.string.cancel_attachment_upload:R.string.dismiss));}
+
     }
     private void history(){
         java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
@@ -408,11 +446,15 @@ public final class MainActivity extends LocalizedActivity {
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
+        if(request==PICK_ATTACHMENT){if(result==RESULT_OK&&data!=null&&data.getData()!=null){attachmentUri=data.getData();uploadPickedAttachment();}else{attachmentUri=null;attachmentTab=null;}return;}
         if((request==73||request==74)&&result==RESULT_OK&&data!=null){String profile=data.getStringExtra("profile");if(profile!=null){pendingProfile=null;chooseSession(profile);}}
+    }
+    private void restoreDraft(String text,int start,int end){
+        draft.setText(text);int length=draft.length();draft.setSelection(start<0?length:Math.min(start,length),end<0?length:Math.min(end,length));
     }
     private void rememberTab(){
         if(shownTab==null)return;
-        shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;
+        shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;shownTab.draftSelectionStart=draft.getSelectionStart();shownTab.draftSelectionEnd=draft.getSelectionEnd();
         if(!minimized&&sheet.isShown()&&terminal.getWidth()>0&&terminal.getHeight()>0&&session!=null&&sshService!=null){
             android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(480,480,android.graphics.Bitmap.Config.ARGB_8888);
             android.graphics.Canvas canvas=new android.graphics.Canvas(bitmap);canvas.drawColor(SURFACE);
@@ -457,7 +499,14 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void showKeyboard() {
         View target=draftMode?draft:directInput;target.requestFocus();
-        target.post(()->((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(target,InputMethodManager.SHOW_IMPLICIT));
+        target.post(new Runnable(){int attempts;
+            public void run(){
+                if(destroyed||minimized||!target.isShown()||!target.hasFocus())return;
+                // Popup dismissal and Activity transitions can return focus a frame later.
+                if(!target.hasWindowFocus()){if(++attempts<12)target.postDelayed(this,50);return;}
+                ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(target,InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
     }
     private void hideKeyboard() {
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);root.requestFocus();
@@ -549,6 +598,8 @@ public final class MainActivity extends LocalizedActivity {
         super.onStop();
     }
     @Override protected void onSaveInstanceState(Bundle state){
+        state.putInt("draftSelectionStart",draft.getSelectionStart());state.putInt("draftSelectionEnd",draft.getSelectionEnd());
+        state.putString("attachmentTab",attachmentTab);state.putString("attachmentUri",attachmentUri==null?null:attachmentUri.toString());
         state.putBoolean("newConnectionShowing",newConnectionDialog!=null&&newConnectionDialog.isShowing());
         if(tmuxDialog!=null&&tmuxDialog.isShowing())state.putString("sessionPickerProfile",sessionPickerProfile);
         state.putString("draftTab",shownTab==null?null:shownTab.id);state.putBoolean("keyboard",imeVisible&&(draft.hasFocus()||directInput.hasFocus()));state.putBoolean("minimized",minimized);state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
@@ -559,12 +610,12 @@ public final class MainActivity extends LocalizedActivity {
         SshSessionService.Tab next=sshService.selected();
         TerminalSession remote=sshService.terminal();
         if(restoredDraftTab!=null){
-            if(next!=null&&restoredDraftTab.equals(next.id)){next.draft=restoredDraft;next.draftMode=restoredDraftMode;}
+            if(next!=null&&restoredDraftTab.equals(next.id)){next.draft=restoredDraft;next.draftMode=restoredDraftMode;next.draftSelectionStart=restoredDraftSelectionStart;next.draftSelectionEnd=restoredDraftSelectionEnd;}
             restoredDraftTab=null;restoredDraft=null;
         }
         if(next!=shownTab){
-            if(shownTab!=null){shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;}
-            shownTab=next;draft.setText(next==null?"":next.draft);setDraftMode(next!=null&&(next.draftMode||getSharedPreferences("appearance",0).getBoolean("draftDefault",false)),false);
+            if(shownTab!=null){shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;shownTab.draftSelectionStart=draft.getSelectionStart();shownTab.draftSelectionEnd=draft.getSelectionEnd();}
+            shownTab=next;restoreDraft(next==null?"":next.draft,next==null?-1:next.draftSelectionStart,next==null?-1:next.draftSelectionEnd);setDraftMode(next!=null&&(next.draftMode||getSharedPreferences("appearance",0).getBoolean("draftDefault",false)),false);
         }
         if(session!=remote){
             terminal.setSession(null);if(session!=null&&!serviceSession)session.close();
@@ -574,7 +625,7 @@ public final class MainActivity extends LocalizedActivity {
         protocolBadge.setText(sshMode?"SSH":tr(R.string.local));
         subtitle.setText(sshMode?sshService.profileName()+" · "+sshService.status()
                 +(sshService.active()&&!notificationsVisible()?tr(R.string.notifications_off):""):tr(R.string.local_terminal));
-        applyAppearance();
+        updateAttachmentStatus();applyAppearance();
         if(overview!=null)overview.refresh(sshService.tabs());
         if(next==null&&!minimized)minimize();
     }
