@@ -1,0 +1,114 @@
+name: Release APK
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: macos-14
+    timeout-minutes: 45
+    outputs:
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate release metadata
+        id: metadata
+        run: python3 scripts/release-metadata.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: '0.16.0'
+      - name: Install Android toolchain
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.2.13676358'
+      - name: Check pairing launcher
+        run: |
+          python3 scripts/generate-pair-script.py
+          git diff --exit-code -- companion/pair.sh
+          bash -n companion/pair.sh scripts/package-apk.sh scripts/publish-release.sh
+          python3 -m unittest discover -s tests -p 'test_release*.py' -v
+          command -v tmux >/dev/null || brew install tmux
+          python3 -m unittest discover -s tests -p 'test_pair_launcher.py' -v
+      - name: Build native library and validate release
+        run: |
+          scripts/build-native.sh
+          ./gradlew --no-daemon :sample:assembleRelease :sample:lintRelease :terminal:lintRelease
+      - name: Restore signing inputs
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SHELLO_RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SHELLO_RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          folder = Path(os.environ['RUNNER_TEMP']) / 'shello-signing'
+          os.umask(0o077)
+          folder.mkdir(mode=0o700)
+          if not os.environ['KEYSTORE_BASE64'] or not os.environ['KEYSTORE_PASSWORD']:
+              raise SystemExit('Missing Shello release signing secrets')
+          (folder / 'release.p12').write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'], validate=True))
+          (folder / 'password').write_text(os.environ['KEYSTORE_PASSWORD'].rstrip('\n') + '\n')
+          PY
+      - name: Sign and verify APK
+        env:
+          SHELLO_SIGNING_DIR: ${{ runner.temp }}/shello-signing
+        run: scripts/package-apk.sh
+      - name: Remove signing inputs
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, shutil
+          from pathlib import Path
+          shutil.rmtree(Path(os.environ['RUNNER_TEMP']) / 'shello-signing', ignore_errors=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-apk
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/releases/${{ steps.metadata.outputs.tag }}/*.apk
+            build/releases/${{ steps.metadata.outputs.tag }}/shello-pair.sh
+            build/releases/${{ steps.metadata.outputs.tag }}/SHA256SUMS
+            build/releases/${{ steps.metadata.outputs.tag }}/signature.txt
+      - name: Summary
+        env:
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          echo "Signed $TAG APK uploaded. Manual runs validate only; a version-tag push publishes the Release." >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: signed-apk
+          path: release-assets
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.package.outputs.tag }}
+        run: scripts/publish-release.sh release-assets

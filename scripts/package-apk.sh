@@ -18,6 +18,9 @@ mkdir -p "$output"
     --out "$output/Shello-$version-arm64-v8a.apk" "$output/aligned.apk"
 rm "$output/aligned.apk"
 "$build_tools/apksigner" verify --verbose --print-certs "$output/Shello-$version-arm64-v8a.apk" > "$output/signature.txt"
+# Pin the release certificate so a wrong secret cannot silently break upgrades.
+expected=2a28be23a3a37b400c9ba0ad85325b4d8785efc7b396e4bb6b944045d7027ad5
+grep -q "certificate SHA-256 digest: $expected" "$output/signature.txt" || { echo 'Unexpected release signing certificate' >&2; exit 1; }
 cp "$root/companion/pair.sh" "$output/shello-pair.sh"
 (cd "$output" && shasum -a 256 "Shello-$version-arm64-v8a.apk" shello-pair.sh > SHA256SUMS)
 echo "$output"
