@@ -133,6 +133,44 @@ public final class TerminalInteractionTest {
         ui(activity.terminal::clearSelection);
         ui(() -> assertEquals("", activity.terminal.getSelectedText()));
     }
+    @Test public void mouseWheelUsesNegotiatedProtocolAndCoordinates() {
+        ui(() -> {
+            assertEquals(0,activity.session.encodeWheel(false,25,45,10,20).length);
+            activity.session.write("\033[?1000h\033[?1006h".getBytes(StandardCharsets.UTF_8));
+            assertEquals("\033[<64;3;3M",new String(activity.session.encodeWheel(false,25,45,10,20),StandardCharsets.UTF_8));
+            assertEquals("\033[<65;3;3M",new String(activity.session.encodeWheel(true,25,45,10,20),StandardCharsets.UTF_8));
+            activity.session.write("\033[?1006l".getBytes(StandardCharsets.UTF_8));
+            assertArrayEquals(new byte[]{27,'[','M',96,35,35},activity.session.encodeWheel(false,25,45,10,20));
+            activity.session.write("\033[?1000l".getBytes(StandardCharsets.UTF_8));
+            assertEquals(0,activity.session.encodeWheel(false,25,45,10,20).length);
+        });
+    }
+    @Test public void swipeWithMouseTrackingSendsWheelInsteadOfArrowKeys() {
+        for(String screen:new String[]{"", "\033[?1049h"}){
+            write("\033c"+screen+"\033[?1000h\033[?1006h");
+            ui(activity.sent::clear);
+            swipe(renderer.cellW*8.5f,renderer.cellH*3,renderer.cellH*12);
+            ui(() -> {
+                assertFalse("Swipe must reach the remote application",activity.sent.isEmpty());
+                for(byte[] bytes:activity.sent)assertTrue(new String(bytes,StandardCharsets.UTF_8).startsWith("\033[<64;9;"));
+                activity.sent.clear();
+            });
+            swipe(renderer.cellW*8.5f,renderer.cellH*12,renderer.cellH*3);
+            ui(() -> {
+                assertFalse(activity.sent.isEmpty());
+                for(byte[] bytes:activity.sent)assertTrue(new String(bytes,StandardCharsets.UTF_8).startsWith("\033[<65;9;"));
+            });
+        }
+    }
+    @Test public void alternateScreenWithoutMouseKeepsKeyboardScrolling() {
+        write("\033c\033[?1049h");
+        ui(activity.sent::clear);
+        swipe(renderer.cellW*8,renderer.cellH*3,renderer.cellH*12);
+        ui(() -> {
+            assertFalse(activity.sent.isEmpty());
+            for(byte[] bytes:activity.sent)assertArrayEquals(activity.session.encodeKey(TerminalSession.Key.UP),bytes);
+        });
+    }
     @Test public void selectionCallbackTracksGestureAndOutputClear() {
         write("\033c中文X");
         longPress(renderer.cellW * .5f, renderer.cellH * .5f);

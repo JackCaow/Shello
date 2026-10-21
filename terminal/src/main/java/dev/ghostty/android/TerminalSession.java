@@ -51,6 +51,11 @@ public final class TerminalSession implements AutoCloseable {
     public void scroll(int delta) { checkOpen(); NativeBridge.scroll(handle, delta); changed(false); }
     public byte[] encodeKey(Key key) { checkOpen(); return NativeBridge.key(handle, Objects.requireNonNull(key).ordinal()); }
 
+    // View geometry is normalized to integer cell dimensions for the native encoder.
+    byte[] encodeWheel(boolean down, float x, float y, int cellWidth, int cellHeight) {
+        checkOpen();return NativeBridge.wheel(handle, down, x, y, cellWidth, cellHeight);
+    }
+
     /** Inclusive, zero-based screen coordinates (including scrollback), in row-major order. */
     public String select(int start, int end) {
         checkOpen();

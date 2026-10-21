@@ -209,6 +209,31 @@ JNIEXPORT jbyteArray JNICALL FN(key)(JNIEnv *env,jclass cls,jlong h,jint index) 
     ghostty_key_event_free(event);ghostty_key_encoder_free(encoder);check(env,r);if(r!=GHOSTTY_SUCCESS)return NULL;
     jbyteArray result=(*env)->NewByteArray(env,n);if(result)(*env)->SetByteArrayRegion(env,result,0,n,(jbyte *)buf);return result;
 }
+JNIEXPORT jbyteArray JNICALL FN(wheel)(JNIEnv *env,jclass cls,jlong h,jboolean down,jfloat x,jfloat y,jint cell_width,jint cell_height) {
+    GhosttyMouseEncoder encoder=NULL;GhosttyMouseEvent event=NULL;
+    GhosttyResult r=ghostty_mouse_encoder_new(NULL,&encoder);
+    if(r==GHOSTTY_SUCCESS)r=ghostty_mouse_event_new(NULL,&event);
+    char buf[128];size_t n=0;
+    if(r==GHOSTTY_SUCCESS){
+        uint16_t cols=0,rows=0;
+        ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_COLS,&cols);
+        ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_ROWS,&rows);
+        GhosttyMouseEncoderSize size=GHOSTTY_INIT_SIZED(GhosttyMouseEncoderSize);
+        size.cell_width=cell_width;size.cell_height=cell_height;
+        size.screen_width=cols*cell_width;size.screen_height=rows*cell_height;
+        ghostty_mouse_encoder_setopt_from_terminal(encoder,term(h));
+        ghostty_mouse_encoder_setopt(encoder,GHOSTTY_MOUSE_ENCODER_OPT_SIZE,&size);
+        ghostty_mouse_event_set_action(event,GHOSTTY_MOUSE_ACTION_PRESS);
+        ghostty_mouse_event_set_button(event,down?GHOSTTY_MOUSE_BUTTON_FIVE:GHOSTTY_MOUSE_BUTTON_FOUR);
+        ghostty_mouse_event_set_position(event,(GhosttyMousePosition){.x=x,.y=y});
+        r=ghostty_mouse_encoder_encode(encoder,event,buf,sizeof(buf),&n);
+    }
+    ghostty_mouse_event_free(event);ghostty_mouse_encoder_free(encoder);
+    check(env,r);if(r!=GHOSTTY_SUCCESS)return NULL;
+    jbyteArray result=(*env)->NewByteArray(env,n);
+    if(result)(*env)->SetByteArrayRegion(env,result,0,n,(jbyte *)buf);
+    return result;
+}
 JNIEXPORT jbyteArray JNICALL FN(selection)(JNIEnv *env,jclass cls,jlong h,jint start,jint end) {
     uint16_t cols=0;ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_COLS,&cols);
     GhosttySelection selection=GHOSTTY_INIT_SIZED(GhosttySelection);

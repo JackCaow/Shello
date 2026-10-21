@@ -269,7 +269,15 @@ public final class TerminalView extends FrameLayout {
             @Override public boolean onSingleTapUp(MotionEvent e){clear();return true;}
             @Override public boolean onScroll(MotionEvent a,MotionEvent b,float dx,float dy){
                 if(selecting)return true;int delta=(int)((previousY-b.getY())/cellHeight());
-                if(delta!=0){if(frame!=null&&frame.optInt("alt")!=0){for(int i=0;i<Math.min(4,Math.abs(delta));i++)sendKey(delta>0?1:0);}
+                if(delta!=0){if(frame!=null&&frame.optBoolean("mouse")){
+                        // tmux owns its history, even though it uses the alternate screen.
+                        // Send negotiated wheel events instead of editing the shell's input history.
+                        int cw=Math.max(1,Math.round(cellWidth())),ch=Math.max(1,Math.round(cellHeight()));
+                        float x=Math.max(0,Math.min(cols*cellWidth()-1,b.getX()))/cellWidth()*cw;
+                        float y=Math.max(0,Math.min(rows*cellHeight()-1,b.getY()))/cellHeight()*ch;
+                        byte[] wheel=session.encodeWheel(delta>0,x,y,cw,ch);
+                        if(wheel.length>0)for(int i=0;i<Math.min(4,Math.abs(delta));i++)emitInput(wheel);
+                    }else if(frame!=null&&frame.optInt("alt")!=0){for(int i=0;i<Math.min(4,Math.abs(delta));i++)sendKey(delta>0?1:0);}
                     else {session.scroll(delta);drawFrame();}previousY=b.getY();}return true;
             }
         });}
