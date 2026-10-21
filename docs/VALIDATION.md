@@ -1,5 +1,17 @@
 # Validation
 
+## Live SSH cursor acceptance
+
+2026-10-21: used the physical API 36 Xiaomi phone over Wi-Fi to a local macOS SSH/tmux fixture. Created separate test windows for Vim 9.1 and Claude Code 2.1.296, preserving the original unsaved Vim session. Input went through the Android app (direct key events, its floating direction pad, and actual taps on the phone's Pinyin keyboard); tmux pane captures and phone screenshots checked the result.
+
+- **Vim:** insertion in the middle of a line, left/right/up/down movement, Chinese two-column block coverage, Esc, and normal/insert/replace mode switching passed. The isolated test vimrc explicitly configured `t_EI=ESC[2 q`, `t_SI=ESC[6 q`, and `t_SR=ESC[4 q`, giving steady block/bar/underline cursors. This is configured Vim behavior, not a claim that stock Vim automatically changes cursor shapes.
+- **Claude Code:** prompt insertion, left/right editing, Pinyin composition and committing `你好`, and cursor movement across Chinese characters passed. Preedit stayed in the IME; the candidate was committed once. The same prompt survived keyboard resize and sample reinstall/reconnect. No model request was submitted.
+- **Blink diagnosis:** both libghostty-vt's built-in default and this tmux client's explicit terminal capabilities can produce a steady cursor. The library now selects blinking for new sessions and default-style resets; explicit PTY steady commands still win. In particular, this `xterm-256color` client's `cnorm` sends `CSI ?12 l` and `Se` sends `CSI 2 SP q`. The fix deliberately does **not** override those instructions.
+- **Live blink check:** temporarily set only the Claude test pane with `tmux set-option -p -t TEST_PANE cursor-style blinking-block`. Phone screenshot sampling confirmed both visible and hidden phases over the Chinese glyph. Unset the pane option afterward. This is a separately configured blinking check, not evidence that unconfigured tmux now blinks.
+- **API 27: 15 tests passed**, including the new default/omitted-style reset, RIS, explicit steady-mode, and checkpoint-policy regression. [Runner output](evidence/cursor-ssh/api27-tests.txt). The final rebuilt test APK also passed the five focused cursor tests. [Focused runner output](evidence/cursor-ssh/api27-cursor-final.txt). Debug sample, R8 release sample, release AAR and terminal/sample release lint passed. The fixed debug sample was installed and used for the Claude/Pinyin/blink checks; the phone disconnected from USB before the standalone instrumentation rerun. [Detailed record](evidence/cursor-ssh/validation.json).
+
+Screenshots/recordings remain local. No exact Moshi timing or input-latency benchmark, Maven publication, or business-flow integration was performed. The stock macOS Vim displays the ZWJ as `<200d>` in its own PTY output; that application-side representation is separate from the terminal's grapheme/cursor rendering.
+
 ## Cursor appearance and blink
 
 2026-10-21: optimized the Android renderer with an opaque block cursor and contrasting redraw of the covered glyph, two-column coverage for wide characters, crisp bar/underline/outline geometry, and per-view blink timing. Input/movement/focus restores a 750 ms visible hold before 500 ms off/on intervals. Remote steady/hidden cursor modes remain authoritative; inactive windows show a non-blinking outline.

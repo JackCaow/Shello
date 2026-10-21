@@ -35,6 +35,27 @@ public final class TerminalCursorTest {
         Bitmap b=Bitmap.createBitmap((int)Math.ceil(r.cellW*20),(int)Math.ceil(r.cellH*4),Bitmap.Config.ARGB_8888);
         b.eraseColor(0xff123456);r.drawCursor(new Canvas(b),now,focus,true);return b;
     }
+    @Test public void defaultCursorBlinksAfterStyleResetButExplicitSteadyModesWin(){check((s,v,r)->{
+        r.setRender(s.render());
+        assertTrue(blinking(s));
+        for(String steady:new String[]{"\033[2 q","\033[4 q","\033[6 q","\033[?12l"}){
+            write(s,r,steady);assertFalse(blinking(s));
+            write(s,r,"\033[0 q");assertTrue("Default style reset must restore blink",blinking(s));
+            r.cursorBlink.reset(1000);
+            Bitmap b=cursor(r,true,1800);try{assertEquals(0xff123456,b.getPixel(1,1));}finally{b.recycle();}
+        }
+        write(s,r,"\033[2 q\033[ q");assertTrue(blinking(s));
+        write(s,r,"\033[2 q\033c");assertTrue("RIS must preserve the configured default",blinking(s));
+        write(s,r,"\033[6 q");
+        try(TerminalSession restored=TerminalSession.restore(s.checkpoint())){
+            assertFalse("Checkpoint retains explicit steady cursor",blinking(restored));
+            restored.write("\033[0 q".getBytes(StandardCharsets.UTF_8));
+            assertTrue("Checkpoint retains default cursor policy",blinking(restored));
+        }
+    });}
+    private boolean blinking(TerminalSession s){
+        return java.nio.ByteBuffer.wrap(s.render()).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt(9*4)!=0;
+    }
     @Test public void solidBlockRedrawsReadableTextAndWideCell(){check((s,v,r)->{
         write(s,r,"\033c\033]11;#101010\007\033]12;#f0f0f0\007\033[2 qW\033[1G");
         Bitmap b=cursor(r,true,0);

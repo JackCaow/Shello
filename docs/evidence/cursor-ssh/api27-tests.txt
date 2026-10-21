@@ -1,0 +1,10 @@
+
+dev.ghostty.android.TerminalApiTest:.....
+dev.ghostty.android.TerminalCursorTest:.....
+dev.ghostty.android.TerminalInteractionTest:.....
+
+Time: 19.417
+
+OK (15 tests)
+
+

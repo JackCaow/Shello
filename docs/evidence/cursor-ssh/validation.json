@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-21",
+  "transport": "Physical phone over Wi-Fi to local macOS OpenSSH, persistent tmux session; no ADB reverse",
+  "device": {
+    "model": "Xiaomi 25019PNF3C",
+    "api": 36
+  },
+  "host": {
+    "vim": "9.1 (patches 1-754)",
+    "tmux": "3.6a",
+    "claude_code": "2.1.296"
+  },
+  "vim": {
+    "fixture": "Separate temporary file and test window; original unsaved vim session preserved",
+    "remote_cursor_configuration": {
+      "normal": "CSI 2 SP q (steady block)",
+      "insert": "CSI 6 SP q (steady bar)",
+      "replace": "CSI 4 SP q (steady underline)"
+    },
+    "checks": [
+      "Phone direct input inserts text at cursor",
+      "Left/right edit in the middle of text",
+      "Esc restores normal block from insert and replace",
+      "Floating arrow pad moves across Chinese characters and between lines",
+      "Chinese block cursor covers two columns with readable glyph"
+    ]
+  },
+  "claude": {
+    "checks": [
+      "Phone direct input and insertion in the middle of a prompt",
+      "Phone Pinyin keyboard composition stays local, selecting candidate commits 你好 once",
+      "Left/right moves over complete Chinese characters",
+      "Hide/show keyboard and sample reinstall reconnect retain the same prompt",
+      "Explicit pane blinking-block setting produces visible/hidden cycles"
+    ],
+    "generation_tested": false,
+    "raw_default": "Steady: this tmux xterm-256color client has cnorm=ESC[?12l ESC[?25h and Se=ESC[2 q",
+    "explicit_blink_setting": "tmux set-option -p -t TEST_PANE cursor-style blinking-block; unset after test",
+    "green_cursor_pixels": [
+      1770,
+      1770,
+      0,
+      1770,
+      1770,
+      0,
+      1770,
+      0,
+      1770,
+      1770,
+      1173,
+      0,
+      1173,
+      0,
+      1173,
+      0
+    ],
+    "sampling_note": "Screenshot sampling confirms both phases; not a frame-time or input-latency benchmark"
+  },
+  "fix": "New/default-reset sessions use a blinking block; explicit remote steady/hidden modes retain priority. This does not override tmux steady instructions.",
+  "automated": {
+    "api27": "15 instrumentation tests passed",
+    "phone": "Live SSH checks on installed fix completed; standalone instrumentation not rerun after USB detached"
+  },
+  "build": "Debug sample, release sample, release AAR and release lint passed",
+  "installed_debug_apk_sha256": "dbc5199857be959da33881cc6646c94d92ef613716de9194c6e5b4dbff26e99f",
+  "limitations": [
+    "No exact comparison of Moshi animation timing",
+    "No Claude model generation or latency benchmark",
+    "Stock macOS vim expands ZWJ to <200d> in its own PTY output; this is not terminal cursor corruption"
+  ],
+  "publication": "No Maven publication; no business-flow changes"
+}

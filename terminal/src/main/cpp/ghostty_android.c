@@ -79,6 +79,12 @@ JNIEXPORT jlong JNICALL FN(create)(JNIEnv *env, jclass cls, jint cols, jint rows
     check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_CONTINUATION_MAX_BYTES, &limit));
     size_t bytes = 4 * 1024 * 1024;
     check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES, &bytes));
+    // DECSCUSR 0 restores the embedding application's default cursor policy.
+    // libghostty-vt defaults to steady; Android uses blink unless the PTY overrides it.
+    bool blink = true;
+    check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_BLINK, &blink));
+    const uint8_t cursor_reset[] = "\033[0 q";
+    ghostty_terminal_vt_write(t, cursor_reset, sizeof(cursor_reset) - 1);
     return wrap(env,t);
 }
 JNIEXPORT void JNICALL FN(free)(JNIEnv *env, jclass cls, jlong h) { if(h){ghostty_render_state_free(lab(h)->render);ghostty_terminal_free(term(h));free(lab(h));} }
