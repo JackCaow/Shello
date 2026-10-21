@@ -433,4 +433,7 @@
     <string name="pair_network_auto">Auto</string>
     <string name="pair_network_lan">LAN</string>
     <string name="pair_network_hint">Auto prefers Tailscale when connected on the computer. Keep both devices on the same tailnet; SSH and the temporary pairing port must be allowed. Choose LAN to pair over Wi-Fi.</string>
+    <string name="no_active_sessions">No active sessions</string>
+    <string name="no_saved_connections">No saved connections</string>
+    <string name="tap_plus_to_add_connection">Tap + to connect</string>
 </resources>

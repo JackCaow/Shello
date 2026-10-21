@@ -331,12 +331,14 @@ public final class MainActivity extends LocalizedActivity {
         home=new ScrollView(this);home.setClipToPadding(false);
         LinearLayout content=column();content.setClipChildren(false);int inset=dp(getResources().getConfiguration().screenWidthDp>=600?24:16);content.setPadding(inset,0,inset,dp(110));home.addView(AdaptiveLayout.centered(this,content,1200,null));
         LinearLayout top=row();top.setPadding(inset,0,inset,0);top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        top.addView(SampleUi.header(this,"inbox",tr(R.string.agent_inbox),MUTED,()->startActivity(new Intent(this,AgentActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));
-        top.addView(SampleUi.header(this,"settings",tr(R.string.settings),MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));homePage.addView(AdaptiveLayout.centered(this,top,1200,null),new LinearLayout.LayoutParams(-1,dp(56)));
+        String[] navIcons={"inbox","settings"};int[] navLabels={R.string.agent_inbox,R.string.settings};
+        for(int i=0;i<navIcons.length;i++){final boolean inbox=i==0;View button=SampleUi.header(this,navIcons[i],tr(navLabels[i]),TEXT,()->startActivity(new Intent(this,inbox?AgentActivity.class:SettingsActivity.class)));button.setBackground(SampleUi.touch(this,0xff111713,22));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(44),dp(44));lp.leftMargin=dp(8);top.addView(button,lp);}
+        homePage.addView(AdaptiveLayout.centered(this,top,1200,null),new LinearLayout.LayoutParams(-1,dp(56)));
         homePage.addView(home,new LinearLayout.LayoutParams(-1,0,1));
         AdaptiveLayout.Columns homeColumns=new AdaptiveLayout.Columns(this,840,24);content.addView(homeColumns,new LinearLayout.LayoutParams(-1,-2));
         overview=new SessionOverview(this,stage,homePage,new SessionOverview.Actions(){
             public void open(String id){openTab(id);}public void close(String id){closeTab(id);}public void closeAll(){closeAllTabs();}
+            public void create(){chooseConnection();}
             public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
         });homeColumns.addView(overview.view());
         LinearLayout connections=column();homeColumns.addView(connections);
@@ -383,7 +385,7 @@ public final class MainActivity extends LocalizedActivity {
             card.addView(SampleUi.icon(this,"right",MUTED),new LinearLayout.LayoutParams(dp(24),dp(24)));card.setOnLongClickListener(v->{showConnectionMenu(card,entry);return true;});LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(86));cp.bottomMargin=dp(12);savedConnections.addView(card,cp);
         }
         if(hookAttention!=null){int needs=0;for(SshProfileStore.Entry e:store.list())if(!hub.enabled(e.id)||hub.pending(e.id)>0||!Integer.valueOf(R.string.connected).equals(hub.states.get(e.id)))needs++;boolean show=getSharedPreferences("appearance",0).getBoolean("hookStatus",true);hookAttention.setText(needs>0&&show?"● "+needs:"");hookAttention.setContentDescription(AppLanguage.quantity(R.plurals.hook_attention_count,needs,needs));}
-        if(savedConnections.getChildCount()==0)savedConnections.addView(label(tr(R.string.tap_to_add_an_ssh_connection),14,MUTED));
+        if(savedConnections.getChildCount()==0)savedConnections.addView(HomeEmptyState.card(this,false,this::chooseConnection),new LinearLayout.LayoutParams(-1,-2));
     }
     private void showConnectionMenu(View anchor,SshProfileStore.Entry entry){
         showMenu(anchor,java.util.Arrays.asList(

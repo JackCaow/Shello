@@ -22,18 +22,18 @@ public final class PairingActivity extends ScreenActivity {
     private SshConnectionSetup verify;private SshProfileStore.Draft paired;
     static final String COMMAND="curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash";
     @Override int contentWidthDp(){return 1040;}
-    @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText(tr(R.string.qr_pairing));scroll.setVerticalScrollBarEnabled(false);
-        TextView title=SampleUi.text(this,tr(R.string.connect_your_computer),24,SampleUi.TEXT);body.addView(title);
+    @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText(tr(R.string.qr_pairing));scroll.setVerticalScrollBarEnabled(false);body.setPadding(dp(16),dp(16),dp(16),dp(24));
+        TextView title=SampleUi.text(this,tr(R.string.connect_your_computer),22,SampleUi.TEXT);body.addView(title);
         TextView hint=SampleUi.text(this,tr(R.string.run_the_pairing_command_then_place_the_qr_code_in_the_frame),14,SampleUi.MUTED);hint.setLineSpacing(dp(3),1);
-        LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(8);hp.bottomMargin=dp(20);body.addView(hint,hp);networkChoice=state==null?0:state.getInt("pairNetwork",0);
-        AdaptiveLayout.Columns columns=new AdaptiveLayout.Columns(this,600,24);body.addView(columns,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(8);hp.bottomMargin=dp(16);body.addView(hint,hp);networkChoice=state==null?0:state.getInt("pairNetwork",0);
+        AdaptiveLayout.Columns columns=new AdaptiveLayout.Columns(this,600,16);body.addView(columns,new LinearLayout.LayoutParams(-1,-2));
         LinearLayout scanColumn=column(),instructions=column();columns.addView(scanColumn);columns.addView(instructions);
-        scanner=new BarcodeView(this);scanner.setUseTextureView(true);scanner.setFramingRectSize(new Size(dp(208),dp(208)));
+        scanner=new BarcodeView(this);scanner.setUseTextureView(true);scanner.setFramingRectSize(new Size(dp(200),dp(200)));
         scanner.setDecoderFactory(new DefaultDecoderFactory(Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE)));
         FrameLayout camera=new FrameLayout(this);camera.setBackground(SampleUi.surface(this,SampleUi.FIELD,24));camera.setClipToOutline(true);
         camera.addView(scanner,new FrameLayout.LayoutParams(-1,-1));overlay=new PairingScanOverlay(this,scanner);camera.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
-        scanColumn.addView(camera,new LinearLayout.LayoutParams(-1,dp(256)));
-        LinearLayout feedback=row();feedback.setGravity(Gravity.CENTER);feedback.setPadding(dp(8),dp(14),dp(8),dp(14));feedback.setMinimumHeight(dp(56));
+        scanColumn.addView(camera,new LinearLayout.LayoutParams(-1,dp(240)));
+        LinearLayout feedback=row();feedback.setGravity(Gravity.CENTER);feedback.setPadding(dp(8),dp(10),dp(8),dp(2));feedback.setMinimumHeight(dp(36));
         progress=new ProgressBar(this);progress.setIndeterminateTintList(ColorStateList.valueOf(SampleUi.GREEN));progress.setVisibility(View.GONE);
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(dp(18),dp(18));pp.rightMargin=dp(10);feedback.addView(progress,pp);
         status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);status.setLineSpacing(dp(3),1);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));scanColumn.addView(feedback);
@@ -46,9 +46,9 @@ public final class PairingActivity extends ScreenActivity {
         String[] choices={tr(R.string.pair_network_auto),tr(R.string.pair_network_lan),"Tailscale"};
         for(int i=0;i<choices.length;i++){RadioButton option=SampleUi.segment(this,choices[i],View.generateViewId());networks.addView(option,new RadioGroup.LayoutParams(0,-2,1));if(i==networkChoice)networks.check(option.getId());}
         networks.setOnCheckedChangeListener((group,id)->{networkChoice=group.indexOfChild(group.findViewById(id));code.setText(pairCommand());});
-        command.addView(networks,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,-2);np.topMargin=dp(12);command.addView(networks,np);
         TextView networkHint=SampleUi.text(this,tr(R.string.pair_network_hint),13,SampleUi.MUTED);networkHint.setPadding(0,dp(12),0,0);command.addView(networkHint);
-        LinearLayout.LayoutParams commandParams=new LinearLayout.LayoutParams(-1,-2);commandParams.topMargin=dp(4);commandParams.bottomMargin=dp(16);instructions.addView(command,commandParams);
+        LinearLayout.LayoutParams commandParams=new LinearLayout.LayoutParams(-1,-2);commandParams.bottomMargin=dp(12);instructions.addView(command,commandParams);
         spacedItem(tr(R.string.scan_from_image),tr(R.string.choose_a_saved_pairing_qr_code),"qr",()->{if(busy)return;Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(pick,95);});
         spacedItem(tr(R.string.about_pairing),null,"qr",()->SampleUi.confirm(this,tr(R.string.qr_pairing),tr(R.string.enable_ssh_and_install_tmux_on_your_computer_first_your_private_k),null,tr(R.string.close),tr(R.string.got_it),false,null,null));
         // Keep secondary actions with the instructions when the scanner occupies the other column.

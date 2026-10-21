@@ -57,7 +57,7 @@ public final class SshSessionService extends Service {
         wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"ghostty:SSHSession");wakeLock.setReferenceCounted(false);
         try{JSONArray ids=new JSONArray(state.getString("order","[]"));for(int i=0;i<ids.length();i++)add(ids.getString(i));}catch(JSONException ignored){}
         if(!state.getBoolean("initialized",false)){
-            if(new SshResumeState(this).pending())add(profileId());else add("local");
+            if(new SshResumeState(this).pending())add(profileId());
         }
         selected=find(state.getString("selected",null));if(selected==null&&!tabs.isEmpty())selected=tabs.get(0);persist();
         ArrayList<String> retained=new ArrayList<>();for(Tab tab:tabs)retained.add(tab.id);previews.retain(retained);

@@ -425,4 +425,7 @@
     <string name="pair_network_auto">自动</string>
     <string name="pair_network_lan">局域网</string>
     <string name="pair_network_hint">自动模式优先使用电脑已连接的 Tailscale。两端需连接同一网络，并允许 SSH 和临时配对端口；也可选择局域网，通过 Wi-Fi 配对。</string>
+    <string name="no_active_sessions">没有活跃会话</string>
+    <string name="no_saved_connections">没有已保存连接</string>
+    <string name="tap_plus_to_add_connection">点按 + 添加连接</string>
 </resources>

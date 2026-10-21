@@ -13,7 +13,7 @@ import java.util.*;
 
 /** Session thumbnails, contextual preview and drag ordering. No connection-profile mutations. */
 final class SessionOverview {
-    interface Actions { void open(String id); void close(String id); void closeAll(); void move(String id,int index); }
+    interface Actions { void open(String id); void close(String id); void closeAll(); void create(); void move(String id,int index); }
     private final Activity activity;
     private final FrameLayout stage;
     private final View background;
@@ -63,6 +63,7 @@ final class SessionOverview {
     View view(){return root;}
     void refresh(List<SshSessionService.Tab> values){
         tabs.clear();tabs.addAll(values);
+        if(tabs.isEmpty()&&ordering){setOrdering(false);return;}
         // Do not replace drag source Views while Android owns their drag session.
         if(dragging!=null)return;
         cards.removeAllViews();
@@ -93,7 +94,11 @@ final class SessionOverview {
             }
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(cardWidth(),-2);cp.rightMargin=dp(12);cards.addView(card,cp);
         }
-        if(tabs.isEmpty()){hint.setText(tr(R.string.no_open_sessions_tap_a_saved_connection_or_to_add_one));setOrdering(false);}
+        if(tabs.isEmpty()){
+            hint.setText("");
+            LinearLayout empty=column();empty.addView(HomeEmptyState.card(activity,true,actions::create),new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
+            cards.addView(empty,new LinearLayout.LayoutParams(cardWidth(),-2));
+        }
         else hint.setText(ordering?(tabs.size()==1?tr(R.string.only_one_session_open_more_connections_to_reorder_them):tr(R.string.long_press_and_drag_sessions_to_reorder)):tr(R.string.long_press_for_options));
     }
     private FrameLayout thumbnail(SshSessionService.Tab tab){
