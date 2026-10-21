@@ -44,6 +44,10 @@ This updates the sample Android launcher resources and creates
 The sample manifest uses `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`.
 API 26+ resources use separate foreground/background layers; API 33+ also
 provides a monochrome layer for themed icons. The background is `#0B100E`.
+Both adaptive foreground and monochrome layers use a 10% inset on each side
+(80% artwork scale), leaving more visual breathing room after the launcher mask
+crops the layer. This corrects the oversized appearance on the Xiaomi launcher;
+the 1024-pixel source artwork is unchanged.
 The foreground's visible bounds stay within the central 66/108 region; launcher
 masks determine the final outer shape. See the
 [Android adaptive icon specification](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive).

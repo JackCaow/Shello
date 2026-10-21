@@ -65,13 +65,18 @@ def main():
     resource(Path("values/ic_launcher_colors.xml"),
              '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
              '    <color name="ic_launcher_background">#0B100E</color>\n</resources>\n')
+    # Adaptive launchers crop the 108 dp layer to roughly 72 dp. Inset the mark
+    # by 10% per side so the visible shape has the same breathing room as peers.
+    inset = ('        <inset android:drawable="@mipmap/ic_launcher_foreground"\n'
+             '            android:insetLeft="10%" android:insetTop="10%"\n'
+             '            android:insetRight="10%" android:insetBottom="10%"/>\n')
     for version in (26, 33):
-        monochrome = ('    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>\n'
+        monochrome = (f'    <monochrome>\n{inset}    </monochrome>\n'
                       if version >= 33 else "")
         xml = ('<?xml version="1.0" encoding="utf-8"?>\n'
                '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
                '    <background android:drawable="@color/ic_launcher_background"/>\n'
-               '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
+               f'    <foreground>\n{inset}    </foreground>\n'
                f'{monochrome}</adaptive-icon>\n')
         for name in ("ic_launcher", "ic_launcher_round"):
             resource(Path(f"mipmap-anydpi-v{version}/{name}.xml"), xml)
