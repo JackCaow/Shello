@@ -1,0 +1,6 @@
+{
+  "opened": "FontSettingsActivity",
+  "cancelledBack": "FontSettingsActivity",
+  "committedBack": "SettingsActivity",
+  "transitionAnimationScale": 1.0
+}

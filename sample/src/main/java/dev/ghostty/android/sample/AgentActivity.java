@@ -70,7 +70,7 @@ public final class AgentActivity extends ScreenActivity {
     private void inboxHeader(){requestHeader=false;header.removeAllViews();header.setMinimumHeight(dp(72));header.setPadding(dp(16),0,dp(16),0);
         View spacer=new View(this);header.addView(spacer,new LinearLayout.LayoutParams(0,1,1));
         header.addView(SampleUi.header(this,"home",label("Home","首页"),SampleUi.TEXT,this::finish),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        header.addView(SampleUi.header(this,"settings",tr(R.string.settings),SampleUi.TEXT,()->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook"))),new LinearLayout.LayoutParams(dp(48),dp(48)));
+        header.addView(SampleUi.header(this,"settings",tr(R.string.settings),SampleUi.TEXT,()->startActivity(SettingsNavigation.intent(this,"hook"))),new LinearLayout.LayoutParams(dp(48),dp(48)));
     }
     private void buildInbox(){
         if(built)return;built=true;inboxHeader();
@@ -104,7 +104,7 @@ public final class AgentActivity extends ScreenActivity {
             card.setOnClickListener(v->sessionDetails(session.key));card.setOnLongClickListener(v->{if(!session.unresolved)SampleUi.menu(this,card,java.util.Arrays.asList(new SampleUi.Action(session.archived?label("Restore","恢复"):label("Archive","归档"),"inbox",true,false,()->hub.archive(session,!session.archived))));return true;});
             LinearLayout.LayoutParams gap=new LinearLayout.LayoutParams(-1,-2);gap.bottomMargin=dp(12);cards.addView(card,gap);
         }
-        if(count==0){TextView empty=SampleUi.text(this,sessions.isEmpty()?tr(R.string.no_agent_events_yet):label("No matching sessions","没有匹配的会话"),18,SampleUi.MUTED);empty.setPadding(dp(8),dp(44),dp(8),dp(24));cards.addView(empty);TextView setup=SampleUi.text(this,tr(R.string.set_up_hook),16,SampleUi.GREEN);setup.setPadding(dp(8),dp(16),dp(8),dp(16));setup.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));cards.addView(setup);}
+        if(count==0){TextView empty=SampleUi.text(this,sessions.isEmpty()?tr(R.string.no_agent_events_yet):label("No matching sessions","没有匹配的会话"),18,SampleUi.MUTED);empty.setPadding(dp(8),dp(44),dp(8),dp(24));cards.addView(empty);TextView setup=SampleUi.text(this,tr(R.string.set_up_hook),16,SampleUi.GREEN);setup.setPadding(dp(8),dp(16),dp(8),dp(16));setup.setOnClickListener(v->startActivity(SettingsNavigation.intent(this,"hook")));cards.addView(setup);}
         TextView background=SampleUi.text(this,label("Updates use SSH while this screen or an SSH session is active. Offline requests cannot be approved.","此页面或 SSH 会话活跃时同步。离线请求不可审批。"),12,SampleUi.MUTED);background.setPadding(0,dp(16),0,dp(12));cards.addView(background);renderUsageBar();
     }
     private android.app.Dialog sheet(String title,java.util.function.Consumer<LinearLayout> build){
@@ -192,7 +192,7 @@ public final class AgentActivity extends ScreenActivity {
             JSONObject diagnostics=hub.diagnostics.get(host.id);line(panel,host.name+" · "+(hub.states.getOrDefault(host.id,0)==R.string.connected?label("Connected","已连接"):label("Offline / check SSH","离线 / 请检查 SSH")),14,SampleUi.TEXT);
             if(diagnostics==null||diagnostics.optInt("version",1)<2)line(panel,label("Update the host helper in Settings → Hook.","请在设置 → Hook 更新主机助手。"),12,SampleUi.MUTED);
             else {JSONObject hooks=diagnostics.optJSONObject("hooks");for(String provider:new String[]{"claude","codex"})if(usageProvider==null||usageProvider.equals(provider))line(panel,(provider.equals("codex")?"Codex":"Claude Code")+" Hook · "+(hooks!=null&&"installed".equals(hooks.optString(provider))?label("Registered","已注册"):label("Not installed","未安装")),12,SampleUi.MUTED);if(usageProvider==null||usageProvider.equals("codex"))line(panel,label("Codex hooks must also be reviewed in /hooks.","Codex 还需在 /hooks 中审核已注册的 Hook。"),12,SampleUi.MUTED);}
-            action(panel,label("Hook settings","Hook 设置"),()->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));
+            action(panel,label("Hook settings","Hook 设置"),()->startActivity(SettingsNavigation.intent(this,"hook")));
         }
     }
     private String status(AgentHub.Event e){switch(e.data.optString("status")){case "pending":return eventStatus(e);case "answered":return tr(R.string.responded);case "expired":return tr(R.string.expired_return_to_the_terminal);case "offline":return tr(R.string.offline_waiting_to_sync);default:return tr(R.string.received);}}

@@ -104,7 +104,9 @@ public final class SshSessionService extends Service {
         if(selected==tab){if(observer!=null)observer.detach();selected=null;}
         tabs.remove(tab);previews.remove(id);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
         if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
-        if(tab.preview!=null){tab.preview.recycle();tab.preview=null;}
+        // Old Activity windows can still draw their ImageViews during a transition.
+        // Release our reference; shared UI bitmaps must be reclaimed by the GC.
+        tab.preview=null;
         if(id.equals(profileId()))new SshResumeState(this).clear();
         if(selected==null&&!tabs.isEmpty())select(tabs.get(0).id);
         mutating=false;persist();changed();
@@ -184,7 +186,7 @@ public final class SshSessionService extends Service {
         getSharedPreferences("language",0).unregisterOnSharedPreferenceChangeListener(languageChanged);
         AgentHub.get(this).keepAlive(false);
         destroyed=true;if(observer!=null){observer.detach();observer=null;}
-        for(Tab tab:tabs){if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();if(tab.preview!=null)tab.preview.recycle();}
+        for(Tab tab:tabs){if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();tab.preview=null;}
         if(wakeLock.isHeld())wakeLock.release();super.onDestroy();
     }
 }

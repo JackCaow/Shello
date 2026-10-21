@@ -11,4 +11,13 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
+    <style name="SettingsTheme" parent="SampleTheme">
+        <item name="android:windowAnimationStyle">@style/SettingsWindowAnimation</item>
+    </style>
+    <style name="SettingsWindowAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/settings_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/settings_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/settings_pop_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/settings_pop_exit</item>
+    </style>
 </resources>

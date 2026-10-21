@@ -36,7 +36,7 @@ final class TmuxPicker {
     private void open(String target){dialog.dismiss();action.open(SessionTarget.id(profile,target));}
     private void load(boolean history){
         cancel();int token=++generation;rows.removeAllViews();scroll.scrollTo(0,0);tmux.setTextColor(history?SampleUi.MUTED:SampleUi.TEXT);recent.setTextColor(history?SampleUi.TEXT:SampleUi.MUTED);icon(tmux,"terminal",history?SampleUi.MUTED:SampleUi.TEXT);icon(recent,"history",history?SampleUi.TEXT:SampleUi.MUTED);tmux.setBackground(SampleUi.surface(activity,history?0x00000000:SampleUi.PANEL,22));recent.setBackground(SampleUi.surface(activity,history?SampleUi.PANEL:0x00000000,22));create.setVisibility(history?View.GONE:View.VISIBLE);scroll.requestLayout();create.setEnabled(true);create.setAlpha(1);
-        if(history&&!AgentHub.get(activity).enabled(profile)){message(tr(R.string.install_the_host_helper_to_browse_claude_code_and_codex_history));TextView setup=tab(tr(R.string.set_up_hook),()->{dialog.dismiss();activity.startActivity(new Intent(activity,SettingsActivity.class).putExtra("page","hook"));});rows.addView(setup);return;}
+        if(history&&!AgentHub.get(activity).enabled(profile)){message(tr(R.string.install_the_host_helper_to_browse_claude_code_and_codex_history));TextView setup=tab(tr(R.string.set_up_hook),()->{dialog.dismiss();activity.startActivity(SettingsNavigation.intent(activity,"hook"));});rows.addView(setup);return;}
         message(tr(R.string.loading_remote_sessions));SshCommand current=new SshCommand();request=current;
         new Thread(()->{try(current){String command=history?AgentHub.COMMAND+"recent":TmuxSessions.COMMAND;
             String output=current.run(activity,profile,command,null);List<String[]> entries=new ArrayList<>();

@@ -11,7 +11,17 @@
     <service android:name=".SshSessionService" android:exported="false" android:foregroundServiceType="specialUse">
       <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started interactive SSH terminal: maintain the remote session and terminal state while the UI is backgrounded; ongoing notification provides disconnect."/>
     </service>
-    <activity android:name=".SettingsActivity" android:exported="false"/>
+    <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".LanguageSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".HookSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".NotificationsSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".FontSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".ThemeSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".AdvancedSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".ToolbarSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".GesturesSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".DraftSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".ShortcutsSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
     <activity android:name=".AgentActivity" android:exported="false"/>
     <activity android:name=".PairingActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
     <activity android:name=".SshDiscoveryActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>

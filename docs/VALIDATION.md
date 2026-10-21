@@ -1,5 +1,13 @@
 # Validation
 
+## Independent settings Activities and system back stack
+
+2026-10-21: all ten secondary settings pages now own distinct, non-exported Activities. The shared base retains the existing styled controls and preference keys; the index only launches destinations. Notifications → Hook returns through Notifications and the same index, while inbox/Recent shortcuts return to their actual caller. Old internal page intents/restored page state migrate once. Scroll and page state survive recreation, and entering settings hides the terminal keyboard.
+
+Settings use matching horizontal open/close transitions on API 27+, with Android 14+ Activity transition APIs and system back dispatch. Physical Xiaomi API 36 gesture checks confirm both cancelled and committed edge-back behavior. Returning during API 27 tests exposed an existing shared thumbnail being recycled while an old window could still draw it; the service now releases its reference without prematurely recycling the shared bitmap.
+
+[Acceptance](evidence/settings-activities/README.md): twelve checks each passed on the physical phone, API 27 and API 35 emulators. Debug, instrumentation, R8 release and debug lint builds passed. Replacement installation and final regression preserved all fourteen original preference/encrypted-profile files byte-for-byte. The updated debug APK is installed on the phone. No release tag or Maven publication.
+
 ## Last-turn user message and assistant reply
 
 2026-10-21: UserPromptSubmit was registered but its `prompt` field was discarded; cards also used their subtitle for status rather than the user message. Hook capture now retains bounded UTF-8 user/assistant previews directly from UserPromptSubmit/Stop (8 KiB per message plus an ellipsis); transcript files are not read. This updates the earlier prompt-metadata-only behavior recorded below.

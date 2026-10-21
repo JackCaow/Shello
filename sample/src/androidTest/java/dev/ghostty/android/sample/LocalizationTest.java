@@ -15,20 +15,21 @@ import static org.junit.Assert.*;
 public class LocalizationTest {
     private final Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     private final Context context=inst.getTargetContext();
-    private final BlockingQueue<SettingsActivity> resumed=new LinkedBlockingQueue<>();
-    private SettingsActivity current;
+    private final BlockingQueue<LanguageSettingsActivity> resumed=new LinkedBlockingQueue<>();
+    private LanguageSettingsActivity current;
     private String original;
+    private String originalStoredChoice;
     private final Application.ActivityLifecycleCallbacks callbacks=new Application.ActivityLifecycleCallbacks(){
         public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}
-        public void onActivityResumed(Activity a){if(a instanceof SettingsActivity){current=(SettingsActivity)a;resumed.add(current);}}
+        public void onActivityResumed(Activity a){if(a instanceof LanguageSettingsActivity){current=(LanguageSettingsActivity)a;resumed.add(current);}}
         public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}
         public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
     };
-    @Before public void before(){original=AppLanguage.choice(context);((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(callbacks);}
+    @Before public void before(){original=AppLanguage.choice(context);originalStoredChoice=context.getSharedPreferences("language",0).getString("selected",null);((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(callbacks);}
     @After public void after(){
-        if(current!=null){inst.runOnMainSync(current::finish);inst.waitForIdleSync();}
+        if(current!=null){inst.runOnMainSync(current::finish);android.os.SystemClock.sleep(80);}
         ((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(callbacks);
-        inst.runOnMainSync(()->AppLanguage.select(context,original));
+        inst.runOnMainSync(()->{AppLanguage.select(context,original);context.getSharedPreferences("language",0).edit().putString("selected",originalStoredChoice).commit();});
     }
     private void language(String value)throws Exception{
         inst.runOnMainSync(()->AppLanguage.select(context,value));
@@ -65,19 +66,20 @@ public class LocalizationTest {
         }finally{prefs.edit().putString("theme",old).commit();}
     }
     @Test public void languagePickerRecreatesAndKeepsPage()throws Exception{
-        language("en");current=(SettingsActivity)inst.startActivitySync(new Intent(context,SettingsActivity.class).putExtra("page","language").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));inst.waitForIdleSync();
+        language("en");
+        try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -W -n dev.ghostty.android.sample/.MainActivity");java.io.InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
+        resumed.clear();inst.runOnMainSync(()->context.startActivity(new Intent(context,LanguageSettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);android.os.SystemClock.sleep(80);
         assertEquals("App language",current.heading.getText().toString());
         choose("简体中文","应用语言");choose("English","App language");
-        choose("Follow system",resources(android.content.res.Resources.getSystem().getConfiguration().getLocales().get(0).toLanguageTag()).getString(R.string.app_language));
+        choose("Follow system",resources((Build.VERSION.SDK_INT>=33?context.getSystemService(LocaleManager.class).getSystemLocales():android.content.res.Resources.getSystem().getConfiguration().getLocales()).get(0).toLanguageTag()).getString(R.string.app_language));
         assertEquals("system",AppLanguage.choice(context));
     }
     private void choose(String label,String heading)throws Exception{
-        SettingsActivity old=current;resumed.clear();
+        LanguageSettingsActivity old=current;resumed.clear();
         inst.runOnMainSync(()->{View view=find(old.root,label);assertNotNull(label,view);view.performClick();});
-        SettingsActivity next=resumed.poll(10,TimeUnit.SECONDS);assertNotNull("Language change must recreate the screen",next);assertNotSame(old,next);current=next;inst.waitForIdleSync();
-        assertEquals(heading,current.heading.getText().toString());assertEquals("language",fieldPage(current));
+        LanguageSettingsActivity next=resumed.poll(10,TimeUnit.SECONDS);assertNotNull("Language change must recreate the screen",next);assertNotSame(old,next);current=next;android.os.SystemClock.sleep(80);
+        assertEquals(heading,current.heading.getText().toString());assertEquals(LanguageSettingsActivity.class,current.getClass());
     }
-    private String fieldPage(SettingsActivity a)throws Exception{java.lang.reflect.Field f=SettingsActivity.class.getDeclaredField("page");f.setAccessible(true);return (String)f.get(a);}
     private View find(View v,String description){if(description.contentEquals(v.getContentDescription()==null?"":v.getContentDescription()))return v;if(v instanceof ViewGroup){ViewGroup group=(ViewGroup)v;for(int i=0;i<group.getChildCount();i++){View found=find(group.getChildAt(i),description);if(found!=null)return found;}}return null;}
     @Test public void validationAndBackgroundStateFollowLanguage()throws Exception{
         SshProfileStore.Draft draft=new SshProfileStore.Draft();
