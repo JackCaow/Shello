@@ -1,0 +1,10 @@
+{
+  "notification_revoked_while_connected": true,
+  "app_pid_before": 16832,
+  "app_pid_after_reopen": 16916,
+  "ordinary_reopen_without_permission_prompt": true,
+  "app_settings_entry_verified": true,
+  "grant_while_settings_open": true,
+  "return_refreshed_notification": true,
+  "same_connection_after_settings_return": true
+}

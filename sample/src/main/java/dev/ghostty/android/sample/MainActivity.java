@@ -33,7 +33,10 @@ public final class MainActivity extends Activity {
             if(destroyed||!bound)return;
             sshService=((SshSessionService.LocalBinder)binder).service();
             sshService.observe(serviceObserver);
-            if(connectOnBind||sshService.shouldResume()){connectOnBind=false;if(sshService.terminal()==null)connectSsh();}
+            if(connectOnBind||sshService.shouldResume()){
+                boolean explicitConnect=connectOnBind;connectOnBind=false;
+                if(sshService.terminal()==null)connectSsh(explicitConnect);
+            }
         }
         public void onServiceDisconnected(ComponentName name){
             if(destroyed||!bound)return;
@@ -346,9 +349,12 @@ public final class MainActivity extends Activity {
         menu.getMenu().add(0,5,5,sshMode?"重新连接本机 SSH":"连接本机 SSH");
         menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(sshService!=null&&sshService.active());
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
+        menu.getMenu().add(0,8,8,"通知设置");
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
                 case 5:connectSsh();break;
+                case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
                 case 6:disconnectSsh();break;
                 case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
                 case 0:terminal.scrollToBottom();break;
@@ -363,6 +369,14 @@ public final class MainActivity extends Activity {
     @Override protected void onStart(){
         super.onStart();
         bound=bindService(new Intent(this,SshSessionService.class),serviceConnection,BIND_AUTO_CREATE);
+    }
+    @Override protected void onResume(){
+        super.onResume();
+        if(sshService!=null){sshService.refreshNotification();updateSshView();}
+    }
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(request,permissions,results);
+        if(request==41&&sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override protected void onStop(){
         if(sshService!=null)sshService.removeObserver(serviceObserver);
@@ -387,19 +401,28 @@ public final class MainActivity extends Activity {
             protocolBadge.setText("SSH");homeBadge.setText("SSH");
         }
         sshConnected=sshService.connected();
-        if(sshMode||sshService.status().equals("配置无效"))subtitle.setText("本机 · "+sshService.status());
+        if(sshMode||!sshService.status().equals("已断开"))subtitle.setText("本机 · "+sshService.status()
+                +(sshService.active()&&!notificationsVisible()?" · 通知已关闭":""));
     }
     private void detachServiceView(){
         if(serviceSession){terminal.setSession(null);session=null;serviceSession=false;}
     }
-    private void connectSsh(){
+    private boolean notificationsVisible(){
+        android.app.NotificationManager manager=getSystemService(android.app.NotificationManager.class);
+        android.app.NotificationChannel channel=manager.getNotificationChannel("ssh_session");
+        return manager.areNotificationsEnabled()&&(channel==null||channel.getImportance()!=android.app.NotificationManager.IMPORTANCE_NONE);
+    }
+    private void connectSsh(){connectSsh(true);}
+    private void connectSsh(boolean requestNotification){
         if(sshService==null){connectOnBind=true;return;}
         if(!new java.io.File(getFilesDir(),"ssh/connection.properties").isFile()){
             toast("请先通过 scripts/local-ssh.py 配置本机 SSH");return;
         }
-        if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
+        if(requestNotification&&Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},41);
-        startForegroundService(new Intent(this,SshSessionService.class).setAction(SshSessionService.CONNECT));
+        // Permission denial does not prevent an SSH foreground service; automatic recovery never re-prompts.
+        String rejected=SshSessionService.requestConnect(this);
+        if(rejected!=null){subtitle.setText("本机 · 系统暂不允许启动会话");toast("请回到应用后重新连接 SSH");}
     }
     private void disconnectSsh(){if(sshService!=null)sshService.disconnect();}
     private void returnOffline(){

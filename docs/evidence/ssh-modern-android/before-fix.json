@@ -1,0 +1,9 @@
+{
+  "api": 35,
+  "base_commit": "635db7b",
+  "notification_denied_service_still_foreground": true,
+  "ordinary_reopen_after_sigkill_repeats_denied_notification_prompt": false,
+  "source_finding": "Automatic resume invoked the explicit Connect path and requestPermissions; this API 35 run did not display a repeated dialog. The new code separates those paths explicitly.",
+  "grant_after_connect_notification_missing": true,
+  "grant_finding": "With POST_NOTIFICATIONS granted and specialUse service running, the notification drawer was empty; connection state updates had occurred before permission was granted."
+}

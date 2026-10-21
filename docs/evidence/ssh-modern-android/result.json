@@ -1,0 +1,134 @@
+{
+  "device": "Android 15 / API 35 ARM64 Play emulator",
+  "target_sdk": 35,
+  "service_type": "specialUse (0x40000000)",
+  "root_required": false,
+  "cases": [
+    {
+      "case": "denied-shell-home",
+      "app_pid": 11907,
+      "ssh_client_pid": 42796,
+      "same_connection": true,
+      "screen_off_seconds": 0
+    },
+    {
+      "case": "denied-shell-lock",
+      "app_pid": 11907,
+      "ssh_client_pid": 42796,
+      "same_connection": true,
+      "screen_off_seconds": 30
+    },
+    {
+      "case": "denied-shell-killed",
+      "kill": "SIGKILL via run-as",
+      "old_app_pid": 11907,
+      "new_app_pid": 12558,
+      "ordinary_launcher": true,
+      "no_permission_prompt": true,
+      "reopen_seconds": 5.63
+    },
+    {
+      "case": "denied-vim-home",
+      "app_pid": 12558,
+      "ssh_client_pid": 44434,
+      "same_connection": true,
+      "screen_off_seconds": 0
+    },
+    {
+      "case": "denied-vim-lock",
+      "app_pid": 12558,
+      "ssh_client_pid": 44434,
+      "same_connection": true,
+      "screen_off_seconds": 30
+    },
+    {
+      "case": "denied-vim-killed",
+      "kill": "SIGKILL via run-as",
+      "old_app_pid": 12558,
+      "new_app_pid": 13318,
+      "ordinary_launcher": true,
+      "no_permission_prompt": true,
+      "reopen_seconds": 5.13
+    },
+    {
+      "case": "denied-remote-state",
+      "shell_pid": 59117,
+      "vim_pid": 45104,
+      "environment_cwd_preserved": true,
+      "unsaved_text_exact": true,
+      "background_reconnect": true
+    },
+    {
+      "case": "allowed-shell-home",
+      "app_pid": 13937,
+      "ssh_client_pid": 49409,
+      "same_connection": true,
+      "screen_off_seconds": 0
+    },
+    {
+      "case": "allowed-shell-lock",
+      "app_pid": 13937,
+      "ssh_client_pid": 49409,
+      "same_connection": true,
+      "screen_off_seconds": 30
+    },
+    {
+      "case": "allowed-shell-killed",
+      "kill": "SIGKILL via run-as",
+      "old_app_pid": 13937,
+      "new_app_pid": 14589,
+      "ordinary_launcher": true,
+      "no_permission_prompt": true,
+      "reopen_seconds": 7.08
+    },
+    {
+      "case": "allowed-vim-home",
+      "app_pid": 14589,
+      "ssh_client_pid": 52603,
+      "same_connection": true,
+      "screen_off_seconds": 0
+    },
+    {
+      "case": "allowed-vim-lock",
+      "app_pid": 14589,
+      "ssh_client_pid": 52603,
+      "same_connection": true,
+      "screen_off_seconds": 30
+    },
+    {
+      "case": "allowed-vim-killed",
+      "kill": "SIGKILL via run-as",
+      "old_app_pid": 14589,
+      "new_app_pid": 15358,
+      "ordinary_launcher": true,
+      "no_permission_prompt": true,
+      "reopen_seconds": 6.31
+    },
+    {
+      "case": "allowed-vim-task-manager-stop",
+      "kill": "am stop-app (Task Manager equivalent)",
+      "old_app_pid": 15358,
+      "new_app_pid": 15460,
+      "ordinary_launcher": true,
+      "no_permission_prompt": true,
+      "reopen_seconds": 5.19
+    },
+    {
+      "case": "allowed-remote-state",
+      "shell_pid": 59117,
+      "vim_pid": 54054,
+      "environment_cwd_preserved": true,
+      "unsaved_text_exact": true,
+      "background_reconnect": true
+    },
+    {
+      "case": "background-start-rejected",
+      "exception": "ForegroundServiceStartNotAllowedException",
+      "app_survived": true,
+      "resume_intent_preserved": true,
+      "visible_reopen_restored": true
+    }
+  ],
+  "explicit_disconnect_cancels_resume_in_both_permission_states": true,
+  "scope": "Emulator OS restrictions, notification allowed/denied, Home, normal lock, process death and Task Manager equivalent; no OEM or Play distribution approval"
+}

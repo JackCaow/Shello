@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-21",
+  "api": 35,
+  "release": "Android 15",
+  "target_sdk": 35,
+  "build_fingerprint": "google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys",
+  "apk_sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "10793fbaa0a5a5b1076ba87a7e6af83162d09d3f9c7cd9140334a2cf6bf7c4b1",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "706577533ed5eafa1dcb62f17475bc545e04bec01fae3a15a91aa74c1c365234",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "fbe75e0b8a6b829c6bab2248afa31f632371364401647a0df790fe475dbe49d4"
+  },
+  "installed_debug_apk_sha256": "10793fbaa0a5a5b1076ba87a7e6af83162d09d3f9c7cd9140334a2cf6bf7c4b1",
+  "build": "assembleDebug, assembleRelease (R8), assembleDebugAndroidTest, lintRelease passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 18
+  },
+  "release_manifest_debug_probe_absent": true,
+  "instrumentation": {
+    "35": {
+      "passed": 4,
+      "skipped": 1,
+      "skip_reason": "Destructive plain-shell PTY exit skipped for tmux fixture"
+    },
+    "27": {
+      "passed": 4,
+      "skipped": 1,
+      "skip_reason": "Destructive plain-shell PTY exit skipped for tmux fixture"
+    }
+  },
+  "scope": "Final APK notification/lifecycle matrix on API 35; additional settings scenario executed separately; API 27 instrumentation regression; no business integration or Maven publication",
+  "temporary_stylus_handwriting_setting_restored": "null"
+}
