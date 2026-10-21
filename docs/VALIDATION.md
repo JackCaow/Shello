@@ -1,5 +1,17 @@
 # Validation
 
+## Saved SSH connection editing
+
+2026-10-21: added the observed Moshi interaction **long-press saved connection → 编辑 / 删除 menu → 编辑连接 form**, with a green top checkmark and a bottom save-and-connect action. This supersedes the earlier creation-only limitation below. Existing encrypted credentials can be retained without retyping; errors and discarded edits preserve the saved profile. Successful verification atomically updates the same profile ID and reconnects.
+
+- **API 27, API 35 and physical Xiaomi API 36: seven tests passed on each** ([API 27](evidence/ssh-edit/api27-tests.txt), [API 35](evidence/ssh-edit/api35-tests.txt), [phone](evidence/ssh-edit/phone-tests.txt)). Coverage includes failed edits retaining the active connection, endpoint changes requiring new trust, cancelled trust, rotation retaining edited metadata and saved credentials, stable profile IDs, AtomicFile rollback, previous encrypted/split-file profile migration, and renamed tmux profiles reattaching the same shell environment.
+- **Manual phone UI:** created a disposable password profile, long-pressed its card, edited its name and username, observed authentication failure for a wrong username, corrected it with the saved password left blank, and verified the renamed connection reached `GHOSTTY_PASSWORD_READY`. A further edit was discarded through its confirmation dialog; the saved name remained unchanged. The disposable profile was deleted afterward. Screenshots remain local.
+- Physical tests used temporary USB `adb reverse` mappings to isolated local SSH servers. Password authentication uses an echo-only server; public-key/tmux checks use real macOS OpenSSH. This is not a new LAN-roaming or vendor power-management test.
+- Debug, instrumentation and R8 release builds passed; sample release lint reported **0 errors / 31 warnings**. The first physical run's delete-button accessibility lookup failed; the test now observes the owned confirmation dialog and invokes its real positive button, then checks deletion/disconnection. Manual phone deletion also passed. [Build hashes and scope](evidence/ssh-edit/validation.json).
+
+No Maven publication or business integration. The terminal AAR is unchanged. Saved connections still support one active SSH connection; keyboard-interactive/MFA and jump hosts remain outside this sample.
+
+
 ## SSH connection creation
 
 2026-10-21: the sample now completes manual/LAN-selected host → username/authentication → explicit SHA-256 host trust → encrypted profile → foreground SSH terminal. Saved profiles support reconnect and confirmed deletion. Optional tmux uses an exec PTY and a stable per-profile session name on the remote server. [Workflow and reproducible fixture](LOCAL_SSH.md#create-a-connection-in-the-app).

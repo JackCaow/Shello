@@ -33,6 +33,7 @@ public final class SshSessionService extends Service {
     private Network activeNetwork;
     private Runnable retryTask,stableTask;
     private boolean connected,autoReconnect,foreground,destroyed;
+    private Properties profileConfig;
     private int generation,retryAttempt;
     private String status="已断开";
 
@@ -151,15 +152,14 @@ public final class SshSessionService extends Service {
     private void connect(){
         cancelConnection();
         File nextDirectory=new SshProfileStore(this).activeDirectory();
-        if(profileDirectory!=null&&!profileDirectory.equals(nextDirectory)&&terminal!=null){
+        Properties config;
+        try{config=SshProfileStore.properties(nextDirectory);}
+        catch(IOException|IllegalArgumentException error){finish("配置无效");return;}
+        if(profileDirectory!=null&&(!profileDirectory.equals(nextDirectory)||!config.equals(profileConfig))&&terminal!=null){
             if(observer!=null)observer.detach();terminal.close();terminal=null;
         }
-        profileDirectory=nextDirectory;
-        profileIdentity=resumeState.identity();
-        Properties config=new Properties();
-        try(InputStream in=new FileInputStream(new File(profileDirectory,"connection.properties"))){
-            config.load(in);profileName=config.getProperty("name","本机");autoReconnect="tmux".equals(config.getProperty("sessionMode"));
-        }catch(IOException|IllegalArgumentException error){finish("配置无效");return;}
+        profileDirectory=nextDirectory;profileConfig=config;profileIdentity=resumeState.identity();
+        profileName=config.getProperty("name","本机");autoReconnect="tmux".equals(config.getProperty("sessionMode"));
         if(terminal==null)terminal=new TerminalSession(40,20);
         // Deliberately held only for a user-started, notified session; released on every terminal stop.
         if(!wakeLock.isHeld())wakeLock.acquire();

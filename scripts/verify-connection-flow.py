@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in macOS/Android-emulator SSH creation checks with disposable local servers.
+"""Opt-in macOS/Android SSH creation and editing checks with disposable local servers.
 
 Run with a Python environment containing paramiko==5.1.0. Build sample debug and
 androidTest APKs first. No credentials or configuration from ~/.ssh are used.
@@ -86,15 +86,18 @@ def free_port():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--serial', help='Dedicated Android emulator serial; installs the sample and its tests')
+    parser.add_argument('--serial', help='Android test device serial; installs the sample and its tests')
+    parser.add_argument('--physical', action='store_true', help='Explicitly allow a USB-authorized phone using two temporary adb reverse ports')
+    parser.add_argument('--hold-seconds', type=int, default=0, help='Keep disposable fixture alive after tests for manual UI checks (maximum 600 seconds)')
     parser.add_argument('--serve-password', type=Path, help=argparse.SUPPRESS)
     parser.add_argument('--port', type=int, help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.serve_password:
         password_server(args.serve_password, args.port)
         return
-    if sys.platform != 'darwin' or not args.serial or not args.serial.startswith('emulator-'):
-        parser.error('Use macOS and --serial emulator-XXXX for this isolated fixture')
+    if sys.platform != 'darwin' or not args.serial or (not args.serial.startswith('emulator-') and not args.physical):
+        parser.error('Use macOS and an emulator, or explicitly pass --physical for a USB phone')
+    if not 0 <= args.hold_seconds <= 600:parser.error('--hold-seconds must be 0..600')
     try:
         import paramiko  # noqa: F401
     except ImportError:
@@ -109,7 +112,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='ghostty-connection-flow-', dir=cache) as folder:
         root = Path(folder)
         os.chmod(root, 0o700)
-        servers, logs = [], []
+        servers, logs, reversed_ports = [], [], []
         try:
             for name in ('client_key', 'host_key'):
                 subprocess.run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', str(root / name)], check=True)
@@ -121,7 +124,8 @@ def main():
             passphrase=secrets.token_hex(24)
             shutil.copy(root / 'client_key',root / 'client_key_encrypted')
             subprocess.run(['ssh-keygen','-q','-p','-P','','-N',passphrase,'-f',str(root / 'client_key_encrypted')],check=True,stdout=subprocess.DEVNULL)
-            (root / 'test.properties').write_text(f'host=10.0.2.2\nport={ssh_port}\nuser={getpass.getuser()}\npasswordPort={password_port}\npassword={secrets.token_hex(24)}\npassphrase={passphrase}\n')
+            target_host='127.0.0.1' if args.physical else '10.0.2.2'
+            (root / 'test.properties').write_text(f'host={target_host}\nalternateHost={target_host}\nport={ssh_port}\nuser={getpass.getuser()}\npasswordPort={password_port}\npassword={secrets.token_hex(24)}\npassphrase={passphrase}\n')
             os.chmod(root / 'test.properties', 0o600)
             (root / 'sshd_config').write_text(f'''ListenAddress 127.0.0.1
 Port {ssh_port}
@@ -152,6 +156,9 @@ PermitTunnel no
                         if probe.connect_ex(('127.0.0.1', port)) == 0:
                             break
                     time.sleep(.1)
+            if args.physical:
+                for port in (ssh_port,password_port):
+                    subprocess.run(adb+['reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}'],check=True);reversed_ports.append(port)
             for apk in ('sample/build/outputs/apk/debug/sample-debug.apk', 'sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk'):
                 subprocess.run(adb + ['install', '-r', str(repo / apk)], check=True)
             subprocess.run(adb + ['shell', 'run-as', package, 'mkdir', '-p', 'cache/ssh-flow'], check=True)
@@ -160,9 +167,13 @@ PermitTunnel no
             classes = ','.join(package + '.' + name for name in ('SshProfileTest', 'SshConnectionFlowTest', 'SshResumeStateTest'))
             result = subprocess.run(adb + ['shell', 'am', 'instrument', '-w', '-e', 'class', classes, package + '.test/androidx.test.runner.AndroidJUnitRunner'], capture_output=True, text=True, timeout=180)
             print(result.stdout)
-            if result.returncode or 'FAILURES' in result.stdout or 'OK (6 tests)' not in result.stdout:
+            if result.returncode or 'FAILURES' in result.stdout or 'OK (7 tests)' not in result.stdout:
                 raise RuntimeError('Connection flow tests failed')
+            if args.hold_seconds:
+                print('Manual fixture ready; reads are available in app cache/ssh-flow. Holding for',args.hold_seconds,'seconds',flush=True)
+                time.sleep(args.hold_seconds)
         finally:
+            for port in reversed_ports:subprocess.run(adb+['reverse','--remove',f'tcp:{port}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             subprocess.run(adb + ['shell', 'run-as', package, 'rm', '-rf', 'cache/ssh-flow'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             for server in servers:
                 if server.poll() is None:

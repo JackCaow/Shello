@@ -4,6 +4,7 @@ import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
+import android.util.AtomicFile;
 import org.json.JSONObject;
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
@@ -26,7 +27,7 @@ final class SshProfileStore {
         Properties properties(){
             Properties p=new Properties();p.setProperty("name",name);p.setProperty("host",host);
             p.setProperty("port",Integer.toString(port));p.setProperty("user",user);p.setProperty("auth",auth);
-            p.setProperty("sessionMode",tmux?"tmux":"plain");if(tmux)p.setProperty("tmuxSession",tmuxSession);return p;
+            p.setProperty("sessionMode",tmux?"tmux":"plain");if(tmux&&tmuxSession!=null)p.setProperty("tmuxSession",tmuxSession);return p;
         }
         String validate(){
             if(host.isEmpty()||host.length()>253||host.matches(".*[\\s/@\\\\].*")||host.startsWith("-")
@@ -52,7 +53,7 @@ final class SshProfileStore {
     }
     String activeId(){return context.getSharedPreferences("ssh_profiles",0).getString("active",null);}
     void activate(String id)throws IOException {
-        if(!new File(directory(id),"connection.properties").isFile())throw new IOException("Profile missing");
+        if(!exists(directory(id)))throw new IOException("Profile missing");
         if(!context.getSharedPreferences("ssh_profiles",0).edit().putString("active",id).commit())throw new IOException("Profile selection failed");
     }
     List<Entry> list(){
@@ -66,40 +67,67 @@ final class SshProfileStore {
         File[] files=dir.listFiles();if(files!=null)for(File f:files)if(!f.delete())throw new IOException("Delete failed");
         if(dir.exists()&&!dir.delete())throw new IOException("Delete failed");
     }
+    static boolean snapshotExists(File dir){return new File(dir,"profile.enc").isFile()||new File(dir,"profile.enc.bak").isFile();}
+    static boolean exists(File dir){return snapshotExists(dir)||new File(dir,"connection.properties").isFile();}
     String save(Draft draft)throws Exception {
-        String error=draft.validate();if(error!=null||draft.knownHosts.length==0)throw new IllegalArgumentException("Unverified profile");
         String id=UUID.randomUUID().toString();File dir=directory(id);
         if(!dir.mkdirs())throw new IOException("Cannot save profile");
-        try{
-            JSONObject secrets=new JSONObject().put("password",draft.password).put("passphrase",draft.passphrase)
-                    .put("privateKey",Base64.encodeToString(draft.privateKey,Base64.NO_WRAP));
-            Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());
-            byte[] encrypted=cipher.doFinal(secrets.toString().getBytes(StandardCharsets.UTF_8));
-            try(DataOutputStream out=new DataOutputStream(new FileOutputStream(new File(dir,"credentials.enc")))){
-                out.writeInt(cipher.getIV().length);out.write(cipher.getIV());out.write(encrypted);
-            }
-            Files.write(new File(dir,"known_hosts").toPath(),draft.knownHosts);
-            // Publish metadata last: incomplete profiles never appear in the connection list.
-            try(OutputStream out=new FileOutputStream(new File(dir,"connection.properties"))){draft.properties().store(out,null);}
-            return id;
-        }catch(Exception errorSaving){delete(id);throw errorSaving;}
+        try{write(dir,draft);return id;}catch(Exception error){delete(id);throw error;}
     }
-    static Properties properties(File dir)throws IOException {
+    void update(String id,Draft draft)throws Exception {
+        File dir=directory(id);if(!exists(dir))throw new IOException("Profile missing");
+        write(dir,draft);
+    }
+    private static synchronized void write(File dir,Draft draft)throws Exception {
+        if(draft.validate()!=null||draft.knownHosts.length==0)throw new IllegalArgumentException("Unverified profile");
+        JSONObject metadata=new JSONObject();Properties properties=draft.properties();
+        for(String name:properties.stringPropertyNames())metadata.put(name,properties.getProperty(name));
+        JSONObject value=new JSONObject().put("properties",metadata)
+                .put("knownHosts",Base64.encodeToString(draft.knownHosts,Base64.NO_WRAP))
+                .put("password",draft.password).put("passphrase",draft.passphrase)
+                .put("privateKey",Base64.encodeToString(draft.privateKey,Base64.NO_WRAP));
+        Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());
+        byte[] encrypted=cipher.doFinal(value.toString().getBytes(StandardCharsets.UTF_8));
+        // Metadata, host trust and credentials switch together, including after a process crash.
+        AtomicFile file=new AtomicFile(new File(dir,"profile.enc"));FileOutputStream stream=null;
+        try{
+            stream=file.startWrite();DataOutputStream out=new DataOutputStream(stream);
+            out.writeInt(cipher.getIV().length);out.write(cipher.getIV());out.write(encrypted);out.flush();
+            file.finishWrite(stream);
+        }catch(Exception error){if(stream!=null)file.failWrite(stream);throw error;}
+        // Legacy profiles migrate only after the complete new snapshot is durable.
+        for(String old:new String[]{"connection.properties","known_hosts","credentials.enc","client_key"})new File(dir,old).delete();
+    }
+    private static JSONObject decrypt(InputStream source)throws Exception {
+        try(DataInputStream in=new DataInputStream(source)){
+            int length=in.readInt();if(length!=12)throw new IOException("Invalid credential IV");byte[] iv=new byte[length];in.readFully(iv);
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int count;
+            while((count=in.read(buffer))!=-1){if(bytes.size()+count>4*1024*1024)throw new IOException("Profile too large");bytes.write(buffer,0,count);}
+            Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,iv));
+            return new JSONObject(new String(cipher.doFinal(bytes.toByteArray()),StandardCharsets.UTF_8));
+        }
+    }
+    private static Properties metadata(JSONObject snapshot)throws Exception {
+        Properties p=new Properties();JSONObject fields=snapshot.getJSONObject("properties");
+        for(Iterator<String> names=fields.keys();names.hasNext();){String name=names.next();p.setProperty(name,fields.getString(name));}return p;
+    }
+    static synchronized Properties properties(File dir)throws IOException {
+        if(snapshotExists(dir))try{return metadata(decrypt(new AtomicFile(new File(dir,"profile.enc")).openRead()));}
+            catch(Exception error){throw new IOException("Cannot read profile",error);}
         Properties p=new Properties();try(InputStream in=new FileInputStream(new File(dir,"connection.properties"))){p.load(in);}return p;
     }
-    Draft read(File dir)throws Exception {
-        Properties p=properties(dir);Draft d=new Draft();d.name=p.getProperty("name","SSH");d.host=p.getProperty("host","");d.user=p.getProperty("user","");
-        d.port=Integer.parseInt(p.getProperty("port","22"));d.auth=p.getProperty("auth","key");d.tmux="tmux".equals(p.getProperty("sessionMode"));d.tmuxSession=p.getProperty("tmuxSession",d.tmuxSession);d.knownHosts=Files.readAllBytes(new File(dir,"known_hosts").toPath());
-        File encrypted=new File(dir,"credentials.enc");
-        if(!encrypted.isFile()){d.privateKey=Files.readAllBytes(new File(dir,"client_key").toPath());return d;}
-        try(DataInputStream in=new DataInputStream(new FileInputStream(encrypted))){
-            int length=in.readInt();if(length!=12)throw new IOException("Invalid credential IV");byte[] iv=new byte[length];in.readFully(iv);
-            byte[] bytes=new byte[(int)encrypted.length()-4-length];in.readFully(bytes);
-            Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,iv));
-            JSONObject secrets=new JSONObject(new String(cipher.doFinal(bytes),StandardCharsets.UTF_8));
-            d.password=secrets.getString("password");d.passphrase=secrets.getString("passphrase");d.privateKey=Base64.decode(secrets.getString("privateKey"),Base64.NO_WRAP);
-        }return d;
-    }
+    Draft read(File dir)throws Exception {synchronized(SshProfileStore.class){
+        JSONObject secrets=snapshotExists(dir)?decrypt(new AtomicFile(new File(dir,"profile.enc")).openRead()):null;
+        Properties p=secrets==null?properties(dir):metadata(secrets);Draft d=new Draft();d.name=p.getProperty("name","SSH");d.host=p.getProperty("host","");d.user=p.getProperty("user","");
+        d.port=Integer.parseInt(p.getProperty("port","22"));d.auth=p.getProperty("auth","key");d.tmux="tmux".equals(p.getProperty("sessionMode"));d.tmuxSession=p.getProperty("tmuxSession");
+        d.knownHosts=secrets==null?Files.readAllBytes(new File(dir,"known_hosts").toPath()):Base64.decode(secrets.getString("knownHosts"),Base64.NO_WRAP);
+        if(secrets==null){
+            File encrypted=new File(dir,"credentials.enc");
+            if(!encrypted.isFile()){d.privateKey=Files.readAllBytes(new File(dir,"client_key").toPath());return d;}
+            secrets=decrypt(new FileInputStream(encrypted));
+        }
+        d.password=secrets.getString("password");d.passphrase=secrets.getString("passphrase");d.privateKey=Base64.decode(secrets.getString("privateKey"),Base64.NO_WRAP);return d;
+    }}
     private static synchronized javax.crypto.SecretKey key()throws Exception {
         KeyStore store=KeyStore.getInstance("AndroidKeyStore");store.load(null);
         if(!store.containsAlias(KEY_ALIAS)){

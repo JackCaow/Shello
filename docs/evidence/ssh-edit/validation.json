@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "133c64a",
+  "scope": "Saved SSH profile editing in sample only",
+  "instrumentation": {
+    "API 27": "7 passed, 7.441 s",
+    "API 35": "7 passed, 11.106 s",
+    "physical Xiaomi API 36": "7 passed, 5.958 s"
+  },
+  "manual_phone": [
+    "Long-press saved card; edit/delete context menu",
+    "Green checkmark saves edited name after SSH verification",
+    "Wrong username fails without overwriting saved profile",
+    "Corrected username reconnects with retained encrypted password",
+    "Discard confirmation preserves the saved name",
+    "Temporary profile removed using real delete confirmation"
+  ],
+  "connection_transport": "Physical device used temporary adb reverse ports to loopback SSH servers; password echo server and real macOS OpenSSH public-key/tmux fixture",
+  "storage": "AES-GCM single encrypted AtomicFile snapshot; legacy encrypted split-file and generated debug-key profiles remain readable; edited legacy profiles migrate",
+  "build_sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "6276c6658e2c19a7a24aec80a20619a8866cae91050c7f2f59d6b7869cac5801",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "6d26bcce74ca54161f0153e975e8e74ffd6af3c762d96c136809b25a02455e97",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "8cbecec540ca0b569d3d295b47428a3ebb35ebf0e0b035a97cb946e96f28c049"
+  },
+  "release_lint": {
+    "errors": 0,
+    "warnings": 31
+  },
+  "limits": [
+    "Release APK built and linted; editing acceptance used the debug APK",
+    "No new LAN roaming / power-management acceptance",
+    "No Maven publication",
+    "No business integration"
+  ],
+  "screenshots": "Local only; phone-edit-menu.png, phone-edit-form.png, phone-failed-edit.png, phone-edited-connected.png, phone-discard-edit.png"
+}

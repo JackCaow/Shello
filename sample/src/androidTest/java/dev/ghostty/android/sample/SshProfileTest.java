@@ -48,9 +48,38 @@ public class SshProfileTest {
             for(File f:dir.listFiles())assertFalse(new String(Files.readAllBytes(f.toPath()),StandardCharsets.ISO_8859_1).contains(d.password));
             SshResumeState resume=new SshResumeState(dir,context.getSharedPreferences("profile-encryption-test",0));
             resume.remember(resume.identity());assertTrue(resume.pending());
-            File secret=new File(dir,"credentials.enc");byte[] bytes=Files.readAllBytes(secret.toPath());bytes[bytes.length-1]^=1;Files.write(secret.toPath(),bytes);
+            File secret=new File(dir,"profile.enc");byte[] bytes=Files.readAllBytes(secret.toPath());bytes[bytes.length-1]^=1;Files.write(secret.toPath(),bytes);
             assertFalse(resume.pending());
             try{store.read(dir);fail("Tampered encrypted credentials must fail");}catch(javax.crypto.AEADBadTagException expected){}
+        }finally{store.delete(id);}
+    }
+    @Test public void editIsAtomicAndMigratesLegacyProfile()throws Exception {
+        SshProfileStore store=new SshProfileStore(context);SshProfileStore.Draft d=new SshProfileStore.Draft();
+        d.name="Original";d.host="example.invalid";d.user="test";d.password="original-secret";d.knownHosts="test pin".getBytes(StandardCharsets.UTF_8);d.tmux=true;
+        String id=store.save(d);File dir=store.directory(id);
+        try{
+            String session=d.tmuxSession;d.name="Edited";d.password="changed-secret";store.update(id,d);
+            assertEquals("Edited",store.read(dir).name);assertEquals("changed-secret",store.read(dir).password);assertEquals(session,store.read(dir).tmuxSession);
+            android.util.AtomicFile file=new android.util.AtomicFile(new File(dir,"profile.enc"));
+            FileOutputStream partial=file.startWrite();partial.write(new byte[]{1,2,3});file.failWrite(partial);
+            assertEquals("Edited",store.read(dir).name);assertEquals("changed-secret",store.read(dir).password);
+            d.host="";try{store.update(id,d);fail("Invalid update accepted");}catch(IllegalArgumentException expected){}
+            assertEquals("example.invalid",store.read(dir).host);
+            // Old UI profiles and the debug fixture remain readable; migration replaces all fields together.
+            file.delete();d.host="example.invalid";d.auth="key";d.privateKey="legacy-key-fixture".getBytes(StandardCharsets.UTF_8);
+            try(OutputStream out=new FileOutputStream(new File(dir,"connection.properties"))){d.properties().store(out,null);}
+            Files.write(new File(dir,"known_hosts").toPath(),d.knownHosts);Files.write(new File(dir,"client_key").toPath(),d.privateKey);
+            SshProfileStore.Draft legacy=store.read(dir);assertArrayEquals(d.privateKey,legacy.privateKey);
+            // The previous UI release kept encrypted credentials separately from metadata and host pins.
+            d.auth="password";try(OutputStream out=new FileOutputStream(new File(dir,"connection.properties"))){d.properties().store(out,null);}
+            java.security.KeyStore keys=java.security.KeyStore.getInstance("AndroidKeyStore");keys.load(null);
+            javax.crypto.Cipher cipher=javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE,keys.getKey("ghostty.sample.ssh.credentials.v1",null));
+            byte[] encrypted=cipher.doFinal(new org.json.JSONObject().put("password","legacy-encrypted-secret").put("passphrase","").put("privateKey","").toString().getBytes(StandardCharsets.UTF_8));
+            try(DataOutputStream out=new DataOutputStream(new FileOutputStream(new File(dir,"credentials.enc")))){out.writeInt(cipher.getIV().length);out.write(cipher.getIV());out.write(encrypted);}
+            legacy=store.read(dir);assertEquals("legacy-encrypted-secret",legacy.password);legacy.name="Migrated";store.update(id,legacy);
+            assertEquals("Migrated",store.read(dir).name);assertEquals("legacy-encrypted-secret",store.read(dir).password);
+            assertFalse(new File(dir,"client_key").exists());assertFalse(new File(dir,"credentials.enc").exists());assertFalse(new File(dir,"connection.properties").exists());
         }finally{store.delete(id);}
     }
     @Test public void firstContactRequiresTrustAndBothAuthenticationMethodsWork()throws Exception {
@@ -88,6 +117,8 @@ public class SshProfileTest {
             Output initial=new Output();one=new SshTransport(context,store.directory(id),80,24,initial);one.connect();assertTrue(initial.state,initial.connected.await(15,TimeUnit.SECONDS));
             one.send("stty -echo; GHOSTTY_FLOW_TEST=retained; printf '\\nFLOW_SAVED\\n'\r".getBytes(StandardCharsets.UTF_8));initial.expect("\r\nFLOW_SAVED\r\n");
             one.close();one=null;Thread.sleep(200);
+            SshProfileStore.Draft edited=store.read(store.directory(id));edited.name="Renamed tmux";store.update(id,edited);
+            assertEquals(d.tmuxSession,store.read(store.directory(id)).tmuxSession);
             Output restored=new Output();two=new SshTransport(context,store.directory(id),80,24,restored);two.connect();assertTrue(restored.state,restored.connected.await(15,TimeUnit.SECONDS));
             two.send("printf '\\nFLOW_RESTORED=%s\\n' \"$GHOSTTY_FLOW_TEST\"\r".getBytes(StandardCharsets.UTF_8));restored.expect("FLOW_RESTORED=retained");
             two.send("exit\r".getBytes(StandardCharsets.UTF_8));

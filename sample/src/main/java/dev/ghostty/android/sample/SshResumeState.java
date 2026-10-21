@@ -21,11 +21,11 @@ final class SshResumeState {
     String identity() {
         try {
             File directory=context==null?this.directory:new SshProfileStore(context).activeDirectory();
-            Properties profile=new Properties();
-            try(InputStream in=new FileInputStream(new File(directory,"connection.properties"))){profile.load(in);}
+            Properties profile=SshProfileStore.properties(directory);
             if(!"tmux".equals(profile.getProperty("sessionMode")))return null;
             MessageDigest digest=MessageDigest.getInstance("SHA-256");
-            for(String name:new String[]{"connection.properties","known_hosts",new File(directory,"credentials.enc").isFile()?"credentials.enc":"client_key"}) {
+            String[] files=SshProfileStore.snapshotExists(directory)?new String[]{"profile.enc"}:new String[]{"connection.properties","known_hosts",new File(directory,"credentials.enc").isFile()?"credentials.enc":"client_key"};
+            for(String name:files) {
                 byte[] bytes=java.nio.file.Files.readAllBytes(new File(directory,name).toPath());
                 digest.update(java.nio.ByteBuffer.allocate(4).putInt(bytes.length).array());
                 digest.update(bytes);

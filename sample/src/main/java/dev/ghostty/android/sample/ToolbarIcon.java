@@ -27,6 +27,8 @@ final class ToolbarIcon extends Drawable {
             case "keyboard":
                 c.drawRoundRect(2,4,22,20,2,2,p);for(int y=8;y<=12;y+=4)for(int x=6;x<=18;x+=4)c.drawPoint(x,y,p);line(c,7,16,17,16);break;
             case "send":line(c,12,20,12,4);line(c,5,11,12,4,19,11);break;
+            case "edit":line(c,14,4,18,2,22,6,10,18,5,19,6,14,18,2);line(c,14,6,18,10);line(c,12,4,3,4,3,22,21,22,21,13);break;
+            case "trash":line(c,3,6,21,6);line(c,9,6,9,3,15,3,15,6);line(c,5,6,6,22,18,22,19,6);line(c,10,10,10,18);line(c,14,10,14,18);break;
             case "plus":line(c,12,4,12,20);line(c,4,12,20,12);break;
             case "close":line(c,5,5,19,19);line(c,19,5,5,19);break;
             case "mic":

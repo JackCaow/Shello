@@ -47,12 +47,9 @@ final class SshTransport implements AutoCloseable {
         String end = "已断开";
         boolean retryable = false, profileLoaded = false;
         try {
-            Properties config = new Properties();
-            try (InputStream source = new FileInputStream(new File(directory, "connection.properties"))) {
-                config.load(source);
-            }
             JSch jsch = new JSch();
             SshProfileStore.Draft profile=new SshProfileStore(context).read(directory);
+            Properties config=profile.properties();
             jsch.setKnownHosts(new ByteArrayInputStream(profile.knownHosts));
             profileLoaded = true;
             Session ssh = SshConnectionSetup.session(jsch,profile);
@@ -61,7 +58,7 @@ final class SshTransport implements AutoCloseable {
             ssh.connect(10000);
             if (closed.get()) return;
             Channel shell;
-            String tmuxSession=config.getProperty("tmuxSession");
+            String tmuxSession=profile.tmuxSession;
             if("tmux".equals(config.getProperty("sessionMode"))&&tmuxSession!=null){
                 if(!tmuxSession.matches("ghostty_[0-9a-f]{32}"))throw new IllegalArgumentException("Invalid tmux session");
                 ChannelExec exec=(ChannelExec)ssh.openChannel("exec");exec.setPty(true);

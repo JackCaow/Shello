@@ -51,6 +51,8 @@ public final class MainActivity extends Activity {
     private EditText draft;
     private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
     private String pendingProfile;
+    private PopupWindow connectionMenu;
+    private android.app.AlertDialog connectionDeleteDialog;
     private FrameLayout stage, viewport;
     private ScrollView home;
     private ImageView sessionPreview;
@@ -315,19 +317,43 @@ public final class MainActivity extends Activity {
             LinearLayout labels=column();labels.addView(label(entry.name,17,TEXT));labels.addView(label(entry.user+"@"+entry.host+":"+entry.port,13,MUTED));
             card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
             card.setContentDescription("连接 SSH "+entry.name);card.setFocusable(true);card.setOnClickListener(v->{pendingProfile=entry.id;connectSsh();});
-            TextView remove=icon("close","删除连接 "+entry.name,()->new android.app.AlertDialog.Builder(this).setTitle("删除连接？")
-                    .setMessage("删除 "+entry.name+" 的本机连接配置和登录凭据。")
-                    .setNegativeButton("取消",null).setPositiveButton("删除",(dialog,which)->{
-                        try{if(entry.id.equals(store.activeId())){
-                                returnOffline();sshMode=false;sshConnected=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");
-                                sessionPreview.setImageDrawable(null);new SshResumeState(this).clear();
-                            }
-                            store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
-                    }).show());
-            card.addView(remove,new LinearLayout.LayoutParams(dp(44),dp(44)));
+            TextView arrow=icon("right","连接 "+entry.name,()->{pendingProfile=entry.id;connectSsh();});arrow.setBackgroundColor(Color.TRANSPARENT);
+            card.addView(arrow,new LinearLayout.LayoutParams(dp(36),dp(44)));
+            card.setOnLongClickListener(v->{showConnectionMenu(card,entry);return true;});
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(10);savedConnections.addView(card,p);
         }
         if(savedConnections.getChildCount()==0)savedConnections.addView(label("点击 + 新建 SSH 连接",14,MUTED));
+        else savedConnections.addView(label("长按连接可编辑或删除",12,MUTED));
+    }
+    private void showConnectionMenu(View anchor,SshProfileStore.Entry entry){
+        if(connectionMenu!=null)connectionMenu.dismiss();
+        LinearLayout choices=column();choices.setBackground(round(0xff161719,18));choices.setPadding(dp(4),dp(4),dp(4),dp(4));
+        connectionMenu=new PopupWindow(choices,dp(248),-2,true);connectionMenu.setBackgroundDrawable(round(0xff161719,18));
+        connectionMenu.setElevation(dp(16));connectionMenu.setOutsideTouchable(true);
+        choices.addView(connectionAction("编辑","编辑连接 "+entry.name,"edit",TEXT,()->{
+            connectionMenu.dismiss();startActivityForResult(new Intent(this,SshDiscoveryActivity.class).putExtra("editProfile",entry.id),73);
+        }));
+        View divider=new View(this);divider.setBackgroundColor(0xff292b2e);choices.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
+        choices.addView(connectionAction("删除","删除连接 "+entry.name,"trash",0xfff05252,()->{connectionMenu.dismiss();deleteConnection(entry);}));
+        connectionMenu.showAsDropDown(anchor,0,0,Gravity.RIGHT);
+    }
+    private View connectionAction(String text,String description,String symbol,int color,Runnable action){
+        LinearLayout item=row();item.setPadding(dp(16),0,dp(12),0);item.setMinimumHeight(dp(52));
+        item.setContentDescription(description);item.setFocusable(true);item.setOnClickListener(v->action.run());
+        item.addView(label(text,18,color),new LinearLayout.LayoutParams(0,-2,1));
+        android.widget.ImageView image=new android.widget.ImageView(this);image.setImageDrawable(new ToolbarIcon(symbol,dp(22),color));
+        image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);item.addView(image,new LinearLayout.LayoutParams(dp(24),dp(24)));return item;
+    }
+    private void deleteConnection(SshProfileStore.Entry entry){
+        SshProfileStore store=new SshProfileStore(this);
+        connectionDeleteDialog=new android.app.AlertDialog.Builder(this).setTitle("删除连接？").setMessage("删除 "+entry.name+" 的本机连接配置和登录凭据。")
+                .setNegativeButton("取消",null).setPositiveButton("删除",(dialog,which)->{
+                    try{if(entry.id.equals(store.activeId())){
+                            returnOffline();sshMode=false;sshConnected=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");
+                            sessionPreview.setImageDrawable(null);new SshResumeState(this).clear();
+                        }
+                        store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
+                }).show();
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
@@ -439,6 +465,7 @@ public final class MainActivity extends Activity {
         if(request==41&&sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override protected void onStop(){
+        if(connectionMenu!=null)connectionMenu.dismiss();
         if(sshService!=null)sshService.removeObserver(serviceObserver);
         detachServiceView();sshService=null;sshConnected=false;
         if(bound){unbindService(serviceConnection);bound=false;}
@@ -475,7 +502,7 @@ public final class MainActivity extends Activity {
     private void connectSsh(){connectSsh(true);}
     private void connectSsh(boolean requestNotification){
         if(sshService==null){connectOnBind=true;return;}
-        if(pendingProfile==null&&!new java.io.File(new SshProfileStore(this).activeDirectory(),"connection.properties").isFile()){
+        if(pendingProfile==null&&!SshProfileStore.exists(new SshProfileStore(this).activeDirectory())){
             startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73);return;
         }
         if(requestNotification&&Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
@@ -553,6 +580,7 @@ public final class MainActivity extends Activity {
         }
     }
     @Override protected void onDestroy(){
+        if(connectionDeleteDialog!=null)connectionDeleteDialog.dismiss();
         destroyed=true;
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);
         if(session!=null&&!serviceSession)session.close();

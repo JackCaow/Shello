@@ -18,7 +18,7 @@ public final class SshDiscoveryActivity extends Activity {
     private final Handler main=new Handler(Looper.getMainLooper());
     private final List<LanSshDiscovery.Host> hosts=new ArrayList<>();
     private EditText name,host,port,user,password,passphrase;
-    private TextView keyStatus,connectButton,connectionStatus;
+    private TextView keyStatus,connectButton,connectionStatus,saveTop;
     private LinearLayout passwordFields,keyFields;
     private android.widget.RadioGroup authChoices;
     private byte[] privateKey=new byte[0],trustedKey=new byte[0];
@@ -26,6 +26,8 @@ public final class SshDiscoveryActivity extends Activity {
     private SshConnectionSetup setup;
     private Dialog trustDialog;
     private boolean busy;
+    private String editingId;
+    private SshProfileStore.Draft original;
     private CheckBox tmux;
     private static final int IMPORT_KEY=72;
     private TextView badge,status,listingStatus;
@@ -39,6 +41,9 @@ public final class SshDiscoveryActivity extends Activity {
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
+        editingId=getIntent().getStringExtra("editProfile");
+        if(editingId!=null)try{original=new SshProfileStore(this).read(new SshProfileStore(this).directory(editingId));}
+            catch(Exception error){Toast.makeText(this,"无法读取连接，请返回重试",Toast.LENGTH_LONG).show();finish();return;}
         getWindow().setStatusBarColor(Color.BLACK);getWindow().setNavigationBarColor(Color.BLACK);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
                 |WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -49,8 +54,9 @@ public final class SshDiscoveryActivity extends Activity {
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
         LinearLayout header=row();header.setPadding(dp(16),dp(12),dp(16),dp(12));root.addView(header);
-        TextView close=button("×","关闭新建连接",this::finish);header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
-        TextView title=text("新建连接",24,TEXT);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        TextView close=button("×",original==null?"关闭新建连接":"关闭编辑连接",this::cancelEdit);header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        TextView title=text(original==null?"新建连接":"编辑连接",24,TEXT);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        if(original!=null){saveTop=button("✓","确认修改连接",this::verifyConnection);saveTop.setTextColor(GREEN);header.addView(saveTop,new LinearLayout.LayoutParams(dp(48),dp(48)));}
         ScrollView scroll=new ScrollView(this);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(form);
         form.addView(label("名称"));
@@ -83,7 +89,16 @@ public final class SshDiscoveryActivity extends Activity {
         tmux=new CheckBox(this);tmux.setText("保持远端会话（tmux）");tmux.setTextColor(TEXT);tmux.setContentDescription("使用 tmux 保持远端会话");margin(form,tmux,20);
         TextView tmuxHint=text("服务器需安装 tmux；开启后可在断线重连时回到原来的 shell 和编辑器。",13,MUTED);margin(form,tmuxHint,4);
         connectionStatus=text("首次连接需核对服务器指纹。认证成功后保存连接，登录凭据在本机加密保存。",13,MUTED);margin(form,connectionStatus,24);
-        connectButton=button("保存并连接","保存并连接 SSH",this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(round(GREEN,20));margin(form,connectButton,20);
+        connectButton=button(original==null?"保存并连接":"保存修改并连接","保存并连接 SSH",this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(round(GREEN,20));margin(form,connectButton,20);
+        if(original!=null){
+            name.setText(original.name);host.setText(original.host);port.setText(Integer.toString(original.port));user.setText(original.user);
+            authChoices.check("key".equals(original.auth)?R.id.auth_key:R.id.auth_password);tmux.setChecked(original.tmux);
+            privateKey=original.privateKey.clone();
+            if(privateKey.length>0)keyStatus.setText("已保存私钥 · 选择文件可替换");
+            if(!original.password.isEmpty())password.setHint("已保存密码（留空保留）");
+            if(!original.passphrase.isEmpty())passphrase.setHint("已保存口令（留空保留）");
+            connectionStatus.setText("验证成功后保存修改并重新连接；取消或验证失败会保留原配置。");
+        }
         if(state!=null){name.setText(state.getString("name",""));host.setText(state.getString("host",""));port.setText(state.getString("port","22"));user.setText(state.getString("user",""));authChoices.check(state.getInt("auth",R.id.auth_password));tmux.setChecked(state.getBoolean("tmux"));}
         root.setFocusableInTouchMode(true);root.requestFocus();
         cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
@@ -188,7 +203,7 @@ public final class SshDiscoveryActivity extends Activity {
             byte[] bytes=new byte[4096];for(int count;(count=in.read(bytes))!=-1;){if(out.size()+count>1024*1024)throw new java.io.IOException();out.write(bytes,0,count);}
             byte[] loaded=out.toByteArray();String header=new String(loaded,java.nio.charset.StandardCharsets.US_ASCII);
             if(!header.contains("PRIVATE KEY-----"))throw new java.io.IOException();
-            java.util.Arrays.fill(privateKey,(byte)0);privateKey=loaded;keyStatus.setText("已载入私钥 · "+privateKey.length+" 字节");
+            java.util.Arrays.fill(privateKey,(byte)0);privateKey=loaded;passphrase.setText("");passphrase.setHint("私钥口令（没有可留空）");keyStatus.setText("已载入私钥 · "+privateKey.length+" 字节");
         }catch(Exception error){connectionStatus.setText("无法读取私钥，请选择不超过 1 MB 的 OpenSSH / PEM 私钥文件");}
     }
     private void verifyConnection(){
@@ -198,15 +213,22 @@ public final class SshDiscoveryActivity extends Activity {
         d.password=d.auth.equals("password")?password.getText().toString():"";d.passphrase=d.auth.equals("key")?passphrase.getText().toString():"";
         d.privateKey=d.auth.equals("key")?privateKey.clone():new byte[0];
         try{d.port=Integer.parseInt(port.getText().toString());}catch(NumberFormatException e){d.port=0;}
+        if(original!=null){
+            if(d.auth.equals("password")&&original.auth.equals("password")&&d.password.isEmpty())d.password=original.password;
+            if(d.auth.equals("key")&&d.passphrase.isEmpty()&&java.util.Arrays.equals(d.privateKey,original.privateKey))d.passphrase=original.passphrase;
+            if(d.tmux&&original.tmux&&original.tmuxSession!=null&&d.host.equals(original.host)&&d.port==original.port&&d.user.equals(original.user))d.tmuxSession=original.tmuxSession;
+        }
         String error=d.validate();if(error!=null){connectionStatus.setText(error);return;}
         if(d.name.isEmpty())d.name=d.host;
-        if((d.host+":"+d.port).equals(trustedEndpoint))d.knownHosts=trustedKey.clone();
+        if(original!=null&&d.host.equals(original.host)&&d.port==original.port)d.knownHosts=original.knownHosts.clone();
+        else if((d.host+":"+d.port).equals(trustedEndpoint))d.knownHosts=trustedKey.clone();
         verify(d);
     }
     private void setBusy(boolean value){busy=value;
+        if(saveTop!=null){saveTop.setEnabled(!value);saveTop.setAlpha(value?.5f:1f);}
         for(View field:new View[]{name,host,port,user,password,passphrase,tmux,badge})field.setEnabled(!value);
         for(int i=0;i<authChoices.getChildCount();i++)authChoices.getChildAt(i).setEnabled(!value);
-        connectButton.setEnabled(!value);connectButton.setAlpha(value?.5f:1f);connectButton.setText(value?"正在验证连接…":"保存并连接");}
+        connectButton.setEnabled(!value);connectButton.setAlpha(value?.5f:1f);connectButton.setText(value?"正在验证连接…":original==null?"保存并连接":"保存修改并连接");}
     private void verify(SshProfileStore.Draft d){
         if(setup!=null)setup.close();setBusy(true);connectionStatus.setText("正在连接 "+d.host+":"+d.port);
         setup=new SshConnectionSetup();setup.start(d,new SshConnectionSetup.Listener(){
@@ -220,7 +242,8 @@ public final class SshDiscoveryActivity extends Activity {
             }
             public void verified(){
                 try{
-                    String id=new SshProfileStore(SshDiscoveryActivity.this).save(d);
+                    SshProfileStore store=new SshProfileStore(SshDiscoveryActivity.this);String id=editingId;
+                    if(id==null)id=store.save(d);else store.update(id,d);
                     password.setText("");passphrase.setText("");
                     setResult(RESULT_OK,new Intent().putExtra("profile",id));finish();
                 }catch(Exception error){setBusy(false);connectionStatus.setText("连接验证成功，但保存失败，请检查本机存储后重试");}
@@ -228,8 +251,19 @@ public final class SshDiscoveryActivity extends Activity {
             public void failed(String message){setBusy(false);connectionStatus.setText(message);}
         });
     }
+    private void cancelEdit(){
+        if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText("已暂停验证，原连接保持不变");}
+        boolean changed=original!=null&&(!name.getText().toString().equals(original.name)||!host.getText().toString().equals(original.host)
+                ||!port.getText().toString().equals(Integer.toString(original.port))||!user.getText().toString().equals(original.user)
+                ||tmux.isChecked()!=original.tmux||(!"key".equals(original.auth))!=(authChoices.getCheckedRadioButtonId()==R.id.auth_password)
+                ||password.length()>0||passphrase.length()>0||!java.util.Arrays.equals(privateKey,original.privateKey));
+        if(changed)new AlertDialog.Builder(this).setTitle("放弃修改？").setMessage("尚未保存的修改将丢失，原连接保持不变。")
+                .setNegativeButton("继续编辑",null).setPositiveButton("放弃修改",(dialog,which)->finish()).show();
+        else finish();
+    }
+    @Override public void onBackPressed(){cancelEdit();}
     @Override protected void onDestroy(){
-        if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();java.util.Arrays.fill(privateKey,(byte)0);super.onDestroy();
+        if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();java.util.Arrays.fill(privateKey,(byte)0);if(original!=null)java.util.Arrays.fill(original.privateKey,(byte)0);super.onDestroy();
     }
     private EditText field(String hint,String description){
         EditText e=new EditText(this);e.setTextColor(TEXT);e.setHintTextColor(MUTED);e.setTextSize(17);e.setSingleLine(true);

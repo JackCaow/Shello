@@ -53,6 +53,26 @@ public class SshConnectionFlowTest {
             Activity previous=current;inst.runOnMainSync(previous::recreate);current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);
             await(()->service()!=null&&service().connected(),10000);click("最小化会话");
             click("连接 SSH SSH Flow Password");await(()->service()!=null&&service().connected(),15000);
+            String editedId=store.activeId();SshSessionService running=service();
+            click("最小化会话");longClick("连接 SSH SSH Flow Password");click("编辑连接 SSH Flow Password");
+            current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
+            assertEquals("",((EditText)find(root(),"SSH 登录密码")).getText().toString());
+            set("连接名称","SSH Flow Edited");set("SSH 登录密码","wrong-edited-password");click("保存并连接 SSH");
+            await(()->text(root(),"认证失败"),15000);
+            assertEquals("SSH Flow Password",store.read(store.directory(editedId)).name);assertTrue(running.connected());
+            assertNull("Same endpoint must retain its pin",value(current,"trustDialog"));
+            // A changed endpoint requires trust again; cancelling must not overwrite the profile.
+            set("SSH 主机地址",p.getProperty("alternateHost", "10.0.2.2"));set("SSH 端口",p.getProperty("port"));
+            set("SSH 登录密码","");click("保存并连接 SSH");await(()->value(current,"trustDialog")!=null,15000);
+            inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_NEGATIVE).performClick());
+            assertEquals("SSH Flow Password",store.read(store.directory(editedId)).name);
+            set("SSH 主机地址",p.getProperty("host"));set("SSH 端口",p.getProperty("passwordPort"));
+            // Rotation preserves editable metadata; blank credentials keep the encrypted saved password.
+            Activity editing=current;inst.runOnMainSync(editing::recreate);current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);
+            assertEquals("SSH Flow Edited",((EditText)find(root(),"连接名称")).getText().toString());
+            click("保存并连接 SSH");current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
+            await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
+            assertEquals(editedId,store.activeId());assertEquals(before.size()+1,store.list().size());
             dev.ghostty.android.TerminalSession firstTerminal=service().terminal();
             // Creating another profile while the service owns a terminal must switch profiles.
             click("最小化会话");click("新建 SSH 连接");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
@@ -63,20 +83,14 @@ public class SshConnectionFlowTest {
             current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
             await(()->service()!=null&&service().connected()&&"SSH Flow Second".equals(service().profileName()),15000);
             assertNotSame(firstTerminal,service().terminal());
-            click("最小化会话");click("连接 SSH SSH Flow Password");
-            await(()->service()!=null&&service().connected()&&"SSH Flow Password".equals(service().profileName()),15000);
+            click("最小化会话");click("连接 SSH SSH Flow Edited");
+            await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             String secondId=store.list().stream().filter(e->e.name.equals("SSH Flow Second")).findFirst().get().id;
             store.delete(secondId);
-            click("最小化会话");click("删除连接 SSH Flow Password");
-            boolean deleted=false;long dialogDeadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
-            while(!deleted&&System.nanoTime()<dialogDeadline){
-                android.view.accessibility.AccessibilityNodeInfo dialogRoot=inst.getUiAutomation().getRootInActiveWindow();
-                if(dialogRoot!=null)for(android.view.accessibility.AccessibilityNodeInfo node:dialogRoot.findAccessibilityNodeInfosByText("删除")){
-                    if("删除".contentEquals(node.getText())){deleted=node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);break;}
-                }
-                if(!deleted)Thread.sleep(50);
-            }
-            assertTrue("Delete confirmation missing",deleted);await(()->store.list().size()==before.size(),5000);
+            click("最小化会话");longClick("连接 SSH SSH Flow Edited");click("删除连接 SSH Flow Edited");
+            await(()->{Dialog dialog=(Dialog)value(current,"connectionDeleteDialog");return dialog!=null&&dialog.isShowing();},5000);
+            inst.runOnMainSync(()->((AlertDialog)value(current,"connectionDeleteDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+            await(()->store.list().size()==before.size(),5000);
             await(()->!service().connected(),5000);
         }finally{
             inst.runOnMainSync(()->{if(current instanceof MainActivity&&service()!=null)service().disconnect();if(current!=null)current.finish();});
@@ -87,7 +101,11 @@ public class SshConnectionFlowTest {
     }
     SshSessionService service(){return (SshSessionService)value(current,"sshService");}
     Object value(Object object,String field){try{Field f=object.getClass().getDeclaredField(field);f.setAccessible(true);return f.get(object);}catch(Exception e){throw new AssertionError(e);}}
-    View root(){return current.getWindow().getDecorView();}
+    View root(){
+        if(current instanceof MainActivity){PopupWindow menu=(PopupWindow)value(current,"connectionMenu");if(menu!=null&&menu.isShowing())return menu.getContentView();}
+        return current.getWindow().getDecorView();
+    }
+    void longClick(String desc){inst.runOnMainSync(()->{View v=find(root(),desc);assertNotNull(desc,v);v.performLongClick();});}
     View find(View v,String desc){
         if(desc.contentEquals(v.getContentDescription()==null?"":v.getContentDescription()))return v;
         if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=find(((ViewGroup)v).getChildAt(i),desc);if(found!=null)return found;}return null;
