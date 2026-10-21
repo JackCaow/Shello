@@ -74,6 +74,18 @@ final class SampleUi {
         };
         v.setContentDescription(description);v.setFocusable(true);v.setBackground(touch(c,Color.TRANSPARENT,24));v.setOnClickListener(view->action.run());return v;
     }
+    /** Shared navigation for full-screen pages; trailing actions use the same touch target. */
+    static final class NavigationBar extends LinearLayout {
+        final TextView title;
+        NavigationBar(Context context,String text,Runnable back){
+            super(context);setOrientation(HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);setMinimumHeight(dp(context,56));
+            addView(header(context,"back","返回",TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
+            title=SampleUi.text(context,text,20,TEXT);title.setIncludeFontPadding(false);
+            title.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));title.setSingleLine();title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.leftMargin=dp(context,16);p.rightMargin=dp(context,16);addView(title,p);
+        }
+        void addAction(View action){addView(action,new LinearLayout.LayoutParams(dp(getContext(),56),dp(getContext(),56)));}
+    }
     static ImageView icon(Context c,String name,int color){
         ImageView v=new ImageView(c);v.setImageDrawable(new ToolbarIcon(name,dp(c,22),color));
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);return v;

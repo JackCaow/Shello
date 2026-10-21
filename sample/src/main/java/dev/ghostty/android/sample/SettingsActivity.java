@@ -23,12 +23,6 @@ public final class SettingsActivity extends ScreenActivity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         prefs=getSharedPreferences("appearance",0);
-        header.removeAllViews();
-        header.addView(SampleUi.header(this,"back","返回",SampleUi.TEXT,this::onBackPressed),new LinearLayout.LayoutParams(dp(56),dp(56)));
-        heading=label("",20,SampleUi.TEXT);
-        LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(0,-2,1);
-        titleParams.leftMargin=dp(16);titleParams.rightMargin=dp(16);
-        header.addView(heading,titleParams);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setId(android.R.id.list);
         homeScroll=state==null?0:state.getInt("homeScroll");

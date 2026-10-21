@@ -1,120 +1,146 @@
-# Shello
+<p align="center">
+  <img src="assets/readme/icon.png" width="112" height="112" alt="Shello 应用图标">
+</p>
+<h1 align="center">Shello</h1>
+<p align="center"><strong>把远端终端，放进口袋。</strong></p>
+<p align="center">Android 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
+<p align="center">
+  <a href="https://github.com/JackCaow/Shello/releases">下载 APK</a> ·
+  <a href="#快速配对">快速配对</a> ·
+  <a href="docs/DEVELOPMENT.md">构建与接入</a> ·
+  <a href="README.en.md">English</a>
+</p>
 
-Shello was previously named `ghostty-android`. The Android application ID, Java API packages, pairing protocol and existing connection storage remain unchanged for upgrade compatibility. The terminal engine is still Ghostty; Shello is an independent project.
+<p align="center">
+  <img src="assets/readme/preview.gif" width="960" alt="Shello 真实截图轮播：Claude Code、Vim、SSH 连接、主题和工具栏">
+</p>
+<p align="center"><sub>真实应用截图轮播，部分画面来自早期开发版本。<a href="assets/readme/preview.png">查看静态预览</a></sub></p>
 
-Experimental Android terminal library: **libghostty-vt + native Canvas rendering + touch selection + IME input**. Unofficial; not affiliated with the Ghostty project. Installable alpha APKs are available on [GitHub Releases](https://github.com/JackCaow/Shello/releases). No Maven Central coordinates are published.
+Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原生绘制**。从手机连接自己的电脑或服务器，使用 shell、Vim、less 和远端 CLI；通过 tmux 保留远端工作现场，也可查找并恢复 Claude Code / Codex 历史会话。
 
-[Source repository](https://github.com/JackCaow/Shello) · [中文说明](README.zh-CN.md) · [API contract](docs/API.md) · [Validation](docs/VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+项目同时提供可嵌入的终端库。当前处于 **Alpha** 阶段，API 和交互仍在完善。
 
-[Direct LAN testing and OEM battery-policy limitations](docs/DEVICE_RECOVERY.md)
+## 下载与安装
 
-## Scope
+| 项目 | 说明 |
+| --- | --- |
+| 当前预发布版 | [v0.1.0-alpha02](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha02) |
+| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha02/Shello-0.1.0-alpha02-arm64-v8a.apk) |
+| Android 要求 | Android 8.1 / API 27 及以上 |
+| 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
+| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha02/SHA256SUMS) |
+| 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
 
-- `TerminalSession`: ordered VT byte stream, key encoding, query replies, scrollback, and opaque in-memory checkpoints.
-- `TerminalView`: colors/styles, cursor, grapheme shaping, long-press selection, two handles, and edge autoscroll.
-- `TerminalInputView`: optional direct-input bridge. Composing text stays local; committed text is sent as UTF-8.
-- `sample`: offline echo by default, with an optional real SSH shell using mwiede/JSch. A USB setup script connects to a temporary loopback-only OpenSSH server on your Mac; optional `--tmux` preserves the remote shell and running programs across automatic SSH reconnects after transport failures. A notified foreground service owns independent SSH/VT sessions across backgrounding and Activity recreation. Long-press a session thumbnail to reorder, close it, or close all sessions; saved connection profiles remain available. After process death, normal app reopen reattaches the previously connected tmux profile; explicit disconnect or changed credentials/profile cancels that intent. Notification denial does not block SSH, and automatic recovery never prompts for notification permission; system-rejected foreground-service starts are handled without crashing. No business/account integration; the terminal AAR stays transport-independent.
+下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。
 
-```text
-PTY / SSH / WebSocket (your application)
-       │ ordered output       ▲ input + VT replies + resize
-       ▼                      │
-TerminalSession ─────── TerminalView
-                           ▲
-                    TerminalInputView
-```
+## 能做什么
 
-Android **8.1+ (API 27) / arm64-v8a only**, Java 17. Runtime regression covers an Android 8.1 / API 27 ARM64 emulator and the earlier API 36 phone checks; see the versioned [validation evidence](docs/VALIDATION.md). This is an alpha API. Ghostty is pinned to `b58ef1d678be2747c830bc1b1e6c0a086afecf9a`, with the documented [keycap-selector patch](patches/README.md). Graphics protocols are disabled. Android Canvas is used; this does not embed the Ghostty desktop renderer.
+- **SSH 连接**：密码或私钥认证、服务器指纹确认、已保存连接编辑、局域网 SSH 发现。
+- **扫码配对**：电脑运行一条命令，手机扫码安装 SSH 公钥，随后验证连接。
+- **持续会话**：借助 tmux 恢复远端 shell / Vim 会话，支持自动重连与后台连接服务。
+- **触屏终端**：中文 IME、文本选择、滚动、方向浮板和 Ctrl / Esc / Tab 快捷键。
+- **会话首页**：缩略图、长按排序与关闭；预览保存在本地，重启后可以恢复。
+- **远端智能体**：按项目查看 Claude Code / Codex 最近会话；Claude Code Hook 支持事件与审批收件箱。
+- **外观设置**：Shello / 黑色 / 浅色主题、字体大小与工具栏配置。
 
-## Sample UI
+## 快速配对
 
-The sample uses a Moshi-inspired mobile terminal layout (visual parity is still in progress): a dark rounded session sheet, a compact Ctrl/Esc/Tab toolbar, a draggable/lockable direction pad, direct IME input and a separate text draft. Tap Send to append Return; long-press Send for text only. Paste opens the local draft, and long-press selection exposes Copy. The history button restores recent drafts from RAM. Voice and attachment entries are disabled in this prototype. Minimize opens a half-width local session card with a viewport preview; resume retains the same in-memory session and draft. Session thumbnails persist privately on-device across process death and upgrades, with a 24 MiB disk limit. Visible terminals checkpoint every five seconds and on minimize/background; closing a tab removes its thumbnail. A cached image is the last captured view, not a live connection indicator. Control keys show feedback in offline mode and operate the real PTY in SSH mode. See [local SSH setup and limitations](docs/LOCAL_SSH.md). UI components live in `sample`, separate from the embeddable terminal library.
+### 1. 准备电脑
 
-[Local SSH auto-discovery](docs/LAN_SSH_DISCOVERY.md): the sample scans the current Wi-Fi subnet, displays a server-count entry and a bottom-sheet picker, then fills a connection draft. Continue with a username and password or imported private key (including passphrase-protected keys), verify the server fingerprint, then save and connect. Credentials are encrypted with Android Keystore. Tap saved profiles to connect; long-press for the Moshi-style Edit/Delete menu. Edits verify authentication before atomically replacing the encrypted profile; optional tmux preserves remote sessions. See the [connection workflow](docs/LOCAL_SSH.md#create-a-connection-in-the-app).
+手机和电脑应在同一局域网，或能直接访问彼此的网络。电脑需要：
 
-[UI screenshots and validation](docs/VALIDATION.md#moshi-inspired-sample-ui)
+- macOS 或 Linux，已开启 SSH 服务；macOS 可开启“远程登录”。
+- Python **3.9+**、OpenSSL、tmux，以及用于下载脚本的 curl。
+- 允许手机访问 SSH 端口与配对服务的临时 HTTPS 端口。
 
-## Install and pair
+以之后用于 SSH 登录的普通用户运行命令，不需要 `sudo`。脚本不会替你开启 SSH 或安装系统软件；部分 Linux 系统还需要安装 `python3-venv`。
 
-Download the signed Android 8.1+ **arm64-v8a** APK from [Releases](https://github.com/JackCaow/Shello/releases). On your SSH-enabled Mac/Linux computer with Python 3.9+, OpenSSL and tmux, run:
+### 2. 运行配对脚本
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash
 ```
 
-Then open **+ → 扫码轻松配对** in Shello. See [pairing options](docs/HOME_AND_AGENTS.md#pairing) and [APK signing/upgrade notes](docs/RELEASING.md).
+脚本会在 `~/.local/share/shello/pair` 准备独立 Python 环境、安装二维码依赖，然后在电脑终端显示二维码。默认有效期为 **3 分钟**，保持终端打开。
 
-## Build
+<details>
+<summary>指定 IP、SSH 端口或固定脚本版本</summary>
 
-Install JDK 17, Android SDK platform 35, NDK `28.2.13676358`, and Zig **0.16.0**. The wrapper pins Gradle 8.11.1. Native source and dependencies are downloaded from public upstream repositories on the first build. Native builds currently target ARM64 Android from macOS or Linux x86_64 hosts; see validation for actually tested hosts.
-
-```sh
-export JAVA_HOME=/path/to/jdk-17
-export ANDROID_HOME=/path/to/android-sdk
-export ZIG_BIN=/path/to/zig-0.16.0/zig
-./scripts/build-native.sh
-./gradlew :terminal:assembleRelease :sample:assembleDebug :sample:assembleRelease
-./gradlew :terminal:publishReleasePublicationToMavenLocal
-```
-
-`GHOSTTY_SOURCE=/path/to/pinned/ghostty` optionally reuses a checkout. The script builds from a disposable `git archive` and does not patch that checkout. Generated native files and build outputs are ignored by Git. Gradle fails early if the native library has not been built.
-
-Outputs:
-
-- `terminal/build/outputs/aar/terminal-release.aar`
-- `sample/build/outputs/apk/debug/sample-debug.apk`
-- Local-only Maven coordinate `dev.ghostty.android:terminal:0.1.0-alpha01` (not registered or remotely published).
-
-For another Android project, use `mavenLocal()` **for local evaluation** and `implementation("dev.ghostty.android:terminal:0.1.0-alpha01")`, or include the `terminal` module. The AAR includes the JNI library, consumer R8 rules, and license texts.
-
-## Integrate
-
-Create and use a session on one thread; when attached to a view, that must be the main thread. The caller owns the session. This sketch uses your own `transport` implementation:
-
-```java
-TerminalSession session = new TerminalSession(80, 24);
-TerminalView view = new TerminalView(context);
-view.setListener(new TerminalView.Listener() {
-    public void onInput(byte[] bytes) { transport.write(bytes); }
-    public void onResize(int columns, int rows) { transport.resize(columns, rows); }
-});
-view.setSession(session);
-TerminalInputView input = new TerminalInputView(context);
-input.setTerminalView(view);
-
-// On ordered PTY output, on the main thread:
-byte[] replies = session.write(outputBytes);
-if (replies.length != 0) transport.write(replies);
-
-// When disposing; cancel pending transport callbacks first:
-input.setTerminalView(null);
-view.setSession(null);
-session.close();
-```
-
-Callbacks run synchronously on the session/UI thread. Do not block them. Transport implementations must preserve ordering, apply backpressure, handle failures, and decide reconnection semantics. The library never retries or queues disconnected input. A view without a listener is read-only. Selection text is returned by `getSelectedText()`; clipboard writes remain an application action.
-
-## Unicode and limits
-
-VT columns are authoritative. Grapheme boundaries come from the pinned Ghostty engine rather than the system ICU version. Legacy mode keeps the application's expected widths while Android shapes adjacent same-style cells as one grapheme. For example, a family emoji occupies 8 legacy columns, with unused space, versus 2 after the application explicitly enables DEC mode 2027. We do not force mode 2027 for Vim/less.
-
-System font/glyph differences (new emoji artwork may be absent on old Android), cross-row or cross-style emoji, arbitrary long clusters, mouse reporting, accessibility, hardware dead keys and modifiers, and all IME variants are not fully supported/validated. Scrollback is currently capped at 4 MiB, pending control sequences at 64 KiB. Grid size is bounded to 1,000 per axis and 65,536 cells. Checkpoints are trusted RAM objects, not persisted/network-importable data and not a promise of cross-version compatibility.
-
-## Tests
+多网卡、VPN 或自定义 SSH 端口时，可以指定电脑的局域网 IPv4 地址：
 
 ```sh
-# Connect an explicitly chosen ARM64 Android device/emulator.
-ANDROID_SERIAL=your-device ./gradlew :terminal:connectedDebugAndroidTest
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh \
+  | bash -s -- --host 192.168.1.10 --ssh-port 2222
 ```
 
-`./scripts/check-artifact.sh` builds a separate R8-enabled consumer against the local Maven AAR, with no project/source dependency. Its debug-signed release APK can be installed to verify JNI under shrinking.
+需要固定配对服务端口以配置防火墙时，再追加 `--port 8765`。这里的 `192.168.1.10`、`2222`、`8765` 均为示例，请替换为自己的配置。
 
-Twenty-one instrumentation tests cover the public stream/lifecycle/IME contract, the pinned 85-case Unicode regression corpus, UTF-16 grapheme boundaries, real-window long-press selection, scrollback handle dragging, edge autoscroll and selection callbacks, cursor pixel geometry/contrast, blink timing, default resets and explicit remote steady modes. Color regressions also cover erased RGB/palette backgrounds, independent default colors, inverse and Canvas pixels. These pass on local API 27 and API 35 ARM64 emulators. Hosted CI checks builds, lint and separate AAR consumer compilation; its emulator runtime limitation is recorded in the validation notes. Device UI and artifact validation are recorded separately in [validation](docs/VALIDATION.md). Historical prototype performance is not a benchmark of this extracted library.
+使用与当前 APK 对应的固定版本：
 
-## License
+```sh
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0-alpha02/companion/pair.sh | bash
+```
 
-MIT, with retained source copyright and third-party notices. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Source is hosted at [JackCaow/Shello](https://github.com/JackCaow/Shello). No Maven package has been remotely published; CI uses Maven Local only to test the packaged AAR.
+查看全部参数：
 
-### Home and agent sessions
+```sh
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash -s -- --help
+```
 
-The sample includes a remote Tmux / Recent agent picker, QR-assisted SSH key pairing, independent settings, and a Claude Code Hook inbox. Recent groups Claude Code / Codex history by project and resumes the selected session in its original directory. See [protocols, setup and validation boundaries](docs/HOME_AND_AGENTS.md). These features are sample-only.
+</details>
+
+### 3. 手机扫码
+
+1. 打开 Shello，点击 **+ → 扫码轻松配对**。
+2. 允许相机权限，扫描自己电脑终端里的二维码。
+3. 确认电脑地址，等待公钥安装、SSH 指纹及 tmux 验证完成。
+4. 连接保存后，选择远端 tmux 会话，或创建新会话开始使用。
+
+手机生成并保存私钥，电脑只接收公钥；已有 `authorized_keys` 条目会保留。二维码携带临时令牌，不要公开分享。配对完成后可用 **Ctrl+C** 关闭临时服务，已安装的 SSH 公钥会保留。[配对协议与更多说明](docs/HOME_AND_AGENTS.md#pairing)
+
+## 手动连接 SSH
+
+不使用二维码也可以连接：
+
+1. 点击 **+ → 使用自己的 SSH**。
+2. 输入主机地址、端口和用户名，或从局域网发现列表选择机器。
+3. 选择密码或私钥认证；加密私钥可填写口令。
+4. 核对服务器指纹，验证并保存连接。
+
+点击已保存连接后，应用先建立 SSH 连接，再显示 **Tmux / 最近** 选择页。长按已保存连接可以编辑或删除。[详细连接流程](docs/LOCAL_SSH.md#create-a-connection-in-the-app)
+
+## 使用 Claude Code / Codex
+
+CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 提供终端操作和会话入口，不附带模型服务或订阅。
+
+- 在终端中按通常方式运行 `claude` 或 `codex`。
+- 在 **最近** 中按项目查找并恢复已有智能体会话。
+- Claude Code 的事件与审批收件箱需要在 **设置 → Hook** 安装对应辅助程序。
+
+Codex 历史恢复已支持，Codex 审批 Hook 尚未实现。具体行为与验证范围见[智能体会话说明](docs/HOME_AND_AGENTS.md)。
+
+## 常见问题
+
+**找不到电脑或配对失败？** 先确认 SSH 已开启、用户名正确、手机与电脑网络可达。VPN、多网卡或访客 Wi-Fi 隔离可能影响访问；可用 `--host` 明确选择 IPv4 地址。二维码过期后重新运行脚本。
+
+**锁屏或切后台后会断线吗？** 厂商省电策略可能切断 SSH。tmux 用于保留远端进程，恢复网络或重新打开 App 后尝试重新附着；电脑关机、tmux 退出后无法恢复原进程。[真机测试与限制](docs/DEVICE_RECOVERY.md)
+
+**首页显示“暂无预览”？** 新会话需要先打开终端生成预览。之后可见终端每 5 秒、收起或切后台时保存缩略图；关闭会话会清理对应缓存。缩略图是上次画面，不表示连接仍在线。
+
+**能在旧安卓设备上显示所有 emoji 吗？** 字形取决于系统字体；较旧 Android 可能缺少新 emoji。复杂字符、所有输入法和所有 TUI 的兼容性仍有边界，详见[验证记录](docs/VALIDATION.md)。
+
+## 开发与开源
+
+| 内容 | 文档 |
+| --- | --- |
+| 从源码构建、嵌入终端库 | [开发指南](docs/DEVELOPMENT.md) |
+| 线程、输入、资源生命周期 | [API 契约](docs/API.md) |
+| 测试结果与已知限制 | [验证记录](docs/VALIDATION.md) |
+| APK 签名与发布 | [发布说明](docs/RELEASING.md) |
+| 问题反馈 | [GitHub Issues](https://github.com/JackCaow/Shello/issues) |
+
+`terminal` 提供 VT、原生视图与 IME 输入；`sample` 包含 Shello 的 SSH、tmux 与应用界面。库的传输层由接入方提供，**尚未发布 Maven 包**。
+
+Shello 原名 `ghostty-android`，保留已有包名和协议标识以兼容升级。项目独立于 Ghostty，使用其终端内核，并非 Ghostty 官方 Android 客户端。
+
+采用 [MIT License](LICENSE)，保留源码版权及[第三方声明](THIRD_PARTY_NOTICES.md)。

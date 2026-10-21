@@ -14,8 +14,8 @@ public abstract class ScreenActivity extends Activity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         root=column();root.setBackgroundColor(Color.BLACK);setContentView(root);
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());v.setPadding(i.left,i.top,i.right,Math.max(i.bottom,insets.getInsets(WindowInsets.Type.ime()).bottom));return insets;});
-        header=row();header.addView(SampleUi.header(this,"left","返回",SampleUi.TEXT,this::onBackPressed),new LinearLayout.LayoutParams(dp(56),dp(56)));
-        heading=SampleUi.text(this,"",24,SampleUi.TEXT);header.addView(heading,new LinearLayout.LayoutParams(0,-2,1));root.addView(header);
+        SampleUi.NavigationBar navigation=new SampleUi.NavigationBar(this,"",this::onBackPressed);
+        header=navigation;heading=navigation.title;root.addView(header,new LinearLayout.LayoutParams(-1,-2));
         scroll=new ScrollView(this);body=column();body.setPadding(dp(16),dp(24),dp(16),dp(32));scroll.addView(body);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
     }
     int dp(int value){return SampleUi.dp(this,value);}

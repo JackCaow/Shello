@@ -53,10 +53,9 @@ public final class SshDiscoveryActivity extends Activity {
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
-        LinearLayout header=row();header.setPadding(dp(16),dp(12),dp(16),dp(12));root.addView(header);
-        TextView close=SampleUi.header(this,"close",original==null?"关闭新建连接":"关闭编辑连接",TEXT,this::cancelEdit);header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
-        TextView title=text(original==null?"新建连接":"编辑连接",24,TEXT);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        if(original!=null){saveTop=SampleUi.header(this,"check","确认修改连接",GREEN,this::verifyConnection);header.addView(saveTop,new LinearLayout.LayoutParams(dp(48),dp(48)));}
+        SampleUi.NavigationBar header=new SampleUi.NavigationBar(this,original==null?"新建连接":"编辑连接",this::cancelEdit);
+        root.addView(header,new LinearLayout.LayoutParams(-1,-2));
+        if(original!=null){saveTop=SampleUi.header(this,"check","确认修改连接",GREEN,this::verifyConnection);header.addAction(saveTop);}
         ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(form);
         form.addView(label("名称"));
