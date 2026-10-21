@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-21",
+  "scope": "sample-only; no login/profile flow or Maven publication",
+  "device": {
+    "model": "Xiaomi 25019PNF3C",
+    "android_api": 36
+  },
+  "physical_lan": {
+    "both_mac_computers_found": true,
+    "both_mac_mdns_names_displayed": true,
+    "router_ptr_name_fixed": true,
+    "both_selections_fill_name_ip_port": true,
+    "recreation_preserves_draft": true,
+    "wifi_off_clears_hosts": true,
+    "wifi_return_discovers_both": true,
+    "wifi_restored": true
+  },
+  "tests": {
+    "physical_scanner": {
+      "passed": 5,
+      "skipped": 0
+    },
+    "physical_ui": {
+      "passed": 1,
+      "skipped": 0
+    },
+    "api27_scanner": {
+      "passed": 4,
+      "skipped": 1,
+      "skip_reason": "No explicit physical Wi-Fi fixture on emulator"
+    }
+  },
+  "build": {
+    "debug": "passed",
+    "release_r8": "passed",
+    "test_apk": "passed",
+    "release_lint_errors": 0,
+    "release_lint_warnings": 21
+  },
+  "debug_apk_sha256": "2feb289904dcf63b328d695110b2eac813944be1ba8de959c23147ba21f93ccb",
+  "limits": [
+    "IPv4 Wi-Fi only, TCP 22, at most containing /24",
+    "Discovery names do not establish host-key trust",
+    "Initial shell UI checks were interrupted by foreground changes/UIAutomator idle errors; final in-app UI test passed",
+    "Initial in-app UI test could not cold-launch the internal Activity on this OEM; launcher-first test setup passed"
+  ],
+  "privacy": "Private LAN addresses and screenshots are kept out of public evidence; tests accept host fixtures as arguments.",
+  "installed_debug_apk_hash_matches": true
+}

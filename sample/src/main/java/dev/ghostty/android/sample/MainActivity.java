@@ -264,6 +264,8 @@ public final class MainActivity extends Activity {
     private void buildHome() {
         home=new ScrollView(this);LinearLayout content=column();content.setPadding(dp(16),dp(12),dp(16),dp(24));home.addView(content);
         LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        TextView add=icon("plus","新建 SSH 连接",()->startActivity(new Intent(this,SshDiscoveryActivity.class)));
+        top.addView(add,new LinearLayout.LayoutParams(dp(44),dp(44)));
         TextView settings=icon("settings","会话工具",()->tools(top));settings.setBackgroundColor(Color.TRANSPARENT);
         top.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(44)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(60)));
         TextView heading=label("会话",13,MUTED);heading.setPadding(0,dp(8),0,dp(12));content.addView(heading);
@@ -351,9 +353,11 @@ public final class MainActivity extends Activity {
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.getMenu().add(0,8,8,"通知设置");
         menu.getMenu().add(0,9,9,"后台运行设置");
+        menu.getMenu().add(0,10,10,"新建连接 · 局域网发现");
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
                 case 5:connectSsh();break;
+                case 10:startActivity(new Intent(this,SshDiscoveryActivity.class));break;
                 case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
                 case 9:new android.app.AlertDialog.Builder(this).setTitle("后台会话与省电限制")

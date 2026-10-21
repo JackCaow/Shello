@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.LanSshDiscoveryTest:....
+
+Time: 0.195
+
+OK (5 tests)

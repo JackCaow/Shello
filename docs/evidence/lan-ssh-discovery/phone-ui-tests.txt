@@ -1,0 +1,17 @@
+dev.ghostty.android.sample.SshDiscoveryActivityTest:
+Launcher opened
+
+Both hosts visible
+
+Both selections filled
+
+Recreation retained draft
+
+Wi-Fi off clears hosts
+
+Wi-Fi return finds both hosts
+.
+
+Time: 26.742
+
+OK (1 test)

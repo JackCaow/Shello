@@ -1,5 +1,17 @@
 # Validation
 
+## Local SSH discovery
+
+2026-10-21: validated the sample discovery UI on Xiaomi 25019PNF3C / Android 16 (API 36), against the two Mac computers on the phone’s Wi-Fi LAN. [Behavior and reproduction](LAN_SSH_DISCOVERY.md), [results](evidence/lan-ssh-discovery/validation.json).
+
+- Both Macs were discovered by real Wi-Fi TCP/SSH probes; their mDNS display names appeared in the server-count/bottom-sheet picker. Selecting each filled its name, IP and port 22 without changing the saved SSH profile.
+- Fixed the router showing only an IP by adding bounded Wi-Fi DNS PTR lookup as a fallback after mDNS. The real-router name assertion and malformed/truncated/compression-cycle DNS tests pass.
+- **5 physical scanner tests passed** ([output](evidence/lan-ssh-discovery/phone-tests.txt)); **4 API 27 scanner tests passed / 1 intentional physical-LAN skip** ([output](evidence/lan-ssh-discovery/api27-tests.txt)). API 27 also opened the new connection UI successfully.
+- **1 physical UI test passed** ([output](evidence/lan-ssh-discovery/phone-ui-tests.txt)): select both computers, recreate Activity and retain the selected draft, disable Wi-Fi and remove stale results, re-enable Wi-Fi and automatically rediscover both. The test restores Wi-Fi in cleanup. Earlier UIAutomator checks were interrupted by app switching/idle errors; the final test uses lifecycle callbacks and a launcher-first setup required by the OEM.
+- Debug, R8 release, instrumentation APK and release lint passed: **0 errors / 21 warnings**. Three added warnings are the sample’s Chinese UI literals; the prior 18 warnings remain.
+
+Discovery lives only in the sample, cancels on leaving its Activity, and does not authenticate or create a business connection. No Maven package was published.
+
 ## Physical Xiaomi / direct LAN checkpoint
 
 2026-10-21: Xiaomi `25019PNF3C`, Android 16 / API 36, HyperOS `OS3.0.314.0.WOACNXM`, **Smart background restriction (recommended)**, no Doze whitelist. Notification permission was granted. [Observations](evidence/ssh-device-recovery/observations.json), [reproduction and limits](DEVICE_RECOVERY.md).
