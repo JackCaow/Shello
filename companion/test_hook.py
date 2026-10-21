@@ -93,17 +93,38 @@ class HookTest(unittest.TestCase):
             hook.configure()
         self.assertEqual(hook.SETTINGS.read_text(), '{bad json')
 
-    def test_codex_lifecycle_and_provider_are_preserved_without_prompt_or_transcript(self):
+    def test_codex_lifecycle_keeps_bounded_prompt_but_never_transcript_path(self):
         for kind in ('SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd'):
-            self.assertEqual(hook.hook({'hook_event_name':kind, 'session_id':'session-1', 'turn_id':'turn-1', 'cwd':'/tmp/项目', 'model':'test-model', 'last_assistant_message':'完成', 'prompt':'PRIVATE', 'transcript_path':'PRIVATE'}, 'codex'), {})
+            self.assertEqual(hook.hook({'hook_event_name':kind, 'session_id':'session-1', 'turn_id':'turn-1', 'cwd':'/tmp/项目', 'model':'test-model', 'last_assistant_message':'完成', 'prompt':'本轮请求 👩🏽‍💻', 'transcript_path':'PRIVATE'}, 'codex'), {})
         events=hook.poll()['events'];self.assertEqual(len(events),5)
         for event in events:
             self.assertEqual(event['provider'],'codex');self.assertEqual(event['session_id'],'session-1')
             self.assertEqual(event['turn_id'],'turn-1');self.assertEqual(event['status'],'info')
             self.assertNotIn('PRIVATE',json.dumps(event))
+            self.assertEqual(event.get('prompt_preview'), '本轮请求 👩🏽‍💻' if event['hook_event_name']=='UserPromptSubmit' else None)
         # Claude-specific question updates are not Codex's input contract.
         hook.hook({'hook_event_name':'PreToolUse','tool_name':'AskUserQuestion'},'codex')
         self.assertEqual(len(hook.poll()['events']),5)
+
+    def test_both_providers_preserve_multiline_last_turn_and_bound_utf8(self):
+        for provider in ('claude','codex'):
+            hook.hook({'hook_event_name':'UserPromptSubmit','session_id':provider,'prompt':'第一行\n中文 👨‍👩‍👧‍👦\n'+'汉'*9000},provider)
+            hook.hook({'hook_event_name':'Stop','session_id':provider,'last_assistant_message':'已完成\n👩🏽‍💻'+'字'*9000},provider)
+        for event in hook.poll()['events']:
+            key='prompt_preview' if event['hook_event_name']=='UserPromptSubmit' else 'last_assistant_message'
+            self.assertLessEqual(len(event[key].encode()),8195);self.assertTrue(event[key].endswith('…'));self.assertIn('\n',event[key]);self.assertNotIn('\ufffd',event[key]);self.assertNotIn('prompt',event)
+
+    def test_busy_session_retains_its_last_prompt_after_history_pruning(self):
+        import uuid
+        now=time.time()
+        def save(kind,created,prompt=None):
+            event={'id':str(uuid.uuid4()),'created':created,'expires':0,'status':'info','provider':'codex','session_id':'busy','turn_id':'current','hook_event_name':kind}
+            if prompt:event['prompt_preview']=prompt
+            hook.atomic(hook.STATE/(event['id']+'.json'),event)
+        save('UserPromptSubmit',now-300,'Current prompt 中文')
+        for i in range(220):save('Stop',now-220+i)
+        for _ in range(2):
+            rows=hook.poll()['events'];self.assertTrue(any(e.get('prompt_preview')=='Current prompt 中文' for e in rows))
 
     def test_codex_permission_allow_and_deny_do_not_update_input_or_permissions(self):
         for behavior in ('allow','deny'):

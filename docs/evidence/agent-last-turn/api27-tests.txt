@@ -1,0 +1,7 @@
+dev.ghostty.android.sample.AgentInboxModelTest:.......
+dev.ghostty.android.sample.AgentBoardUiTest:.
+dev.ghostty.android.sample.AgentInboxTest:.
+
+Time: 4.025
+
+OK (9 tests)

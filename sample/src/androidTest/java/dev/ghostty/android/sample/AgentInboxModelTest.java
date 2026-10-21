@@ -47,6 +47,18 @@ public class AgentInboxModelTest {
         AgentHub.Event e=event("a","s","1","Stop",now/1000d,"info");e.data.put("model","test-model");AgentInbox.Session s=AgentInbox.sessions(Arrays.asList(e),prefs,now).get(0);
         assertTrue(AgentInbox.matches(s,"TEST-MODEL","codex","a","/tmp/project"));assertFalse(AgentInbox.matches(s,"project","claude",null,null));assertFalse(AgentInbox.matches(s,"project",null,"b",null));
     }
+    @Test public void lastTurnPairsMessagesAndDoesNotReusePreviousReply()throws Exception{
+        for(String provider:new String[]{"claude","codex"}){
+            double t=now/1000d;AgentHub.Event prompt=event("a","s","prompt","UserPromptSubmit",t-4,"info"),reply=event("a","s","reply","Stop",t-3,"info"),end=event("a","s","end","SessionEnd",t-2,"info");
+            for(AgentHub.Event e:Arrays.asList(prompt,reply,end)){e.data.put("provider",provider);if(provider.equals("codex"))e.data.put("turn_id","turn-one");}
+            prompt.data.put("prompt_preview","请求第一行\n中文 👩🏽‍💻");reply.data.put("last_assistant_message","最新回复\n第二行 👨‍👩‍👧‍👦");
+            List<AgentHub.Event> rows=new ArrayList<>(Arrays.asList(end,reply,prompt));AgentInbox.Session s=AgentInbox.sessions(rows,prefs,now).get(0);
+            assertEquals("请求第一行\n中文 👩🏽‍💻",s.lastPrompt());assertEquals("最新回复\n第二行 👨‍👩‍👧‍👦",s.lastAssistant());assertTrue(AgentInbox.matches(s,"请求第一行",null,null,null));
+            AgentHub.Event next=event("a","s","next","UserPromptSubmit",t-1,"info");next.data.put("provider",provider).put("prompt_preview","新一轮消息");if(provider.equals("codex"))next.data.put("turn_id","turn-two");rows.add(next);
+            s=AgentInbox.sessions(rows,prefs,now).get(0);assertEquals("新一轮消息",s.summary());assertEquals("",s.lastAssistant());assertEquals(AgentInbox.State.WORKING,s.state);
+            if(provider.equals("codex")){AgentHub.Event late=event("a","s","late","Stop",t,"info");late.data.put("turn_id","turn-one").put("last_assistant_message","上一轮延迟回复");rows.add(late);s=AgentInbox.sessions(rows,prefs,now).get(0);assertEquals("",s.lastAssistant());assertEquals(AgentInbox.State.WORKING,s.state);}
+        }
+    }
     @Test public void privateCacheSurvivesNewStoreAndCorruptionIsBounded()throws Exception{
         File root=new File(context.getCacheDir(),"inbox-cache-test-"+UUID.randomUUID());assertTrue(root.mkdirs());
         File file=new File(root,"agent-inbox-v2.json");

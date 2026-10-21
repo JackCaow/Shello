@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.AgentLastTurnDeviceTest:.
+
+Time: 2.746
+
+OK (1 test)

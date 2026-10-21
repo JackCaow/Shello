@@ -1,5 +1,13 @@
 # Validation
 
+## Last-turn user message and assistant reply
+
+2026-10-21: UserPromptSubmit was registered but its `prompt` field was discarded; cards also used their subtitle for status rather than the user message. Hook capture now retains bounded UTF-8 user/assistant previews directly from UserPromptSubmit/Stop (8 KiB per message plus an ellipsis); transcript files are not read. This updates the earlier prompt-metadata-only behavior recorded below.
+
+Completed cards show the final reply and the current user message; session details show separate selectable messages. Starting a new turn clears the previous reply, and mismatched Codex turn IDs cannot replace the active turn. The host preserves each recent session's current prompt while pruning noisy history. Existing metadata-only events are not fabricated into messages.
+
+[Acceptance](evidence/agent-last-turn/README.md): 24 Python tests, nine API 27 and nine physical API 36 model/UI checks passed. Actual Claude Code and Codex sessions with Chinese, multiline text and complex emoji passed phone card/detail/cache assertions over the saved pinned SSH profile. The replacement APK and host helper are installed with connections/data preserved. Debug, instrumentation, R8 release and debug lint builds passed. No tag or Maven release.
+
 ## Agent session inbox and real account quotas
 
 2026-10-21: the sample inbox now aggregates Claude Code/Codex events by saved host, provider and session, with state sections, combined search/filters, session details, individual decisions, archive/restore and existing-tmux attachment. Private atomic snapshots restore sessions and quota data after app restarts; cached, expired, offline or confirmed dead-process requests cannot authorize a tool. This supersedes the earlier board/quota exclusions below. Codex interactive question replies and cloud push remain outside the supported protocol.

@@ -149,18 +149,25 @@ def poll():
         except (ValueError, KeyError, OSError):
             continue
     events.sort(key=lambda e: e['created'], reverse=True)
+    latest, prompts = {}, {}
+    for event in events:
+        key = (event.get('provider', 'claude'), event.get('session_id', event['id']))
+        latest.setdefault(key, event)
+        if event.get('hook_event_name') == 'UserPromptSubmit':
+            prompts.setdefault(key, event)
+    # Retain the latest prompt with each of the 100 most recent sessions. A
+    # busy turn must not lose its user message to the ordinary history cap.
+    context = [prompts[key] for key in list(latest)[:100] if key in prompts]
+    protected = {event['id'] for event in context}
     # Keep a bounded disk history, including completion events while the app is away.
     for event in events[200:]:
-        if event['status'] != 'pending':
+        if event['status'] != 'pending' and event['id'] not in protected:
             for path in paths(event['id']):
                 path.unlink(missing_ok=True)
     # Pending decisions take priority over noisy completions. Include each
     # session's newest event before filling the remaining bounded history.
     pending = [e for e in events if e['status'] == 'pending']
-    latest = {}
-    for e in events:
-        latest.setdefault((e.get('provider','claude'),e.get('session_id',e['id'])),e)
-    candidates = pending + list(latest.values()) + events
+    candidates = pending + list(latest.values()) + context + events
     selected, size, seen = [], 0, set()
     for event in candidates:
         if event['id'] in seen:continue
@@ -172,6 +179,14 @@ def poll():
     return {'version': 1, 'events': selected, 'now': time.time()}
 
 
+def message_preview(value):
+    if not isinstance(value, str):
+        return ''
+    # Keep UTF-8 valid and bound message content independently of tool payloads.
+    text = value.strip().encode('utf-8')
+    return text[:8192].decode('utf-8', errors='ignore') + ('…' if len(text) > 8192 else '')
+
+
 def hook(value, provider='claude'):
     if provider not in ('claude', 'codex'):
         raise ValueError('unsupported provider')
@@ -181,7 +196,11 @@ def hook(value, provider='claude'):
     if kind not in supported and not question:
         return {}
     event_id = str(uuid.uuid4())
-    event = {key: value[key] for key in ('hook_event_name', 'session_id', 'turn_id', 'cwd', 'model', 'tool_name', 'tool_input', 'message', 'notification_type', 'last_assistant_message') if key in value}
+    event = {key: value[key] for key in ('hook_event_name', 'session_id', 'turn_id', 'cwd', 'model', 'tool_name', 'tool_input', 'message', 'notification_type') if key in value}
+    if kind == 'UserPromptSubmit':
+        event['prompt_preview'] = message_preview(value.get('prompt'))
+    if kind == 'Stop':
+        event['last_assistant_message'] = message_preview(value.get('last_assistant_message'))
     event['provider'] = provider
     process = agent_process()
     if process:event.update(process)
