@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "4e44119",
+  "scope": "Sample UI only; no terminal library changes or Maven publication",
+  "tests": {
+    "api27": 7,
+    "api35": 7,
+    "physical_api36": 7
+  },
+  "sample_release_lint": {
+    "Error": 0,
+    "Warning": 30
+  },
+  "sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "8fbcce1a7a452363251535868e4a0e011db16c67a349668ba85cba67e07ac6b2",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "5c4c68682c64ccef6f093d38bf3d16231b5476d567c648e22f65d1baaa71905a",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "6d26bcce74ca54161f0153e975e8e74ffd6af3c762d96c136809b25a02455e97"
+  }
+}

@@ -52,7 +52,7 @@ public final class MainActivity extends Activity {
     private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
     private String pendingProfile;
     private PopupWindow connectionMenu;
-    private android.app.AlertDialog connectionDeleteDialog;
+    private android.app.AlertDialog connectionDeleteDialog,infoDialog;
     private FrameLayout stage, viewport;
     private ScrollView home;
     private ImageView sessionPreview;
@@ -213,15 +213,18 @@ public final class MainActivity extends Activity {
     private void composerAction(LinearLayout actions,TextView button){
         button.setBackgroundColor(Color.TRANSPARENT);actions.addView(button,new LinearLayout.LayoutParams(dp(40),dp(44)));
     }
+    private void showMenu(View anchor,java.util.List<SampleUi.Action> actions){
+        if(connectionMenu!=null)connectionMenu.dismiss();connectionMenu=SampleUi.menu(this,anchor,actions);
+    }
     private void addTextMenu(){
-        PopupMenu menu=new PopupMenu(this,composer);menu.getMenu().add("粘贴文本").setOnMenuItemClickListener(item->{paste();return true;});
-        menu.getMenu().add("附件（暂未接入）").setEnabled(false);menu.show();
+        showMenu(composer,java.util.Arrays.asList(new SampleUi.Action("粘贴文本","paste",true,false,this::paste),
+                new SampleUi.Action("附件（暂未接入）","plus",false,false,null)));
     }
     private void history(){
-        PopupMenu menu=new PopupMenu(this,toolbar);
-        if(draftHistory.isEmpty())menu.getMenu().add("暂无输入历史").setEnabled(false);
-        for(String entry:draftHistory)menu.getMenu().add(entry).setOnMenuItemClickListener(item->{setDraftMode(true,true);draft.setText(entry);draft.setSelection(draft.length());return true;});
-        menu.show();
+        java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
+        if(draftHistory.isEmpty())actions.add(new SampleUi.Action("暂无输入历史","history",false,false,null));
+        for(String entry:draftHistory)actions.add(new SampleUi.Action(entry,"history",true,false,()->{setDraftMode(true,true);draft.setText(entry);draft.setSelection(draft.length());}));
+        showMenu(toolbar,actions);
     }
     private void buildSelectionBar() {
         selectionBar=row();selectionBar.setPadding(dp(4),dp(4),dp(4),dp(4));
@@ -326,34 +329,19 @@ public final class MainActivity extends Activity {
         else savedConnections.addView(label("长按连接可编辑或删除",12,MUTED));
     }
     private void showConnectionMenu(View anchor,SshProfileStore.Entry entry){
-        if(connectionMenu!=null)connectionMenu.dismiss();
-        LinearLayout choices=column();choices.setBackground(round(0xff161719,18));choices.setPadding(dp(4),dp(4),dp(4),dp(4));
-        connectionMenu=new PopupWindow(choices,dp(248),-2,true);connectionMenu.setBackgroundDrawable(round(0xff161719,18));
-        connectionMenu.setElevation(dp(16));connectionMenu.setOutsideTouchable(true);
-        choices.addView(connectionAction("编辑","编辑连接 "+entry.name,"edit",TEXT,()->{
-            connectionMenu.dismiss();startActivityForResult(new Intent(this,SshDiscoveryActivity.class).putExtra("editProfile",entry.id),73);
-        }));
-        View divider=new View(this);divider.setBackgroundColor(0xff292b2e);choices.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
-        choices.addView(connectionAction("删除","删除连接 "+entry.name,"trash",0xfff05252,()->{connectionMenu.dismiss();deleteConnection(entry);}));
-        connectionMenu.showAsDropDown(anchor,0,0,Gravity.RIGHT);
-    }
-    private View connectionAction(String text,String description,String symbol,int color,Runnable action){
-        LinearLayout item=row();item.setPadding(dp(16),0,dp(12),0);item.setMinimumHeight(dp(52));
-        item.setContentDescription(description);item.setFocusable(true);item.setOnClickListener(v->action.run());
-        item.addView(label(text,18,color),new LinearLayout.LayoutParams(0,-2,1));
-        android.widget.ImageView image=new android.widget.ImageView(this);image.setImageDrawable(new ToolbarIcon(symbol,dp(22),color));
-        image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);item.addView(image,new LinearLayout.LayoutParams(dp(24),dp(24)));return item;
+        showMenu(anchor,java.util.Arrays.asList(
+                new SampleUi.Action("编辑","编辑连接 "+entry.name,"edit",true,false,()->startActivityForResult(new Intent(this,SshDiscoveryActivity.class).putExtra("editProfile",entry.id),73)),
+                new SampleUi.Action("删除","删除连接 "+entry.name,"trash",true,true,()->deleteConnection(entry))));
     }
     private void deleteConnection(SshProfileStore.Entry entry){
         SshProfileStore store=new SshProfileStore(this);
-        connectionDeleteDialog=new android.app.AlertDialog.Builder(this).setTitle("删除连接？").setMessage("删除 "+entry.name+" 的本机连接配置和登录凭据。")
-                .setNegativeButton("取消",null).setPositiveButton("删除",(dialog,which)->{
+        connectionDeleteDialog=SampleUi.confirm(this,"删除连接？","删除 "+entry.name+" 的本机连接配置和登录凭据。",null,"取消","删除",true,null,()->{
                     try{if(entry.id.equals(store.activeId())){
                             returnOffline();sshMode=false;sshConnected=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");
                             sessionPreview.setImageDrawable(null);new SshResumeState(this).clear();
                         }
                         store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
-                }).show();
+                });
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
@@ -416,31 +404,32 @@ public final class MainActivity extends Activity {
         terminal.clearSelection();toast("已复制");
     }
     private void tools(View anchor) {
-        PopupMenu menu=new PopupMenu(this,anchor);
-        String[] titles={"回到底部","Unicode 示例","滚动示例","保存本地快照","恢复本地快照"};
-        for(int i=0;i<titles.length;i++)menu.getMenu().add(0,i,i,titles[i]);
-        menu.getMenu().findItem(4).setEnabled(checkpoint!=null && !sshMode);
-        for(int id=1;id<=3;id++)menu.getMenu().findItem(id).setEnabled(!sshMode);
-        menu.getMenu().add(0,5,5,sshMode?"重新连接 SSH":"连接 SSH");
-        menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(sshService!=null&&sshService.active());
-        menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
-        menu.getMenu().add(0,8,8,"通知设置");
-        menu.getMenu().add(0,9,9,"后台运行设置");
-        menu.getMenu().add(0,10,10,"新建连接 · 局域网发现");
-        menu.setOnMenuItemClickListener(item->{
-            switch(item.getItemId()){
+        String[] titles={"回到底部","Unicode 示例","滚动示例","保存本地快照","恢复本地快照",sshMode?"重新连接 SSH":"连接 SSH","断开 SSH","返回离线演示","通知设置","后台运行设置","新建连接 · 局域网发现"};
+        String[] symbols={"down","chat","panel","paste","history","server","close","return","settings","settings","plus"};
+        java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
+        for(int i=0;i<titles.length;i++){
+            final int id=i;boolean enabled=true;
+            if(i>=1&&i<=3)enabled=!sshMode;
+            if(i==4)enabled=checkpoint!=null&&!sshMode;
+            if(i==6)enabled=sshService!=null&&sshService.active();
+            if(i==7)enabled=sshMode;
+            actions.add(new SampleUi.Action(titles[i],symbols[i],enabled,i==6,()->runTool(id)));
+        }
+        showMenu(anchor,actions);
+    }
+    private void runTool(int id){
+            switch(id){
                 case 5:connectSsh();break;
                 case 10:startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73);break;
                 case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
-                case 9:new android.app.AlertDialog.Builder(this).setTitle("后台会话与省电限制")
-                        .setMessage("系统省电策略可能暂停联网或关闭应用，前台服务不能保证一直在线。\n\n"
-                                +"需要持续后台连接时，可在应用信息中查看省电策略。设置名称因手机而异；允许后台运行也不保证连接不会中断。\n\n"
-                                +"SSH 断开后，远端仍在运行的 tmux 会话会在网络恢复或重新打开应用后重新附着。")
-                        .setNegativeButton("关闭",null)
-                        .setPositiveButton("打开应用信息",(dialog,which)->startActivity(new Intent(
+                case 9:infoDialog=SampleUi.confirm(this,"后台会话与省电限制",
+                        "系统省电策略可能暂停联网或关闭应用，前台服务不能保证一直在线。\n\n"
+                        +"需要持续后台连接时，可在应用信息中查看省电策略。设置名称因手机而异。\n\n"
+                        +"网络恢复或重新打开应用后，会重新连接远端仍在运行的 tmux 会话。",null,
+                        "关闭","打开应用信息",false,null,()->startActivity(new Intent(
                                 android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                android.net.Uri.parse("package:"+getPackageName())))).show();break;
+                                android.net.Uri.parse("package:"+getPackageName()))));break;
                 case 6:disconnectSsh();break;
                 case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");demo();break;
                 case 0:terminal.scrollToBottom();break;
@@ -448,9 +437,8 @@ public final class MainActivity extends Activity {
                 case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
                 case 3:checkpoint=session.checkpoint();toast("已保存本地快照");break;
                 case 4:TerminalSession restored=TerminalSession.restore(checkpoint);terminal.setSession(null);session.close();session=restored;terminal.setSession(session);toast("已恢复本地快照");break;
-                default:return false;
-            }return true;
-        });menu.show();
+                default:break;
+            }
     }
     @Override protected void onStart(){
         super.onStart();
@@ -580,7 +568,7 @@ public final class MainActivity extends Activity {
         }
     }
     @Override protected void onDestroy(){
-        if(connectionDeleteDialog!=null)connectionDeleteDialog.dismiss();
+        if(connectionDeleteDialog!=null)connectionDeleteDialog.dismiss();if(infoDialog!=null)infoDialog.dismiss();
         destroyed=true;
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);
         if(session!=null&&!serviceSession)session.close();

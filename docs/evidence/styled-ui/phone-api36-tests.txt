@@ -1,0 +1,14 @@
+59635
+59636
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+dev.ghostty.android.sample.SshResumeStateTest:.
+dev.ghostty.android.sample.SshConnectionFlowTest:.
+dev.ghostty.android.sample.SshProfileTest:.....
+
+Time: 6.418
+
+OK (7 tests)

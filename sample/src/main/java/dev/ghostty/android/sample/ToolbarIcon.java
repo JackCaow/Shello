@@ -15,6 +15,8 @@ final class ToolbarIcon extends Drawable {
     @Override public void draw(Canvas c){
         c.save();c.translate(getBounds().left,getBounds().top);c.scale(getBounds().width()/24f,getBounds().height()/24f);
         switch(name){
+            case "check":line(c,4,12,9,17,20,6);break;
+            case "server":c.drawRoundRect(3,3,21,10,2,2,p);c.drawRoundRect(3,14,21,21,2,2,p);c.drawPoint(7,6.5f,p);c.drawPoint(7,17.5f,p);break;
             case "panel":
                 for(int y=5;y<=19;y+=7){line(c,9,y,21,y);c.drawPoint(3,y,p);}break;
             case "paste":

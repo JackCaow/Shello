@@ -1,5 +1,14 @@
 # Validation
 
+## Consistent sample controls and dialogs
+
+2026-10-21: the sample now shares dark rounded fields, green password/key segments, a custom session switch, line icons, action menus and bottom confirmation sheets. This covers connection creation/editing, host trust, discard/delete, input history, composer actions and session tools. Native text editing, IME and checked-state semantics remain in use beneath the styling. System-owned file picking, notification permissions and Android settings retain their OS UI.
+
+- **Seven SSH/profile/recovery tests passed on each of API 27, API 35 and the physical Xiaomi API 36 phone**: [API 27](evidence/styled-ui/api27-tests.txt), [API 35](evidence/styled-ui/api35-tests.txt), [phone](evidence/styled-ui/phone-api36-tests.txt).
+- Phone: inspected password/key segments, key import and both session-switch states; [private-key form](evidence/styled-ui/phone-key-form.png). The final debug build is installed.
+- API 27 manual UI: verified an isolated SSH host fingerprint, connected successfully, edited/discarded a name change, opened the tools/background-information views and deleted the disposable saved connection. Screenshots: [trust](evidence/styled-ui/api27-trust.png), [connection menu](evidence/styled-ui/api27-connection-menu.png), [tools](evidence/styled-ui/api27-tools.png), [discard](evidence/styled-ui/api27-discard.png), [delete](evidence/styled-ui/api27-delete.png). Original phone sessions were preserved.
+- Debug, test APK and R8 release builds passed; sample release lint: **0 errors / 30 warnings**. [Artifact hashes](evidence/styled-ui/validation.json). No terminal-library changes or Maven publication. TalkBack and extreme font scaling are not certified by this run.
+
 ## Phone SSH: Claude Code and Vim color acceptance
 
 2026-10-21, on renderer revision `b2bec89`: the physical Xiaomi API 36 phone connected to the existing isolated macOS OpenSSH + tmux fixture. Commands, search text, mode changes and menu navigation were sent through the phone's terminal input/toolbar. Tests ran in a new disposable tmux window; the pre-existing shell/Vim/Claude windows were preserved and the original window was restored afterward.

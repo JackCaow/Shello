@@ -14,7 +14,7 @@ import java.util.*;
 
 /** Local discovery and user-driven SSH setup; no credentials are passed through Intents. */
 public final class SshDiscoveryActivity extends Activity {
-    private static final int TEXT=0xffe6e6e8,MUTED=0xff96999f,GREEN=0xff00e529,CARD=0xff111315;
+    private static final int TEXT=0xffe6e6e8,MUTED=0xff96999f,GREEN=SampleUi.GREEN,CARD=0xff111315;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final List<LanSshDiscovery.Host> hosts=new ArrayList<>();
     private EditText name,host,port,user,password,passphrase;
@@ -24,7 +24,7 @@ public final class SshDiscoveryActivity extends Activity {
     private byte[] privateKey=new byte[0],trustedKey=new byte[0];
     private String trustedEndpoint;
     private SshConnectionSetup setup;
-    private Dialog trustDialog;
+    private Dialog trustDialog,discardDialog;
     private boolean busy;
     private String editingId;
     private SshProfileStore.Draft original;
@@ -54,10 +54,10 @@ public final class SshDiscoveryActivity extends Activity {
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
         LinearLayout header=row();header.setPadding(dp(16),dp(12),dp(16),dp(12));root.addView(header);
-        TextView close=button("×",original==null?"关闭新建连接":"关闭编辑连接",this::cancelEdit);header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        TextView close=SampleUi.header(this,"close",original==null?"关闭新建连接":"关闭编辑连接",TEXT,this::cancelEdit);header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
         TextView title=text(original==null?"新建连接":"编辑连接",24,TEXT);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        if(original!=null){saveTop=button("✓","确认修改连接",this::verifyConnection);saveTop.setTextColor(GREEN);header.addView(saveTop,new LinearLayout.LayoutParams(dp(48),dp(48)));}
-        ScrollView scroll=new ScrollView(this);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        if(original!=null){saveTop=SampleUi.header(this,"check","确认修改连接",GREEN,this::verifyConnection);header.addView(saveTop,new LinearLayout.LayoutParams(dp(48),dp(48)));}
+        ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(form);
         form.addView(label("名称"));
         LinearLayout nameRow=row();nameRow.setPadding(dp(8),0,dp(8),0);nameRow.setBackground(round(CARD,20));
@@ -77,19 +77,20 @@ public final class SshDiscoveryActivity extends Activity {
         margin(form,label("用户名"),20);user=field("服务器上的用户名","SSH 用户名");form.addView(user,new LinearLayout.LayoutParams(-1,dp(60)));
         margin(form,label("认证方式"),24);
         authChoices=new RadioGroup(this);authChoices.setOrientation(RadioGroup.HORIZONTAL);
-        RadioButton passwordChoice=new RadioButton(this);passwordChoice.setId(R.id.auth_password);passwordChoice.setText("密码");passwordChoice.setTextColor(TEXT);
-        RadioButton keyChoice=new RadioButton(this);keyChoice.setId(R.id.auth_key);keyChoice.setText("私钥");keyChoice.setTextColor(TEXT);
-        authChoices.addView(passwordChoice);authChoices.addView(keyChoice);form.addView(authChoices);authChoices.check(R.id.auth_password);
-        passwordFields=column();form.addView(passwordFields);password=secretField("登录密码","SSH 登录密码");passwordFields.addView(password,new LinearLayout.LayoutParams(-1,dp(60)));
-        keyFields=column();keyFields.setVisibility(View.GONE);form.addView(keyFields);
-        TextView importKey=button("选择私钥文件","导入 SSH 私钥",this::importKey);importKey.setTextColor(GREEN);keyFields.addView(importKey);
-        keyStatus=text("支持 OpenSSH / PEM 私钥",13,MUTED);keyFields.addView(keyStatus);
+        authChoices.setPadding(dp(4),dp(4),dp(4),dp(4));authChoices.setBackground(round(CARD,18));
+        RadioButton passwordChoice=SampleUi.segment(this,"密码",R.id.auth_password),keyChoice=SampleUi.segment(this,"私钥",R.id.auth_key);
+        authChoices.addView(passwordChoice,new RadioGroup.LayoutParams(0,-2,1));authChoices.addView(keyChoice,new RadioGroup.LayoutParams(0,-2,1));
+        form.addView(authChoices,new LinearLayout.LayoutParams(-1,-2));authChoices.check(R.id.auth_password);
+        passwordFields=column();margin(form,passwordFields,12);password=secretField("登录密码","SSH 登录密码");passwordFields.addView(password,new LinearLayout.LayoutParams(-1,dp(60)));
+        keyFields=column();keyFields.setVisibility(View.GONE);margin(form,keyFields,12);
+        TextView importKey=button("选择私钥文件","导入 SSH 私钥",this::importKey);importKey.setTextColor(GREEN);importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,dp(56)));
+        keyStatus=text("支持 OpenSSH / PEM 私钥",13,MUTED);margin(keyFields,keyStatus,12);
         passphrase=secretField("私钥口令（没有可留空）","SSH 私钥口令");margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(60));
         authChoices.setOnCheckedChangeListener((group,id)->{passwordFields.setVisibility(id==R.id.auth_password?View.VISIBLE:View.GONE);keyFields.setVisibility(id==R.id.auth_key?View.VISIBLE:View.GONE);});
-        tmux=new CheckBox(this);tmux.setText("保持远端会话（tmux）");tmux.setTextColor(TEXT);tmux.setContentDescription("使用 tmux 保持远端会话");margin(form,tmux,20);
+        tmux=new SampleUi.Toggle(this);tmux.setText("保持远端会话");tmux.setTextColor(TEXT);tmux.setContentDescription("使用 tmux 保持远端会话");margin(form,tmux,20);
         TextView tmuxHint=text("服务器需安装 tmux；开启后可在断线重连时回到原来的 shell 和编辑器。",13,MUTED);margin(form,tmuxHint,4);
         connectionStatus=text("首次连接需核对服务器指纹。认证成功后保存连接，登录凭据在本机加密保存。",13,MUTED);margin(form,connectionStatus,24);
-        connectButton=button(original==null?"保存并连接":"保存修改并连接","保存并连接 SSH",this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(round(GREEN,20));margin(form,connectButton,20);
+        connectButton=button(original==null?"保存并连接":"保存修改并连接","保存并连接 SSH",this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
         if(original!=null){
             name.setText(original.name);host.setText(original.host);port.setText(Integer.toString(original.port));user.setText(original.user);
             authChoices.check("key".equals(original.auth)?R.id.auth_key:R.id.auth_password);tmux.setChecked(original.tmux);
@@ -145,7 +146,7 @@ public final class SshDiscoveryActivity extends Activity {
         content.setContentDescription("本地 SSH 服务器列表");
         LinearLayout heading=row();content.addView(heading);
         heading.addView(text("本地 SSH 服务器",22,TEXT),new LinearLayout.LayoutParams(0,-2,1));
-        heading.addView(button("×","关闭服务器列表",()->picker.dismiss()),new LinearLayout.LayoutParams(dp(44),dp(44)));
+        heading.addView(SampleUi.header(this,"close","关闭服务器列表",TEXT,()->picker.dismiss()),new LinearLayout.LayoutParams(dp(44),dp(44)));
         listingStatus=text("",12,MUTED);margin(content,listingStatus,8);
         ScrollView scroll=new ScrollView(this);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,0,1);sp.topMargin=dp(12);content.addView(scroll,sp);
         list=column();scroll.addView(list);
@@ -165,12 +166,12 @@ public final class SshDiscoveryActivity extends Activity {
             empty.setPadding(dp(12),dp(24),dp(12),dp(24));list.addView(empty);return;
         }
         for(LanSshDiscovery.Host item:hosts){
-            LinearLayout card=row();card.setPadding(dp(18),dp(16),dp(18),dp(16));card.setBackground(round(CARD,20));
-            TextView icon=text("▤",26,MUTED);icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);card.addView(icon,new LinearLayout.LayoutParams(dp(42),dp(48)));
+            LinearLayout card=row();card.setPadding(dp(18),dp(16),dp(18),dp(16));card.setBackground(SampleUi.touch(this,CARD,20));
+            ImageView icon=SampleUi.icon(this,"server",MUTED);icon.setPadding(0,0,dp(14),0);card.addView(icon,new LinearLayout.LayoutParams(dp(42),dp(48)));
             LinearLayout labels=column();card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
             TextView title=text(item.name,19,TEXT);title.setMaxLines(2);labels.addView(title);
             TextView address=text(item.address+":22",15,MUTED);address.setTypeface(Typeface.MONOSPACE);labels.addView(address);
-            TextView arrow=text("›",28,MUTED);arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);card.addView(arrow);
+            ImageView arrow=SampleUi.icon(this,"right",MUTED);card.addView(arrow,new LinearLayout.LayoutParams(dp(24),dp(24)));
             card.setContentDescription("选择 SSH 服务器 "+item.name+" "+item.address+":22");
             card.setFocusable(true);card.setOnClickListener(v->{name.setText(item.name);host.setText(item.address);port.setText("22");picker.dismiss();});
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(12);list.addView(card,p);
@@ -234,11 +235,11 @@ public final class SshDiscoveryActivity extends Activity {
         setup=new SshConnectionSetup();setup.start(d,new SshConnectionSetup.Listener(){
             public void trustedHostNeeded(String fingerprint,byte[] knownHosts){
                 connectionStatus.setText("等待确认服务器指纹");
-                trustDialog=new AlertDialog.Builder(SshDiscoveryActivity.this).setTitle("确认 SSH 服务器指纹")
-                        .setMessage(d.host+":"+d.port+"\n\n"+fingerprint+"\n\n请与服务器提供的指纹核对。确认后才会发送登录凭据。")
-                        .setNegativeButton("取消",(dialog,which)->{setBusy(false);connectionStatus.setText("已取消连接，未保存服务器");})
-                        .setPositiveButton("信任并连接",(dialog,which)->{d.knownHosts=knownHosts;trustedKey=knownHosts;trustedEndpoint=d.host+":"+d.port;verify(d);})
-                        .setOnCancelListener(dialog->{setBusy(false);connectionStatus.setText("已取消连接，未保存服务器");}).show();
+                Runnable cancel=()->{setBusy(false);connectionStatus.setText("已取消连接，未保存服务器");};
+                trustDialog=SampleUi.confirm(SshDiscoveryActivity.this,"确认服务器指纹",
+                        "请与服务器提供的指纹核对。确认后才会发送登录凭据。",d.host+":"+d.port+"\n\n"+fingerprint,
+                        "取消","信任并连接",false,cancel,
+                        ()->{d.knownHosts=knownHosts;trustedKey=knownHosts;trustedEndpoint=d.host+":"+d.port;verify(d);});
             }
             public void verified(){
                 try{
@@ -257,22 +258,21 @@ public final class SshDiscoveryActivity extends Activity {
                 ||!port.getText().toString().equals(Integer.toString(original.port))||!user.getText().toString().equals(original.user)
                 ||tmux.isChecked()!=original.tmux||(!"key".equals(original.auth))!=(authChoices.getCheckedRadioButtonId()==R.id.auth_password)
                 ||password.length()>0||passphrase.length()>0||!java.util.Arrays.equals(privateKey,original.privateKey));
-        if(changed)new AlertDialog.Builder(this).setTitle("放弃修改？").setMessage("尚未保存的修改将丢失，原连接保持不变。")
-                .setNegativeButton("继续编辑",null).setPositiveButton("放弃修改",(dialog,which)->finish()).show();
+        if(changed){if(discardDialog==null||!discardDialog.isShowing())discardDialog=SampleUi.confirm(this,"放弃修改？","尚未保存的修改将丢失，原连接保持不变。",null,"继续编辑","放弃修改",true,null,this::finish);}
         else finish();
     }
     @Override public void onBackPressed(){cancelEdit();}
     @Override protected void onDestroy(){
-        if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();java.util.Arrays.fill(privateKey,(byte)0);if(original!=null)java.util.Arrays.fill(original.privateKey,(byte)0);super.onDestroy();
+        if(discardDialog!=null)discardDialog.dismiss();if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();java.util.Arrays.fill(privateKey,(byte)0);if(original!=null)java.util.Arrays.fill(original.privateKey,(byte)0);super.onDestroy();
     }
     private EditText field(String hint,String description){
         EditText e=new EditText(this);e.setTextColor(TEXT);e.setHintTextColor(MUTED);e.setTextSize(17);e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);e.setHint(hint);e.setContentDescription(description);
-        e.setPadding(dp(16),0,dp(12),0);e.setBackground(round(CARD,18));return e;
+        SampleUi.field(e);return e;
     }
     private TextView label(String value){TextView t=text(value,17,MUTED);t.setPadding(0,0,0,dp(10));return t;}
     private TextView text(String value,int size,int color){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;}
-    private TextView button(String value,String description,Runnable action){TextView t=text(value,20,TEXT);t.setGravity(Gravity.CENTER);t.setMinHeight(dp(48));t.setContentDescription(description);t.setFocusable(true);t.setOnClickListener(v->action.run());return t;}
+    private TextView button(String value,String description,Runnable action){TextView t=text(value,17,TEXT);t.setBackground(SampleUi.touch(this,Color.TRANSPARENT,16));t.setGravity(Gravity.CENTER);t.setMinHeight(dp(48));t.setContentDescription(description);t.setFocusable(true);t.setOnClickListener(v->action.run());return t;}
     private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(this);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
     private void margin(LinearLayout parent,View child,int top){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(top);parent.addView(child,p);}
