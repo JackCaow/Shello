@@ -283,3 +283,9 @@ Current artifact hashes and compatibility checks are recorded in [api27-validati
 ## Unvalidated scope
 
 Linux build hosts, x86/32-bit ABIs, physical Android 8.1 devices, untested IMEs, process-death persistence, production transport/reconnection, hardware keyboard layout/dead-key coverage, accessibility, GPU/presentation latency and long-duration performance of the extracted library are not certified.
+
+## Homepage, pairing and agent history (2026-10-21)
+
+See [protocols and current limits](HOME_AND_AGENTS.md) and [run evidence](evidence/home-agents/). The API 27 sample suite includes connect-before-sheet, cancelled request and failed authentication/network presentation checks (13 tests). API 35 also passed all 13 tests. The final phone run passed 12/13, including the new connection-order test; drag reorder timed out with `focus=false`, so full uninterrupted phone UI acceptance remains open. The terminal suite still passes 21 tests on API 27. Debug, R8 Release, AAR and lint builds succeeded; sample lint reports 0 errors and 44 warnings. AAR contents retain the native core and exclude pairing/Hook/UI dependencies. No Maven publication was performed.
+
+Real LAN checks used a dedicated Claude test history, phone-generated SSH public key and explicit Hook approval. Real provider history screenshots are kept locally rather than committed. Live Codex interactive resume, live Claude AskUserQuestion and full Moshi feature/pixel parity are not established by these tests.

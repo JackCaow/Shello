@@ -19,6 +19,7 @@ android {
 }
 dependencies {
     implementation(project(":terminal"))
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.github.mwiede:jsch:2.28.8")
     // JSch uses the lightweight BC implementations for Ed25519 on Android / Java 8.
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")

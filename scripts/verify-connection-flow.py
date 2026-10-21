@@ -40,6 +40,16 @@ def password_server(root, port):
         def check_channel_window_change_request(self, *args):
             return True
 
+        def check_channel_exec_request(self, channel, command):
+            # This password-only fixture has no tmux sessions. Authenticate first,
+            # then complete the picker query before the sheet may appear.
+            def finish():
+                time.sleep(.1)
+                channel.send_exit_status(0 if b'list-sessions' in command else 127)
+                channel.close()
+            threading.Thread(target=finish, daemon=True).start()
+            return True
+
         def check_channel_shell_request(self, channel):
             threading.Thread(target=self.echo, args=(channel,), daemon=True).start()
             return True
@@ -87,6 +97,7 @@ def free_port():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--serial', help='Android test device serial; installs the sample and its tests')
+    parser.add_argument('--home-features', action='store_true', help='Also test TLS pairing, tmux targets, and isolated Hook events')
     parser.add_argument('--physical', action='store_true', help='Explicitly allow a USB-authorized phone using two temporary adb reverse ports')
     parser.add_argument('--hold-seconds', type=int, default=0, help='Keep disposable fixture alive after tests for manual UI checks (maximum 600 seconds)')
     parser.add_argument('--serve-password', type=Path, help=argparse.SUPPRESS)
@@ -156,18 +167,35 @@ PermitTunnel no
                         if probe.connect_ex(('127.0.0.1', port)) == 0:
                             break
                     time.sleep(.1)
+            if args.home_features:
+                import qrcode
+                hook_root = root / 'hook-fixture'
+                hook_root.mkdir()
+                shutil.copy(repo / 'sample/src/main/assets/ghostty_hook.py', hook_root / 'ghostty_hook.py')
+                with (root / 'test.properties').open('a') as props:
+                    props.write(f'hookRoot={hook_root}\nhostPublicKey=' + ' '.join((root / 'host_key.pub').read_text().split()[:2]) + '\n')
+                pair_port = free_port()
+                log = (root / 'pair.log').open('w'); logs.append(log)
+                server = subprocess.Popen([sys.executable, str(repo / 'companion/pair.py'), '--host', target_host, '--bind', '127.0.0.1', '--ssh-port', str(ssh_port), '--port', str(pair_port), '--ttl', '600', '--host-key', str(root / 'host_key.pub'), '--authorized-keys', str(root / 'authorized_keys'), '--qr-file', str(root / 'pair.txt')], stdout=log, stderr=log, start_new_session=True); servers.append(server)
+                deadline = time.monotonic() + 20
+                while not (root / 'pair.txt').exists():
+                    if server.poll() is not None or time.monotonic() > deadline: raise RuntimeError('Pairing fixture did not start')
+                    time.sleep(.1)
+                if args.physical:
+                    subprocess.run(adb+['reverse','--no-rebind',f'tcp:{pair_port}',f'tcp:{pair_port}'], check=True); reversed_ports.append(pair_port)
             if args.physical:
                 for port in (ssh_port,password_port):
                     subprocess.run(adb+['reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}'],check=True);reversed_ports.append(port)
             for apk in ('sample/build/outputs/apk/debug/sample-debug.apk', 'sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk'):
                 subprocess.run(adb + ['install', '-r', str(repo / apk)], check=True)
             subprocess.run(adb + ['shell', 'run-as', package, 'mkdir', '-p', 'cache/ssh-flow'], check=True)
-            for name in ('test.properties', 'client_key', 'client_key_encrypted'):
+            for name in ('test.properties', 'client_key', 'client_key_encrypted') + (('pair.txt',) if args.home_features else ()):
                 subprocess.run(adb + ['shell', f"run-as {package} sh -c 'cat > cache/ssh-flow/{name}'"], input=(root / name).read_bytes(), check=True)
             classes = ','.join(package + '.' + name for name in ('SshProfileTest', 'SshConnectionFlowTest', 'SshResumeStateTest', 'SessionOverviewTest'))
+            if args.home_features: classes += ',' + package + '.HomeFeaturesTest'
             result = subprocess.run(adb + ['shell', 'am', 'instrument', '-w', '-e', 'class', classes, package + '.test/androidx.test.runner.AndroidJUnitRunner'], capture_output=True, text=True, timeout=180)
             print(result.stdout)
-            if result.returncode or 'FAILURES' in result.stdout or 'OK (8 tests)' not in result.stdout:
+            if result.returncode or 'FAILURES' in result.stdout or ('OK (13 tests)' if args.home_features else 'OK (8 tests)') not in result.stdout:
                 raise RuntimeError('Connection flow tests failed')
             if args.hold_seconds:
                 print('Manual fixture ready; reads are available in app cache/ssh-flow. Holding for',args.hold_seconds,'seconds',flush=True)

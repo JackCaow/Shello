@@ -16,6 +16,7 @@ final class SshSessionConnection {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final SshResumeState resumeState;
     private final File profileDirectory;
+    final String target;
     TerminalSession terminal;
     private SshTransport ssh;
     private String profileIdentity;
@@ -28,8 +29,8 @@ final class SshSessionConnection {
     private Properties profileConfig;
     private int generation,retryAttempt;
     SshSessionConnection(Context context,File directory,String id,Listener listener){
-        this.context=context;this.profileDirectory=directory;this.listener=listener;
-        resumeState=new SshResumeState(directory,context.getSharedPreferences("session_resume_"+id,0));
+        this.context=context;this.profileDirectory=directory;this.listener=listener;target=SessionTarget.target(id);
+        resumeState=new SshResumeState(directory,context.getSharedPreferences("session_resume_"+SessionTarget.storageKey(id),0),target==null?null:!target.startsWith("plain_"));
         try{profileName=SshProfileStore.properties(directory).getProperty("name","本机");}catch(IOException ignored){}
     }
     boolean shouldResume(){return resumeState.pending();}
@@ -88,7 +89,7 @@ final class SshSessionConnection {
             listener.detach();terminal.close();terminal=null;
         }
         profileConfig=config;profileIdentity=resumeState.identity();
-        profileName=config.getProperty("name","本机");autoReconnect="tmux".equals(config.getProperty("sessionMode"));
+        profileName=config.getProperty("name","本机");autoReconnect=target==null?"tmux".equals(config.getProperty("sessionMode")):!target.startsWith("plain_");
         if(terminal==null)terminal=new TerminalSession(40,20);
         if(autoReconnect)startNetworkMonitoring();
         changed();startAttempt();
@@ -126,7 +127,7 @@ final class SshSessionConnection {
                 if(replies.length>0&&ssh!=null)ssh.send(replies);
             }
         });
-        ssh.connect();
+        ssh.target(target).connect();
     }
     void send(byte[] bytes){if(connected&&ssh!=null)ssh.send(bytes);}
     void resize(int columns,int rows){if(ssh!=null)ssh.resize(columns,rows);}

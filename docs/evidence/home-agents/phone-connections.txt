@@ -1,0 +1,32 @@
+dev.ghostty.android.sample.SessionOverviewTest:
+Error in orderCloseAndRecreateKeepOtherShellAndSavedProfiles(dev.ghostty.android.sample.SessionOverviewTest):
+java.lang.AssertionError: UI condition timed out: destroyed=false, focus=false, connecting=false
+	at org.junit.Assert.fail(Assert.java:89)
+	at dev.ghostty.android.sample.SshConnectionFlowTest.await(SshConnectionFlowTest.java:119)
+	at dev.ghostty.android.sample.SessionOverviewTest.orderCloseAndRecreateKeepOtherShellAndSavedProfiles(SessionOverviewTest.java:59)
+
+dev.ghostty.android.sample.HomeFeaturesTest:.....
+dev.ghostty.android.sample.SshResumeStateTest:.
+dev.ghostty.android.sample.SshConnectionFlowTest:.
+dev.ghostty.android.sample.SshProfileTest:.....
+
+Time: 20.863
+There was 1 failure:
+1) orderCloseAndRecreateKeepOtherShellAndSavedProfiles(dev.ghostty.android.sample.SessionOverviewTest)
+java.lang.AssertionError: UI condition timed out: destroyed=false, focus=false, connecting=false
+	at org.junit.Assert.fail(Assert.java:89)
+	at dev.ghostty.android.sample.SshConnectionFlowTest.await(SshConnectionFlowTest.java:119)
+	at dev.ghostty.android.sample.SessionOverviewTest.orderCloseAndRecreateKeepOtherShellAndSavedProfiles(SessionOverviewTest.java:59)
+
+FAILURES!!!
+Tests run: 13,  Failures: 1
+
+
+
+Traceback (most recent call last):
+  File "/Users/cver/workspace/ghostty-android/scripts/verify-connection-flow.py", line 218, in <module>
+    main()
+    ~~~~^^
+  File "/Users/cver/workspace/ghostty-android/scripts/verify-connection-flow.py", line 199, in main
+    raise RuntimeError('Connection flow tests failed')
+RuntimeError: Connection flow tests failed

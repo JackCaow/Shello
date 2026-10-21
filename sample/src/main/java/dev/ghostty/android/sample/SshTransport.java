@@ -23,6 +23,7 @@ final class SshTransport implements AutoCloseable {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Listener listener;
     private final File directory;
+    private String target;
     private final android.content.Context context;
     private final AtomicBoolean closed = new AtomicBoolean();
     // Bound both directions: a fast PTY must not enqueue unlimited Android UI work.
@@ -39,6 +40,7 @@ final class SshTransport implements AutoCloseable {
         this.context=context.getApplicationContext();
         this.directory = directory; this.columns = columns; this.rows = rows; this.listener = listener;
     }
+    SshTransport target(String value){if(value!=null)SessionTarget.validate(value);target=value;return this;}
     void connect() {
         state("连接中", false);
         reader = new Thread(this::read, "sample-ssh-reader"); reader.start();
@@ -49,6 +51,7 @@ final class SshTransport implements AutoCloseable {
         try {
             JSch jsch = new JSch();
             SshProfileStore.Draft profile=new SshProfileStore(context).read(directory);
+            if(target!=null){profile.tmux=!target.startsWith("plain_");profile.tmuxSession=profile.tmux?target:null;}
             Properties config=profile.properties();
             jsch.setKnownHosts(new ByteArrayInputStream(profile.knownHosts));
             profileLoaded = true;
@@ -60,10 +63,10 @@ final class SshTransport implements AutoCloseable {
             Channel shell;
             String tmuxSession=profile.tmuxSession;
             if("tmux".equals(config.getProperty("sessionMode"))&&tmuxSession!=null){
-                if(!tmuxSession.matches("ghostty_[0-9a-f]{32}"))throw new IllegalArgumentException("Invalid tmux session");
+                SessionTarget.validate(tmuxSession);
                 ChannelExec exec=(ChannelExec)ssh.openChannel("exec");exec.setPty(true);
                 exec.setPtyType("xterm-256color",columns,rows,0,0);
-                exec.setCommand(SshConnectionSetup.TMUX_LOOKUP+"exec \"$T\" new-session -A -s "+tmuxSession);shell=exec;
+                exec.setCommand(SessionTarget.command(tmuxSession));shell=exec;
             }else{
                 ChannelShell login=(ChannelShell)ssh.openChannel("shell");login.setPtyType("xterm-256color",columns,rows,0,0);shell=login;
             }
@@ -89,6 +92,7 @@ final class SshTransport implements AutoCloseable {
             // JSch closes channel streams BEFORE clearing Session.isConnected on transport loss.
             // That flag can still be true here: do not mistake the race for a deliberate remote exit.
             retryable = shell.getExitStatus()<0&&shell.getExitSignal()==null;
+            if(!retryable&&shell.getExitStatus()!=0&&target!=null&&target.startsWith("="))end="远端 tmux 会话已结束，请重新选择或新建";
             if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport EOF: exit="+shell.getExitStatus()
                     +" sessionConnected="+ssh.isConnected()+" channelClosed="+shell.isClosed()+" retry="+retryable);
         } catch (Exception error) {

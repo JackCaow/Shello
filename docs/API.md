@@ -25,3 +25,5 @@ New sessions and default cursor resets (`CSI 0 SP q`, omitted-parameter DECSCUSR
 Rendering and parsing are on the UI thread in this alpha. The renderer batches updates on animation frames, but has no dirty-row atlas or GPU renderer. It uses the system monospace/emoji fonts. Do not infer production performance from a prior prototype benchmark.
 
 On Android 15+ edge-to-edge windows, apply IME insets to the host layout (as in the sample). `adjustResize` alone is insufficient for an edge-to-edge content view; the terminal resizes when its actual view bounds change.
+
+`TerminalView.setFontSize(float sp)` updates cell metrics and notifies the resize listener when the grid changes (8–32 sp). `setSelectionEnabled(boolean)` controls long-press text selection. Both must be called on the UI thread. Existing IME/transport ownership stays with the caller.

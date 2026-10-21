@@ -1,0 +1,14 @@
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+dev.ghostty.android.sample.SessionOverviewTest:.
+dev.ghostty.android.sample.HomeFeaturesTest:.....
+dev.ghostty.android.sample.SshResumeStateTest:.
+dev.ghostty.android.sample.SshConnectionFlowTest:.
+dev.ghostty.android.sample.SshProfileTest:.....
+
+Time: 63.511
+
+OK (13 tests)

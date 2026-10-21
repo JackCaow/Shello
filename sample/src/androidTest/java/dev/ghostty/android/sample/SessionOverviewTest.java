@@ -23,7 +23,7 @@ public class SessionOverviewTest {
         SharedPreferences tabState=context.getSharedPreferences("terminal_tabs",0),legacy=context.getSharedPreferences("ssh_resume",0);
         Map<String,?> previous=new HashMap<>(tabState.getAll()),previousResume=new HashMap<>(legacy.getAll());
         Map<String,Map<String,?>> previousTabResume=new HashMap<>();
-        try{org.json.JSONArray saved=new org.json.JSONArray(tabState.getString("order","[]"));for(int i=0;i<saved.length();i++){String id=saved.getString(i);previousTabResume.put(id,new HashMap<>(context.getSharedPreferences("session_resume_"+id,0).getAll()));}}catch(org.json.JSONException ignored){}
+        try{org.json.JSONArray saved=new org.json.JSONArray(tabState.getString("order","[]"));for(int i=0;i<saved.length();i++){String id=saved.getString(i);previousTabResume.put(id,new HashMap<>(context.getSharedPreferences("session_resume_"+SessionTarget.storageKey(id),0).getAll()));}}catch(org.json.JSONException ignored){}
         ArrayList<String> ids=new ArrayList<>();ArrayList<TerminalSession> terminals=new ArrayList<>();
         Application app=(Application)context.getApplicationContext();BlockingQueue<Activity> resumed=new LinkedBlockingQueue<>();
         Application.ActivityLifecycleCallbacks callback=new Application.ActivityLifecycleCallbacks(){
@@ -75,13 +75,13 @@ public class SessionOverviewTest {
             assertEquals("[]",tabState.getString("order",null));assertTrue(SshProfileStore.exists(store.directory(ids.get(0))));
             Activity second=ui.current;inst.runOnMainSync(second::recreate);ui.current=resumed.poll(10,TimeUnit.SECONDS);ui.await(()->ui.service()!=null,10000);
             inst.runOnMainSync(()->assertTrue(ui.service().tabs().isEmpty()));
-            ui.click("连接 SSH Menu Test A");ui.await(()->ui.service().connected(),15000);
+            ui.click("连接 SSH Menu Test A");ui.skipTmux();ui.await(()->ui.service().connected(),15000);
             inst.runOnMainSync(()->{assertEquals(1,ui.service().tabs().size());assertNotSame(terminals.get(0),ui.service().terminal());});
         }finally{
-            inst.runOnMainSync(()->{if(ui.current instanceof MainActivity&&ui.service()!=null){for(String id:ids)ui.service().close(id);}if(ui.current!=null)ui.current.finish();});
+            inst.runOnMainSync(()->{if(ui.current instanceof MainActivity&&ui.service()!=null){for(String id:ids)ui.service().closeProfile(id);}if(ui.current!=null)ui.current.finish();});
             app.unregisterActivityLifecycleCallbacks(callback);for(String id:ids)store.delete(id);
             if(original!=null)store.activate(original);else context.getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
-            restore(tabState,previous);restore(legacy,previousResume);for(Map.Entry<String,Map<String,?>> e:previousTabResume.entrySet())restore(context.getSharedPreferences("session_resume_"+e.getKey(),0),e.getValue());
+            restore(tabState,previous);restore(legacy,previousResume);for(Map.Entry<String,Map<String,?>> e:previousTabResume.entrySet())restore(context.getSharedPreferences("session_resume_"+SessionTarget.storageKey(e.getKey()),0),e.getValue());
         }
     }
     private static void drag(Instrumentation inst,SshConnectionFlowTest ui,String from,String to)throws Exception {

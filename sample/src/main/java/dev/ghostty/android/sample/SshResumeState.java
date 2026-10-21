@@ -10,6 +10,7 @@ import java.util.Properties;
 /** Only remembers a successfully attached tmux profile; never stores terminal input or credentials. */
 final class SshResumeState {
     private final File directory;
+    private Boolean tmuxOverride;
     private final Context context;
     private final SharedPreferences preferences;
     SshResumeState(Context context) {
@@ -18,11 +19,12 @@ final class SshResumeState {
     SshResumeState(File directory, SharedPreferences preferences) {
         this.context=null;this.directory=directory;this.preferences=preferences;
     }
+    SshResumeState(File directory,SharedPreferences preferences,Boolean tmux){this(directory,preferences);tmuxOverride=tmux;}
     String identity() {
         try {
             File directory=context==null?this.directory:new SshProfileStore(context).activeDirectory();
             Properties profile=SshProfileStore.properties(directory);
-            if(!"tmux".equals(profile.getProperty("sessionMode")))return null;
+            if(!(tmuxOverride==null?"tmux".equals(profile.getProperty("sessionMode")):tmuxOverride))return null;
             MessageDigest digest=MessageDigest.getInstance("SHA-256");
             String[] files=SshProfileStore.snapshotExists(directory)?new String[]{"profile.enc"}:new String[]{"connection.properties","known_hosts",new File(directory,"credentials.enc").isFile()?"credentials.enc":"client_key"};
             for(String name:files) {

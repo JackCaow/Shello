@@ -54,6 +54,16 @@ public final class TerminalView extends FrameLayout {
         checkUi();this.listener=listener;
         if(listener!=null&&session!=null)listener.onResize(cols,rows);
     }
+    /** Font size in scaled pixels. Resizes the PTY grid and preserves its contents. */
+    public void setFontSize(float sp) {
+        checkUi();if(!Float.isFinite(sp)||sp<8||sp>32)throw new IllegalArgumentException("Font size must be 8..32 sp");
+        float pixels=sp*getResources().getDisplayMetrics().scaledDensity;
+        if(canvas.paint.getTextSize()==pixels)return;
+        canvas.paint.setTextSize(pixels);canvas.paint.setTypeface(canvas.faces[0]);
+        canvas.cellW=canvas.paint.measureText("M");canvas.cellH=Math.max(pixels*1.28f,canvas.paint.getFontSpacing());
+        touch.clear();resizeToView();refreshFrame();canvas.invalidate();
+    }
+    public void setSelectionEnabled(boolean enabled){checkUi();touch.selectionEnabled=enabled;if(!enabled)touch.clear();}
     public String getSelectedText() { checkUi();return selected; }
     public void clearSelection() { checkUi();touch.clear(); }
     private void selectionChanged(String text) {
@@ -248,13 +258,14 @@ public final class TerminalView extends FrameLayout {
     }
 
     class TouchLayer extends View {
+        boolean selectionEnabled=true;
         final GestureDetector detector;
         boolean selecting=false,handleDrag=false;int start,end,dragHandle=1;float previousY,pointerX,pointerY;
         final Paint overlay=new Paint(Paint.ANTI_ALIAS_FLAG);
         final Runnable autoScroll=()->autoScrollTick();
         TouchLayer(){super(TerminalView.this.getContext());setContentDescription("Terminal: long press to select, drag either handle, swipe to scroll");detector=new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener(){
             @Override public boolean onDown(MotionEvent e){previousY=e.getY();return true;}
-            @Override public void onLongPress(MotionEvent e){refreshFrame();selecting=true;dragHandle=1;start=normalize(cell(e.getX(),e.getY()),false);end=normalize(start,true);updateSelection();performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);}
+            @Override public void onLongPress(MotionEvent e){if(!selectionEnabled)return;refreshFrame();selecting=true;dragHandle=1;start=normalize(cell(e.getX(),e.getY()),false);end=normalize(start,true);updateSelection();performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);}
             @Override public boolean onSingleTapUp(MotionEvent e){clear();return true;}
             @Override public boolean onScroll(MotionEvent a,MotionEvent b,float dx,float dy){
                 if(selecting)return true;int delta=(int)((previousY-b.getY())/cellHeight());

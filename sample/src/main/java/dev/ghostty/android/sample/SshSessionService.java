@@ -19,10 +19,12 @@ public final class SshSessionService extends Service {
     final class LocalBinder extends Binder { SshSessionService service(){return SshSessionService.this;} }
     static final class Tab {
         final String id;final SshSessionConnection connection;
-        TerminalSession local;Bitmap preview;String draft="";boolean draftMode;
+        TerminalSession local;Bitmap preview;String caption="";String draft="";boolean draftMode;
         Tab(String id,SshSessionConnection connection){this.id=id;this.connection=connection;}
         boolean remote(){return connection!=null;}
         String name(){return remote()?connection.profileName:"本地终端";}
+        String sessionName(){if(!caption.isEmpty())return caption;if(!remote())return "local";String target=connection.target;return target==null?"":target.startsWith("=")?target.substring(1):target.startsWith("plain_")?"shell":target.startsWith("ghostty_")?"shell":target;}
+        String profile(){return SessionTarget.profile(id);}
         TerminalSession terminal(){return remote()?connection.terminal:local;}
     }
     private final LocalBinder binder=new LocalBinder();
@@ -61,7 +63,7 @@ public final class SshSessionService extends Service {
             tab.local.write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› ".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }else{
             File directory;
-            try{directory="fixture".equals(id)?new File(getFilesDir(),"ssh"):new SshProfileStore(this).directory(id);}
+            try{String target=SessionTarget.target(id);if(target!=null)SessionTarget.validate(target);directory="fixture".equals(id)?new File(getFilesDir(),"ssh"):new SshProfileStore(this).directory(SessionTarget.profile(id));}
             catch(IllegalArgumentException invalid){return null;}
             if(!SshProfileStore.exists(directory))return null;
             tab=new Tab(id,new SshSessionConnection(this,directory,id,new SshSessionConnection.Listener(){
@@ -69,7 +71,7 @@ public final class SshSessionService extends Service {
                 public void detach(){if(selected!=null&&selected.id.equals(id)&&observer!=null)observer.detach();}
             }));
         }
-        tabs.add(tab);return tab;
+        tab.caption=getSharedPreferences("terminal_titles",0).getString(id,"");tabs.add(tab);return tab;
     }
     List<Tab> tabs(){return new ArrayList<>(tabs);}
     Tab selected(){return selected;}
@@ -77,7 +79,7 @@ public final class SshSessionService extends Service {
     void select(String id){
         Tab next=find(id);if(next==null)return;
         if(selected!=next&&observer!=null)observer.detach();selected=next;
-        if(next.remote())try{if(!"fixture".equals(id))new SshProfileStore(this).activate(id);else getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();}catch(IOException ignored){}
+        if(next.remote())try{if(!"fixture".equals(id))new SshProfileStore(this).activate(SessionTarget.profile(id));else getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();}catch(IOException ignored){}
         persist();changed();
     }
     void openLocal(){Tab tab=add("local");select(tab.id);}
@@ -86,13 +88,14 @@ public final class SshSessionService extends Service {
         Tab tab=find(id);if(tab==null)return;
         mutating=true;
         if(selected==tab){if(observer!=null)observer.detach();selected=null;}
-        tabs.remove(tab);persist(); // Remove restore intent before closing sockets.
+        tabs.remove(tab);getSharedPreferences("terminal_titles",0).edit().remove(id).apply();persist(); // Remove restore intent before closing sockets.
         if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
         if(tab.preview!=null){tab.preview.recycle();tab.preview=null;}
         if(id.equals(profileId()))new SshResumeState(this).clear();
         if(selected==null&&!tabs.isEmpty())select(tabs.get(0).id);
         mutating=false;persist();changed();
     }
+    void closeProfile(String id){for(Tab tab:new ArrayList<>(tabs))if(tab.profile().equals(id))close(tab.id);}
     void closeAll(){for(Tab tab:new ArrayList<>(tabs))close(tab.id);new SshResumeState(this).clear();}
     private void persist(){JSONArray ids=new JSONArray();for(Tab tab:tabs)ids.put(tab.id);state.edit().putBoolean("initialized",true).putString("order",ids.toString()).putString("selected",selected==null?null:selected.id).commit();}
     @Override public IBinder onBind(Intent intent){return binder;}
@@ -106,14 +109,14 @@ public final class SshSessionService extends Service {
             }
             foreground=true;mutating=true;
             String id=intent.getStringExtra("profile");if(id==null)id=profileId();
-            Tab tab=add(id);
             boolean restore=intent.getBooleanExtra("restore",false);
-            if(restore&&(tab==null||!tab.connection.shouldResume())){
+            Tab tab=restore?selected:add(id);
+            if(restore&&(tab==null||!tab.remote()||!tab.connection.shouldResume())){
                 Tab eligible=null;for(Tab candidate:tabs)if(candidate.remote()&&candidate.connection.shouldResume()){eligible=candidate;break;}
                 // Migration from the single-session release uses its legacy resume marker once.
-                if(eligible!=null)tab=eligible;else if(!new SshResumeState(this).pending())tab=null;
+                if(eligible!=null)tab=eligible;else tab=new SshResumeState(this).pending()?add(profileId()):null;
             }
-            if(tab!=null){select(tab.id);tab.connection.connect();}
+            if(tab!=null&&tab.remote()){select(tab.id);tab.connection.connect();}
             // Reopen eligible tmux tabs only after a visible Activity starts the service.
             for(Tab other:tabs)if(other!=tab&&other.remote()&&!other.connection.foreground&&other.connection.shouldResume())other.connection.connect();
             mutating=false;persist();changed();
@@ -139,9 +142,10 @@ public final class SshSessionService extends Service {
     private void changed(){
         if(mutating||destroyed)return;
         boolean running=false;for(Tab tab:tabs)if(tab.remote()&&tab.connection.foreground)running=true;
+        AgentHub.get(this).keepAlive(running);
         if(running){if(!wakeLock.isHeld())wakeLock.acquire();}
         else {if(wakeLock.isHeld())wakeLock.release();if(foreground){foreground=false;stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();}}
-        if(connected())new SshResumeState(this).remember(new SshResumeState(this).identity());
+        if(connected()&&selected.connection.target==null)new SshResumeState(this).remember(new SshResumeState(this).identity());
         if(observer!=null)observer.changed();refreshNotification();
     }
     void refreshNotification(){if(foreground)getSystemService(NotificationManager.class).notify(NOTIFICATION,notification());}
@@ -162,6 +166,7 @@ public final class SshSessionService extends Service {
     private void disconnectAll(){for(Tab tab:tabs)if(tab.remote())tab.connection.disconnect();new SshResumeState(this).clear();}
     void clearSession(){if(selected!=null)close(selected.id);}
     @Override public void onDestroy(){
+        AgentHub.get(this).keepAlive(false);
         destroyed=true;if(observer!=null){observer.detach();observer=null;}
         for(Tab tab:tabs){if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();if(tab.preview!=null)tab.preview.recycle();}
         if(wakeLock.isHeld())wakeLock.release();super.onDestroy();

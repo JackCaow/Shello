@@ -27,13 +27,13 @@ final class SessionOverview {
     private final Runnable autoScroll=new Runnable(){public void run(){if(dragging!=null&&scrollDirection!=0){scroll.smoothScrollBy(dp(18)*scrollDirection,0);scroll.postDelayed(this,40);}}};
     SessionOverview(Activity activity,FrameLayout stage,View background,Actions actions){
         this.activity=activity;this.stage=stage;this.background=background;this.actions=actions;
-        root=column();header=row();root.addView(header,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView title=SampleUi.text(activity,"会话",15,SampleUi.MUTED);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        root=column();header=row();root.addView(header,new LinearLayout.LayoutParams(-1,dp(36)));
+        TextView title=SampleUi.text(activity,"会话",14,SampleUi.MUTED);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         done=SampleUi.text(activity,"完成",16,SampleUi.GREEN);done.setGravity(Gravity.CENTER);done.setContentDescription("完成会话排序");done.setFocusable(true);
         done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));header.addView(done,new LinearLayout.LayoutParams(dp(64),dp(36)));done.setVisibility(View.GONE);
         scroll=new HorizontalScrollView(activity);scroll.setHorizontalScrollBarEnabled(false);scroll.setClipToPadding(false);
         cards=row();cards.setGravity(Gravity.TOP);scroll.addView(cards,new HorizontalScrollView.LayoutParams(-2,-2));root.addView(scroll);
-        hint=SampleUi.text(activity,"",13,SampleUi.MUTED);hint.setPadding(0,dp(12),0,0);root.addView(hint);
+        hint=SampleUi.text(activity,"",13,SampleUi.MUTED);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);header.addView(hint);
         scroll.setOnDragListener((v,event)->{
             if(!(event.getLocalState() instanceof String)||!ordering)return false;
             switch(event.getAction()){
@@ -59,8 +59,10 @@ final class SessionOverview {
             LinearLayout card=column();card.setContentDescription("恢复会话 "+tab.name());card.setFocusable(true);
             card.setOnClickListener(v->{if(!ordering)actions.open(tab.id);});
             FrameLayout thumb=thumbnail(tab);card.addView(thumb,new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
-            TextView name=SampleUi.text(activity,tab.name(),15,SampleUi.TEXT);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(8),0,0);card.addView(name);
-            TextView type=SampleUi.text(activity,tab.remote()?"›_ SSH":"›_ local",13,SampleUi.GREEN);type.setTypeface(Typeface.MONOSPACE);card.addView(type);
+            TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon("server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(4),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,dp(32)));
+            String sessionLabel=tab.sessionName().trim();TextView type=SampleUi.text(activity,sessionLabel,14,0xff00bc00);type.setSingleLine();type.setEllipsize(android.text.TextUtils.TruncateAt.END);type.setIncludeFontPadding(false);type.setGravity(Gravity.CENTER_VERTICAL);
+            if(!sessionLabel.isEmpty()){ToolbarIcon prompt=new ToolbarIcon("terminal",dp(16),0xff00bc00);prompt.setBounds(0,0,dp(16),dp(16));type.setCompoundDrawables(prompt,null,null,null);type.setCompoundDrawablePadding(dp(5));}
+            card.addView(type,new LinearLayout.LayoutParams(-1,dp(24)));
             card.setOnLongClickListener(v->{if(ordering)beginDrag(card,tab.id);else showContext(card,thumb,tab);return true;});
             // Directional accessibility actions let keyboard/TalkBack users reorder without dragging.
             card.setAccessibilityDelegate(new View.AccessibilityDelegate(){
@@ -81,14 +83,14 @@ final class SessionOverview {
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(cardWidth(),-2);cp.rightMargin=dp(12);cards.addView(card,cp);
         }
         if(tabs.isEmpty()){hint.setText("暂无打开的会话，点击已保存的连接或 + 新建连接");setOrdering(false);}
-        else hint.setText(ordering?(tabs.size()==1?"只有一个会话；打开更多连接后可拖动排序":"长按并拖动会话调整顺序"):"长按会话可排序或关闭");
+        else hint.setText(ordering?(tabs.size()==1?"只有一个会话；打开更多连接后可拖动排序":"长按并拖动会话调整顺序"):"长按显示选项。");
     }
     private FrameLayout thumbnail(SshSessionService.Tab tab){
-        FrameLayout thumb=new FrameLayout(activity);thumb.setBackground(SampleUi.surface(activity,0xff1e1e1e,16));thumb.setClipToOutline(true);
+        FrameLayout thumb=new FrameLayout(activity);thumb.setBackground(SampleUi.surface(activity,0xff111113,16));thumb.setClipToOutline(true);
         ImageView image=new ImageView(activity);image.setScaleType(ImageView.ScaleType.FIT_START);image.setImageBitmap(tab.preview);image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);thumb.addView(image,new FrameLayout.LayoutParams(-1,-1));
-        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":"LOCAL",12,0xffe6efff);badge.setPadding(dp(8),dp(4),dp(8),dp(4));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff286de0:0xff375166,10));
+        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":"LOCAL",12,0xffe6efff);badge.setIncludeFontPadding(false);badge.setTypeface(Typeface.MONOSPACE);badge.setPadding(dp(9),dp(3),dp(9),dp(3));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff245ca0:0xff375166,10));
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.RIGHT);bp.setMargins(dp(8),dp(8),dp(8),0);thumb.addView(badge,bp);
-        if(tab.preview==null){TextView title=SampleUi.text(activity,tab.name(),15,SampleUi.TEXT);title.setPadding(dp(12),dp(48),dp(12),dp(12));thumb.addView(title);}
+        if(tab.preview==null){TextView title=SampleUi.text(activity,"暂无预览",15,SampleUi.MUTED);title.setGravity(Gravity.CENTER);thumb.addView(title,new FrameLayout.LayoutParams(-1,-1));}
         return thumb;
     }
     private void beginDrag(View card,String id){
@@ -148,7 +150,7 @@ final class SessionOverview {
         }
         bitmap.setPixels(pixels,0,w,0,0,w,h);return bitmap;
     }
-    private int cardWidth(){return (activity.getResources().getDisplayMetrics().widthPixels-dp(44))/2;}
+    private int cardWidth(){return Math.round((activity.getResources().getDisplayMetrics().widthPixels-48*activity.getResources().getDisplayMetrics().density)/2f);}
     private int dp(int n){return SampleUi.dp(activity,n);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private LinearLayout row(){LinearLayout l=new LinearLayout(activity);l.setGravity(Gravity.CENTER_VERTICAL);return l;}

@@ -34,7 +34,7 @@ public class SshConnectionFlowTest {
         try{
             try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -n dev.ghostty.android.sample/.MainActivity -f 0x10008000");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){byte[] b=new byte[512];while(in.read(b)!=-1){}}
             current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
-            click("最小化会话");click("新建 SSH 连接");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
+            click("最小化会话");click("新建 SSH 连接");click("使用自己的 SSH");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
             set("连接名称","SSH Flow Password");set("SSH 主机地址",p.getProperty("host"));set("SSH 端口","0");set("SSH 用户名",p.getProperty("user"));set("SSH 登录密码","incorrect");
             click("保存并连接 SSH");await(()->text(root(),"端口必须"),1000);
             set("SSH 端口",p.getProperty("passwordPort"));click("保存并连接 SSH");
@@ -46,13 +46,13 @@ public class SshConnectionFlowTest {
             await(()->text(root(),"认证失败"),15000);assertEquals(before.size(),store.list().size());
             set("SSH 登录密码",p.getProperty("password"));click("保存并连接 SSH");
             current=resumed.poll(20,TimeUnit.SECONDS);assertTrue("Form did not return to terminal",current instanceof MainActivity);
-            await(()->service()!=null&&service().connected(),15000);
+            skipTmux();await(()->service()!=null&&service().connected(),15000);
             await(()->{dev.ghostty.android.TerminalSession t=service().terminal();return t!=null&&t.select(0,t.getColumns()*t.getRows()-1).contains("GHOSTTY_PASSWORD_READY");},10000);
             assertEquals(before.size()+1,store.list().size());assertNotNull(store.activeId());
             assertEquals("SSH Flow Password",store.read(store.activeDirectory()).name);
-            Activity previous=current;inst.runOnMainSync(previous::recreate);current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);
+            Activity previous=current;resumed.clear();inst.runOnMainSync(previous::recreate);long recreatedUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);do{current=resumed.poll(1,TimeUnit.SECONDS);}while((current==null||current==previous||current.isDestroyed())&&System.nanoTime()<recreatedUntil);assertNotNull(current);assertNotSame(previous,current);
             await(()->service()!=null&&service().connected(),10000);click("最小化会话");
-            click("连接 SSH SSH Flow Password");await(()->service()!=null&&service().connected(),15000);
+            click("连接 SSH SSH Flow Password");skipTmux();await(()->service()!=null&&service().connected(),15000);
             String editedId=store.activeId();SshSessionService running=service();
             click("最小化会话");longClick("连接 SSH SSH Flow Password");click("编辑连接 SSH Flow Password");
             current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
@@ -71,29 +71,29 @@ public class SshConnectionFlowTest {
             Activity editing=current;inst.runOnMainSync(editing::recreate);current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);
             assertEquals("SSH Flow Edited",((EditText)find(root(),"连接名称")).getText().toString());
             click("保存并连接 SSH");current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
-            await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
+            skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             assertEquals(editedId,store.activeId());assertEquals(before.size()+1,store.list().size());
             dev.ghostty.android.TerminalSession firstTerminal=service().terminal();
             // Creating another profile while the service owns a terminal must switch profiles.
-            click("最小化会话");click("新建 SSH 连接");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
+            click("最小化会话");click("新建 SSH 连接");click("使用自己的 SSH");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
             set("连接名称","SSH Flow Second");set("SSH 主机地址",p.getProperty("host"));set("SSH 端口",p.getProperty("passwordPort"));
             set("SSH 用户名",p.getProperty("user"));set("SSH 登录密码",p.getProperty("password"));click("保存并连接 SSH");
             await(()->value(current,"trustDialog")!=null,15000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
             current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
-            await(()->service()!=null&&service().connected()&&"SSH Flow Second".equals(service().profileName()),15000);
+            skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Second".equals(service().profileName()),15000);
             assertNotSame(firstTerminal,service().terminal());
             click("最小化会话");click("连接 SSH SSH Flow Edited");
-            await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
+            skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             String secondId=store.list().stream().filter(e->e.name.equals("SSH Flow Second")).findFirst().get().id;
-            inst.runOnMainSync(()->service().close(secondId));store.delete(secondId);
+            inst.runOnMainSync(()->service().closeProfile(secondId));store.delete(secondId);
             click("最小化会话");longClick("连接 SSH SSH Flow Edited");click("删除连接 SSH Flow Edited");
             await(()->{Dialog dialog=(Dialog)value(current,"connectionDeleteDialog");return dialog!=null&&dialog.isShowing();},5000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"connectionDeleteDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
             await(()->store.list().size()==before.size(),5000);
             await(()->service().find(editedId)==null,5000);
         }finally{
-            inst.runOnMainSync(()->{if(current instanceof MainActivity&&service()!=null){for(SshSessionService.Tab tab:service().tabs())if(!before.contains(tab.id)&&!tab.id.equals("fixture")&&!tab.id.equals("local"))service().close(tab.id);}if(current!=null)current.finish();});
+            inst.runOnMainSync(()->{if(current instanceof MainActivity&&service()!=null){for(SshSessionService.Tab tab:service().tabs())if(!before.contains(tab.profile())&&!tab.id.equals("fixture")&&!tab.id.equals("local"))service().close(tab.id);}if(current!=null)current.finish();});
             app.unregisterActivityLifecycleCallbacks(callback);
             for(SshProfileStore.Entry e:store.list())if(!before.contains(e.id))store.delete(e.id);
             if(original!=null)store.activate(original);else context.getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
@@ -102,9 +102,10 @@ public class SshConnectionFlowTest {
     SshSessionService service(){return (SshSessionService)value(current,"sshService");}
     Object value(Object object,String field){try{Field f=object.getClass().getDeclaredField(field);f.setAccessible(true);return f.get(object);}catch(Exception e){throw new AssertionError(e);}}
     View root(){
-        if(current instanceof MainActivity){PopupWindow menu=(PopupWindow)value(current,"connectionMenu");if(menu!=null&&menu.isShowing())return menu.getContentView();}
+        if(current instanceof MainActivity){for(String name:new String[]{"newConnectionDialog","tmuxDialog"}){Dialog dialog=(Dialog)value(current,name);if(dialog!=null&&dialog.isShowing())return dialog.getWindow().getDecorView();}PopupWindow menu=(PopupWindow)value(current,"connectionMenu");if(menu!=null&&menu.isShowing())return menu.getContentView();}
         return current.getWindow().getDecorView();
     }
+    void skipTmux()throws Exception {await(()->{Dialog d=(Dialog)value(current,"tmuxDialog");return d!=null&&d.isShowing();},20000);click("跳过 tmux，打开 shell");}
     void longClick(String desc){inst.runOnMainSync(()->{View v=find(root(),desc);assertNotNull(desc,v);v.performLongClick();});}
     View find(View v,String desc){
         if(desc.contentEquals(v.getContentDescription()==null?"":v.getContentDescription()))return v;
@@ -115,5 +116,5 @@ public class SshConnectionFlowTest {
     boolean text(View v,String needle){if(v instanceof TextView&&((TextView)v).getText().toString().contains(needle))return true;
         if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)if(text(((ViewGroup)v).getChildAt(i),needle))return true;return false;}
     void await(BooleanSupplier check,int millis)throws Exception {long end=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(millis);AtomicBoolean yes=new AtomicBoolean();
-        do{inst.runOnMainSync(()->yes.set(check.getAsBoolean()));if(yes.get())return;Thread.sleep(50);}while(System.nanoTime()<end);fail("UI condition timed out");}
+        do{inst.runOnMainSync(()->yes.set(check.getAsBoolean()));if(yes.get())return;Thread.sleep(50);}while(System.nanoTime()<end);AtomicReference<String> detail=new AtomicReference<>("");inst.runOnMainSync(()->{if(current instanceof MainActivity)detail.set("destroyed="+current.isDestroyed()+", focus="+current.hasWindowFocus()+", connecting="+(value(current,"connectingProfile")!=null));if(current instanceof SshDiscoveryActivity){Object status=value(current,"connectionStatus");if(status instanceof TextView)detail.set(((TextView)status).getText().toString());}});fail("UI condition timed out: "+detail.get());}
 }

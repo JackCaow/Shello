@@ -102,3 +102,7 @@ Twenty-one instrumentation tests cover the public stream/lifecycle/IME contract,
 ## License
 
 MIT, with retained source copyright and third-party notices. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Source is hosted at [JackCaow/ghostty-android](https://github.com/JackCaow/ghostty-android). No Maven package has been remotely published; CI uses Maven Local only to test the packaged AAR.
+
+### Home and agent sessions
+
+The sample includes a remote Tmux / Recent agent picker, QR-assisted SSH key pairing, independent settings, and a Claude Code Hook inbox. Recent groups Claude Code / Codex history by project and resumes the selected session in its original directory. See [protocols, setup and validation boundaries](docs/HOME_AND_AGENTS.md). These features are sample-only.
