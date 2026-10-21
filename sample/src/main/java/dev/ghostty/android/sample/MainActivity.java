@@ -56,13 +56,14 @@ public final class MainActivity extends LocalizedActivity {
     private TerminalInputView directInput;
     private EditText draft;
     private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
-    private String pendingProfile;
+    private String pendingProfile,restoredDraftTab,restoredDraft;
+    private boolean restoredDraftMode;
     private PopupWindow connectionMenu;
     private android.app.AlertDialog connectionDeleteDialog,infoDialog;
     private FrameLayout stage, viewport;
     private ScrollView home;
     private View addConnection;
-    private android.app.Dialog newConnectionDialog,tmuxDialog;private String connectingProfile;
+    private android.app.Dialog newConnectionDialog,tmuxDialog;private String connectingProfile,sessionPickerProfile;
     private AgentHub agentHub;
     private final Runnable agentChanged=()->refreshSavedConnections();
     private String appliedTheme;
@@ -71,6 +72,8 @@ public final class MainActivity extends LocalizedActivity {
     private TextView subtitle, ctrlButton, padButton, lockButton, sendButton;
     private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
     private boolean padPositioned;
+    private HorizontalScrollView toolScroll;
+    private LinearLayout composerActions;
     private boolean ctrlArmed, draftMode, imeVisible, minimized, padLocked;
 
     @Override public void onCreate(Bundle state) {
@@ -114,17 +117,35 @@ public final class MainActivity extends LocalizedActivity {
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             android.graphics.Rect visible=new android.graphics.Rect();
             root.getWindowVisibleDisplayFrame(visible);
-            imeVisible=root.getRootView().getHeight()-visible.bottom>dp(120);
+            if(Build.VERSION.SDK_INT<30)imeVisible=root.getRootView().getHeight()-visible.bottom>dp(120);
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
+        sheet.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
+            int toolWidth=Math.min(dp(600),Math.max(0,r-l-dp(16)));
+            LinearLayout.LayoutParams tools=(LinearLayout.LayoutParams)toolScroll.getLayoutParams();
+            if(tools.width!=toolWidth){tools.width=toolWidth;tools.gravity=Gravity.CENTER_HORIZONTAL;toolScroll.setLayoutParams(tools);}
+            int composerWidth=Math.min(dp(800),Math.max(0,r-l-dp(16)));
+            LinearLayout.LayoutParams cp=(LinearLayout.LayoutParams)composer.getLayoutParams();
+            if(cp.width!=composerWidth){cp.width=composerWidth;cp.gravity=Gravity.CENTER_HORIZONTAL;composer.setLayoutParams(cp);}
+            boolean compact=b-t<dp(400)&&composerWidth>=dp(600);
+            if(composer.getOrientation()!=(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL)){
+                composer.setOrientation(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);composer.setGravity(Gravity.CENTER_VERTICAL);
+                draft.setLayoutParams(new LinearLayout.LayoutParams(compact?0:-1,-2,compact?1:0));
+                composerActions.setLayoutParams(new LinearLayout.LayoutParams(compact?dp(220):-1,dp(44)));
+            }
+            draft.setMaxLines(compact?2:4);
+        });
         write(tr(R.string.local_demo_banner)); root.requestFocus();
         pendingProfile=state==null?null:state.getString("pendingProfile");
+        if(state!=null){restoredDraftTab=state.getString("draftTab");restoredDraft=state.getString("draft","");restoredDraftMode=state.getBoolean("draftMode");}
         boolean legacyFixture=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
         // Explicit debug fixture launches select files/ssh without deleting saved UI profiles.
         if(legacyFixture)getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
         connectOnBind=pendingProfile!=null||legacyFixture;
         if(state==null&&!connectOnBind)minimize();
-        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);if(state.getBoolean("minimized"))minimize();}
+        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);if(state.getBoolean("minimized"))minimize();else if(state.getBoolean("keyboard"))root.post(this::showKeyboard);
+            if(state.getBoolean("newConnectionShowing"))root.post(this::chooseConnection);
+            String picker=state.getString("sessionPickerProfile");if(picker!=null)root.post(()->chooseSession(picker));}
     }
 
     private void buildHeader() {
@@ -150,7 +171,7 @@ public final class MainActivity extends LocalizedActivity {
     }
 
     private void buildToolbar() {
-        HorizontalScrollView scroll=new HorizontalScrollView(this);
+        HorizontalScrollView scroll=new HorizontalScrollView(this);toolScroll=scroll;
         scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);
         toolbar=row();toolbar.setPadding(dp(5),dp(4),dp(5),dp(4));
         scroll.setBackground(round(Color.BLACK,32));scroll.setClipToOutline(true);
@@ -202,7 +223,7 @@ public final class MainActivity extends LocalizedActivity {
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         draft.setMinLines(1);draft.setMaxLines(4);draft.setPadding(dp(8),dp(10),dp(8),dp(8));
         draft.setContentDescription(tr(R.string.local_text_draft));composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
-        LinearLayout actions=row();composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
+        LinearLayout actions=row();composerActions=actions;composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
         TextView add=icon("plus",tr(R.string.add_text),this::addTextMenu);composerAction(actions,add);
         composerAction(actions,icon("toolbox",tr(R.string.terminal_tools),()->tools(composer)));
         composerAction(actions,icon("close",tr(R.string.close_editor_and_keep_draft),()->setDraftMode(false,true)));
@@ -293,21 +314,31 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void clampPad() {
         if(pad==null||viewport.getWidth()==0||pad.getWidth()==0)return;
+        boolean compact=viewport.getHeight()<dp(184)&&viewport.getWidth()>=dp(468);
+        if((pad.getOrientation()==LinearLayout.HORIZONTAL)!=compact){
+            pad.setOrientation(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);
+            pad.getChildAt(0).setVisibility(compact?View.GONE:View.VISIBLE);
+            for(int i=1;i<pad.getChildCount();i++)pad.getChildAt(i).setLayoutParams(new LinearLayout.LayoutParams(dp(156),dp(52)));
+            FrameLayout.LayoutParams p=(FrameLayout.LayoutParams)pad.getLayoutParams();p.width=dp(compact?468:156);p.height=dp(compact?52:184);pad.setLayoutParams(p);
+            pad.post(this::clampPad);return;
+        }
         pad.setX(Math.max(0,Math.min(pad.getX(),viewport.getWidth()-pad.getWidth())));
         pad.setY(Math.max(0,Math.min(pad.getY(),viewport.getHeight()-pad.getHeight())));
     }
     private void buildHome() {
         home=new ScrollView(this);home.setClipToPadding(false);home.setBackground(new HomeBackdrop());
-        LinearLayout content=column();content.setClipChildren(false);content.setPadding(dp(16),0,dp(16),dp(110));home.addView(content);
+        LinearLayout content=column();content.setClipChildren(false);int inset=dp(getResources().getConfiguration().screenWidthDp>=600?24:16);content.setPadding(inset,0,inset,dp(110));home.addView(AdaptiveLayout.centered(this,content,1200,null));
         LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         top.addView(SampleUi.header(this,"inbox",tr(R.string.agent_inbox),MUTED,()->startActivity(new Intent(this,AgentActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));
         top.addView(SampleUi.header(this,"settings",tr(R.string.settings),MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
+        AdaptiveLayout.Columns homeColumns=new AdaptiveLayout.Columns(this,840,24);content.addView(homeColumns,new LinearLayout.LayoutParams(-1,-2));
         overview=new SessionOverview(this,stage,home,new SessionOverview.Actions(){
             public void open(String id){openTab(id);}public void close(String id){closeTab(id);}public void closeAll(){closeAllTabs();}
             public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
-        });content.addView(overview.view());
-        LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,tr(R.string.connections));connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connectionHeaderParams.topMargin=dp(16);content.addView(connectionHeading,connectionHeaderParams);
-        savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
+        });homeColumns.addView(overview.view());
+        LinearLayout connections=column();homeColumns.addView(connections);
+        LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,tr(R.string.connections));connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connections.addView(connectionHeading,connectionHeaderParams);
+        savedConnections=column();connections.addView(savedConnections);refreshSavedConnections();
         guideShown=getSharedPreferences("appearance",0).getBoolean("guide",true);if(guideShown){
             LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,tr(R.string.discover_shello));guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
             android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
@@ -329,13 +360,14 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void chooseConnection(){
         newConnectionDialog=new android.app.Dialog(this);LinearLayout panel=column();panel.setPadding(dp(20),dp(20),dp(20),dp(28));panel.setBackground(round(SampleUi.PANEL,28));
+        AdaptiveLayout.Columns choices=new AdaptiveLayout.Columns(this,600,12);panel.addView(choices,new LinearLayout.LayoutParams(-1,-2));
         for(int i=0;i<2;i++){final boolean pair=i==0;LinearLayout card=column();card.setPadding(dp(22),dp(22),dp(22),dp(22));card.setBackground(SampleUi.touch(this,pair?0xff122c14:KEY,20));card.setContentDescription(pair?tr(R.string.pair_with_a_qr_code):tr(R.string.use_your_own_ssh));
             card.addView(label(pair?tr(R.string.quickest):tr(R.string.know_ssh),12,pair?0xff00ef00:MUTED));TextView title=label(pair?tr(R.string.pair_with_a_qr_code):tr(R.string.use_your_own_ssh),22,TEXT);title.setPadding(0,dp(10),0,dp(10));title.setTypeface(null,Typeface.BOLD);card.addView(title);
             card.addView(label(pair?tr(R.string.run_one_command_on_mac_or_linux_and_scan_its_qr_code_shello_insta):tr(R.string.enter_a_host_username_and_key_or_password_keep_remote_sessions_wi),15,MUTED));TextView hint=label(pair?tr(R.string.recommended_about_1_minute):tr(R.string.about_3_minutes_ssh_credentials_needed),12,pair?0xff00ef00:MUTED);hint.setPadding(0,dp(16),0,0);card.addView(hint);
-            card.setOnClickListener(v->{newConnectionDialog.dismiss();startActivityForResult(new Intent(this,pair?PairingActivity.class:SshDiscoveryActivity.class),pair?74:73);});LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.bottomMargin=dp(12);panel.addView(card,cp);}
-        newConnectionDialog.setContentView(panel);newConnectionDialog.show();Window w=newConnectionDialog.getWindow();w.setBackgroundDrawableResource(android.R.color.transparent);w.setGravity(Gravity.BOTTOM);w.setDimAmount(.55f);w.setLayout(-1,-2);
+            card.setOnClickListener(v->{newConnectionDialog.dismiss();startActivityForResult(new Intent(this,pair?PairingActivity.class:SshDiscoveryActivity.class),pair?74:73);});LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);choices.addView(card,cp);}
+        newConnectionDialog.setContentView(AdaptiveLayout.sheetScroll(this,panel));newConnectionDialog.show();AdaptiveLayout.sheetWindow(this,newConnectionDialog,800,0);
     }
-    private void chooseSession(String profile){rememberTab();if(tmuxDialog!=null)tmuxDialog.dismiss();connectingProfile=profile;refreshSavedConnections();tmuxDialog=TmuxPicker.show(this,profile,id->{pendingProfile=id;connectSsh();},()->{connectingProfile=null;if(!isDestroyed())refreshSavedConnections();});}
+    private void chooseSession(String profile){sessionPickerProfile=profile;rememberTab();if(tmuxDialog!=null)tmuxDialog.dismiss();connectingProfile=profile;refreshSavedConnections();tmuxDialog=TmuxPicker.show(this,profile,id->{pendingProfile=id;connectSsh();},()->{connectingProfile=null;if(!isDestroyed())refreshSavedConnections();});}
     private void refreshSavedConnections(){
         if(savedConnections==null)return;savedConnections.removeAllViews();SshProfileStore store=new SshProfileStore(this);AgentHub hub=AgentHub.get(this);
         for(SshProfileStore.Entry entry:store.list()){
@@ -505,13 +537,19 @@ public final class MainActivity extends LocalizedActivity {
         super.onStop();
     }
     @Override protected void onSaveInstanceState(Bundle state){
-        state.putBoolean("minimized",minimized);state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
+        state.putBoolean("newConnectionShowing",newConnectionDialog!=null&&newConnectionDialog.isShowing());
+        if(tmuxDialog!=null&&tmuxDialog.isShowing())state.putString("sessionPickerProfile",sessionPickerProfile);
+        state.putString("draftTab",shownTab==null?null:shownTab.id);state.putBoolean("keyboard",imeVisible&&(draft.hasFocus()||directInput.hasFocus()));state.putBoolean("minimized",minimized);state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
         super.onSaveInstanceState(state);
     }
     private void updateSshView(){
         if(destroyed||sshService==null)return;
         SshSessionService.Tab next=sshService.selected();
         TerminalSession remote=sshService.terminal();
+        if(restoredDraftTab!=null){
+            if(next!=null&&restoredDraftTab.equals(next.id)){next.draft=restoredDraft;next.draftMode=restoredDraftMode;}
+            restoredDraftTab=null;restoredDraft=null;
+        }
         if(next!=shownTab){
             if(shownTab!=null){shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;}
             shownTab=next;draft.setText(next==null?"":next.draft);setDraftMode(next!=null&&(next.draftMode||getSharedPreferences("appearance",0).getBoolean("draftDefault",false)),false);
@@ -584,7 +622,7 @@ public final class MainActivity extends LocalizedActivity {
     }
     @android.annotation.TargetApi(30) private void applyModernInsets() {
         root.setOnApplyWindowInsetsListener((v,insets)->{
-            android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
+            android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
             v.setPadding(bars.left,bars.top,bars.right,Math.max(bars.bottom,ime.bottom));
             imeVisible=insets.isVisible(WindowInsets.Type.ime());return insets;

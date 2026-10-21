@@ -20,27 +20,32 @@ public final class PairingActivity extends ScreenActivity {
     private boolean busy,active;private TextView status;private ProgressBar progress;private long lastInvalid;
     private SshConnectionSetup verify;private SshProfileStore.Draft paired;
     static final String COMMAND="curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.sh | bash";
+    @Override int contentWidthDp(){return 1040;}
     @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText(tr(R.string.qr_pairing));scroll.setVerticalScrollBarEnabled(false);
         TextView title=SampleUi.text(this,tr(R.string.connect_your_computer),24,SampleUi.TEXT);body.addView(title);
         TextView hint=SampleUi.text(this,tr(R.string.run_the_pairing_command_then_place_the_qr_code_in_the_frame),14,SampleUi.MUTED);hint.setLineSpacing(dp(3),1);
         LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(8);hp.bottomMargin=dp(20);body.addView(hint,hp);
+        AdaptiveLayout.Columns columns=new AdaptiveLayout.Columns(this,600,24);body.addView(columns,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout scanColumn=column(),instructions=column();columns.addView(scanColumn);columns.addView(instructions);
         scanner=new BarcodeView(this);scanner.setUseTextureView(true);scanner.setFramingRectSize(new Size(dp(208),dp(208)));
         scanner.setDecoderFactory(new DefaultDecoderFactory(Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE)));
         FrameLayout camera=new FrameLayout(this);camera.setBackground(SampleUi.surface(this,SampleUi.FIELD,24));camera.setClipToOutline(true);
         camera.addView(scanner,new FrameLayout.LayoutParams(-1,-1));overlay=new PairingScanOverlay(this,scanner);camera.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
-        body.addView(camera,new LinearLayout.LayoutParams(-1,dp(256)));
+        scanColumn.addView(camera,new LinearLayout.LayoutParams(-1,dp(256)));
         LinearLayout feedback=row();feedback.setGravity(Gravity.CENTER);feedback.setPadding(dp(8),dp(14),dp(8),dp(14));feedback.setMinimumHeight(dp(56));
         progress=new ProgressBar(this);progress.setIndeterminateTintList(ColorStateList.valueOf(SampleUi.GREEN));progress.setVisibility(View.GONE);
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(dp(18),dp(18));pp.rightMargin=dp(10);feedback.addView(progress,pp);
-        status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);status.setLineSpacing(dp(3),1);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));body.addView(feedback);
+        status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);status.setLineSpacing(dp(3),1);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));scanColumn.addView(feedback);
         LinearLayout command=column();command.setPadding(dp(16),dp(16),dp(16),dp(16));command.setBackground(SampleUi.surface(this,SampleUi.FIELD,18));
         LinearLayout commandHeader=row();commandHeader.addView(SampleUi.text(this,"macOS / Linux",15,SampleUi.TEXT),new LinearLayout.LayoutParams(0,-2,1));
         TextView copyButton=SampleUi.text(this,tr(R.string.copy_command),14,SampleUi.GREEN);copyButton.setGravity(Gravity.CENTER);copyButton.setPadding(dp(12),0,dp(12),0);copyButton.setMinHeight(dp(48));copyButton.setBackground(SampleUi.touch(this,0x1200d86c,12));copyButton.setFocusable(true);copyButton.setContentDescription(tr(R.string.copy_pairing_command));
         copyButton.setOnClickListener(v->{clipboard(tr(R.string.shello_pairing_command),COMMAND);copyButton.setText(tr(R.string.copied));if(restoreCopy!=null)copyButton.removeCallbacks(restoreCopy);restoreCopy=()->copyButton.setText(tr(R.string.copy_command));copyButton.postDelayed(restoreCopy,1800);});commandHeader.addView(copyButton);command.addView(commandHeader);
         TextView code=SampleUi.text(this,COMMAND,12,SampleUi.MUTED);code.setTypeface(Typeface.MONOSPACE);code.setLineSpacing(dp(4),1);code.setTextIsSelectable(true);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(12);command.addView(code,cp);
-        LinearLayout.LayoutParams commandParams=new LinearLayout.LayoutParams(-1,-2);commandParams.topMargin=dp(4);commandParams.bottomMargin=dp(16);body.addView(command,commandParams);
+        LinearLayout.LayoutParams commandParams=new LinearLayout.LayoutParams(-1,-2);commandParams.topMargin=dp(4);commandParams.bottomMargin=dp(16);instructions.addView(command,commandParams);
         spacedItem(tr(R.string.scan_from_image),tr(R.string.choose_a_saved_pairing_qr_code),"qr",()->{if(busy)return;Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(pick,95);});
         spacedItem(tr(R.string.about_pairing),null,"qr",()->SampleUi.confirm(this,tr(R.string.qr_pairing),tr(R.string.enable_ssh_and_install_tmux_on_your_computer_first_your_private_k),null,tr(R.string.close),tr(R.string.got_it),false,null,null));
+        // Keep secondary actions with the instructions when the scanner occupies the other column.
+        while(body.getChildCount()>3){View action=body.getChildAt(3);body.removeView(action);instructions.addView(action);}
         scanner.decodeContinuous(new BarcodeCallback(){public void barcodeResult(BarcodeResult result){scanned(result.getText());}});
         scanner.addStateListener(new CameraPreview.StateListener(){
             public void previewSized(){overlay.invalidate();}

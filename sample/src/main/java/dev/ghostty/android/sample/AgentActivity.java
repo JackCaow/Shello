@@ -12,9 +12,13 @@ import java.util.*;
 
 /** Inbox of actual remote events, with explicit per-request decisions. */
 public final class AgentActivity extends ScreenActivity {
-    private AgentHub hub;private String selected;private boolean sending;
+    private AgentHub hub;private String selected;private boolean sending;private Map<String,EditText> answers=new LinkedHashMap<>();
     private final Runnable update=()->{if(selected==null)render();};
-    @Override public void onCreate(Bundle state){super.onCreate(state);hub=AgentHub.get(this);heading.setText(tr(R.string.agent_inbox));render();}
+    @Override public void onCreate(Bundle state){super.onCreate(state);hub=AgentHub.get(this);heading.setText(tr(R.string.agent_inbox));render();
+        if(state!=null&&state.getString("event")!=null)for(AgentHub.Event event:hub.snapshot())if(event.id().equals(state.getString("event"))){
+            detail(event);Bundle values=state.getBundle("answers");if(values!=null)for(Map.Entry<String,EditText> entry:answers.entrySet())entry.getValue().setText(values.getString(entry.getKey(),""));break;}
+    }
+    @Override protected void onSaveInstanceState(Bundle state){state.putString("event",selected);Bundle values=new Bundle();for(Map.Entry<String,EditText> e:answers.entrySet())values.putString(e.getKey(),e.getValue().getText().toString());state.putBundle("answers",values);super.onSaveInstanceState(state);}
     @Override protected void onStart(){super.onStart();hub.attach(update);}
     @Override protected void onStop(){hub.detach(update);super.onStop();}
     @Override void section(String text){
@@ -50,7 +54,7 @@ public final class AgentActivity extends ScreenActivity {
         String cwd=event.data.optString("cwd");if(!cwd.isEmpty())copy(cwd);
         String message=event.data.optString("message",event.data.optString("last_assistant_message"));if(!message.isEmpty())copy(message).setTextIsSelectable(true);
         JSONObject input=event.data.optJSONObject("tool_input");JSONArray questions=input==null?null:input.optJSONArray("questions");
-        Map<String,EditText> answers=new LinkedHashMap<>();
+        answers=new LinkedHashMap<>();
         if(questions!=null&&event.data.optString("tool_name").equals("AskUserQuestion")){
             for(int i=0;i<Math.min(questions.length(),4);i++){JSONObject q=questions.optJSONObject(i);if(q==null)continue;String title=q.optString("question");section(title);EditText answer=new EditText(this);SampleUi.field(answer);answer.setHint(tr(R.string.choose_an_option_or_type_an_answer));answer.setContentDescription(title);LinearLayout.LayoutParams field=new LinearLayout.LayoutParams(-1,-2);field.bottomMargin=dp(12);body.addView(answer,field);answers.put(title,answer);
                 JSONArray options=q.optJSONArray("options");if(options!=null)for(int j=0;j<Math.min(options.length(),20);j++){JSONObject option=options.optJSONObject(j);if(option==null)continue;String label=option.optString("label");item(label,option.optString("description"),"chat",()->{if(q.optBoolean("multiSelect")){String previous=answer.getText().toString();answer.setText(previous.isEmpty()?label:previous+", "+label);}else answer.setText(label);});}}

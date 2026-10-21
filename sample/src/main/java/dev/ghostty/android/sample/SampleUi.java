@@ -132,7 +132,7 @@ final class SampleUi {
             super(activity);this.activity=activity;Context c=activity;
             panel=new LinearLayout(c);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(c,24),dp(c,12),dp(c,24),dp(c,24));panel.setBackground(surface(c,PANEL,28));
             View grip=new View(c);grip.setBackground(surface(c,0xff54585d,3));LinearLayout.LayoutParams gp=new LinearLayout.LayoutParams(dp(c,40),dp(c,4));gp.gravity=Gravity.CENTER_HORIZONTAL;gp.bottomMargin=dp(c,24);panel.addView(grip,gp);
-            ScrollView scroll=new ScrollView(c);LinearLayout body=new LinearLayout(c);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);panel.addView(scroll,new LinearLayout.LayoutParams(-1,-2));
+            LinearLayout body=new LinearLayout(c);body.setOrientation(LinearLayout.VERTICAL);panel.addView(body,new LinearLayout.LayoutParams(-1,-2));
             TextView heading=text(c,title,22,TEXT);heading.setTypeface(null,Typeface.BOLD);body.addView(heading);
             TextView copy=text(c,message,15,MUTED);copy.setLineSpacing(dp(c,4),1);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.topMargin=dp(c,16);body.addView(copy,mp);
             if(detail!=null){TextView code=text(c,detail,14,TEXT);code.setTypeface(Typeface.MONOSPACE);code.setTextIsSelectable(true);code.setPadding(dp(c,16),dp(c,16),dp(c,16),dp(c,16));code.setBackground(surface(c,FIELD,16));LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(c,16);body.addView(code,cp);}
@@ -140,19 +140,13 @@ final class SampleUi {
             LinearLayout actions=new LinearLayout(c);LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,-2);ap.topMargin=dp(c,24);panel.addView(actions,ap);
             actions.addView(negative,new LinearLayout.LayoutParams(0,-2,1));LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(0,-2,1);pp.leftMargin=dp(c,12);actions.addView(positive,pp);
             negative.setOnClickListener(v->{dismiss();if(cancelled!=null)cancelled.run();});positive.setOnClickListener(v->{dismiss();if(accepted!=null)accepted.run();});
-            setOnCancelListener(d->{if(cancelled!=null)cancelled.run();});setView(panel,0,0,0,0);
-            // Scroll long messages/fingerprints on compact screens and with large fonts.
-            panel.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
-                int max=activity.getResources().getDisplayMetrics().heightPixels*3/4;
-                int available=Math.max(dp(c,80),max-(panel.getHeight()-scroll.getHeight()));
-                if(scroll.getHeight()>available){scroll.getLayoutParams().height=available;scroll.requestLayout();}
-            });
+            setOnCancelListener(d->{if(cancelled!=null)cancelled.run();});setView(AdaptiveLayout.sheetScroll(activity,panel),0,0,0,0);
+
         }
         @Override public Button getButton(int which){return which==BUTTON_POSITIVE?positive:which==BUTTON_NEGATIVE?negative:super.getButton(which);}
         @Override public void show(){
-            super.show();Window w=getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setDimAmount(.55f);w.setGravity(Gravity.BOTTOM);
-                w.setLayout(Math.min(dp(activity,520),activity.getResources().getDisplayMetrics().widthPixels-dp(activity,24)),-2);
-                WindowManager.LayoutParams p=w.getAttributes();p.y=dp(activity,12);w.setAttributes(p);w.setNavigationBarColor(Color.BLACK);}
+            super.show();AdaptiveLayout.sheetWindow(activity,this,520,0);
+            if(getWindow()!=null)getWindow().setNavigationBarColor(Color.BLACK);
         }
     }
     private static Button actionButton(Context c,String title,boolean primary,boolean danger){

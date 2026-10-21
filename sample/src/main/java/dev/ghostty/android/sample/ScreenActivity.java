@@ -18,8 +18,9 @@ public abstract class ScreenActivity extends LocalizedActivity {
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());v.setPadding(i.left,i.top,i.right,Math.max(i.bottom,insets.getInsets(WindowInsets.Type.ime()).bottom));return insets;});
         SampleUi.NavigationBar navigation=new SampleUi.NavigationBar(this,"",this::onBackPressed);
         header=navigation;heading=navigation.title;root.addView(header,new LinearLayout.LayoutParams(-1,-2));
-        scroll=new ScrollView(this);body=column();body.setPadding(dp(16),dp(24),dp(16),dp(32));scroll.addView(body);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        scroll=new ScrollView(this);body=column();body.setPadding(dp(16),dp(getResources().getConfiguration().screenHeightDp<480?12:24),dp(16),dp(32));scroll.addView(AdaptiveLayout.centered(this,body,contentWidthDp(),header));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
     }
+    int contentWidthDp(){return 640;}
     int dp(int value){return SampleUi.dp(this,value);}
     LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setGravity(Gravity.CENTER_VERTICAL);return l;}

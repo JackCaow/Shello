@@ -34,8 +34,15 @@ public class HomeFeaturesTest {
         AtomicReference<android.app.Dialog> opened=new AtomicReference<>();CountDownLatch ready=new CountDownLatch(1);
         try{
             inst.runOnMainSync(()->{opened.set(TmuxPicker.show(ui.current,id,tab->{},ready::countDown));assertFalse("Sheet must wait for SSH",opened.get().isShowing());});
-            assertTrue(ready.await(15,TimeUnit.SECONDS));ui.await(()->opened.get().isShowing(),1000);
-            inst.runOnMainSync(()->opened.get().dismiss());
+            assertTrue(ready.await(15,TimeUnit.SECONDS));ui.await(()->opened.get().isShowing()&&opened.get().getWindow().getDecorView().getWidth()>0,3000);
+            inst.runOnMainSync(()->{
+                android.view.View root=opened.get().getWindow().getDecorView();android.graphics.Rect bounds=AdaptiveLayout.available(ui.current);
+                assertTrue("Tmux sheet exceeds window height",root.getHeight()<=bounds.height());
+                assertTrue("Tmux sheet stretches across tablet",root.getWidth()<=SampleUi.dp(ui.current,640));
+                android.view.View create=ui.find(root,AppLanguage.tr(R.string.new_tmux_session_76));assertNotNull(create);
+                android.graphics.Rect visible=new android.graphics.Rect();assertTrue(create.getGlobalVisibleRect(visible));assertEquals(create.getHeight(),visible.height());
+                opened.get().dismiss();
+            });
             CountDownLatch cancelled=new CountDownLatch(1);
             inst.runOnMainSync(()->{opened.set(TmuxPicker.show(ui.current,id,tab->{},cancelled::countDown));opened.get().dismiss();});
             assertTrue(cancelled.await(1,TimeUnit.SECONDS));Thread.sleep(800);inst.runOnMainSync(()->assertFalse(opened.get().isShowing()));

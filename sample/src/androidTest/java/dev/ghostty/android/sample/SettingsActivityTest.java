@@ -87,7 +87,7 @@ public class SettingsActivityTest {
         }finally{finish();restore(prefs,"theme",before);}
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{
-        try{for(String page:new String[]{"","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts"}){
+        try{for(String page:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts"}){
             open(page);inst.runOnMainSync(()->{checkLabels(current.body);assertTrue("Settings column stretched across the window",current.body.getWidth()<=current.dp(640));});
             if("true".equals(InstrumentationRegistry.getArguments().getString("settingsScreenshots"))){
                 Thread.sleep(700);inst.runOnMainSync(()->assertTrue("Settings must be in the foreground for screenshots",current.hasWindowFocus()));Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);

@@ -27,19 +27,6 @@ public final class SettingsActivity extends ScreenActivity {
         prefs=getSharedPreferences("appearance",0);
         boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         body.setPadding(dp(16),dp(landscape?12:24),dp(16),dp(32));
-        // Keep labels and accessories within one readable column on wide windows.
-        scroll.removeView(body);
-        FrameLayout content=new FrameLayout(this){
-            @Override protected void onMeasure(int widthSpec,int heightSpec){
-                int width=Math.min(View.MeasureSpec.getSize(widthSpec),dp(640));
-                body.getLayoutParams().width=width;
-                int side=Math.max(0,(View.MeasureSpec.getSize(widthSpec)-width)/2);
-                if(header.getPaddingLeft()!=side)header.setPadding(side,0,side,0);
-                super.onMeasure(widthSpec,heightSpec);
-            }
-        };
-        content.addView(body,new FrameLayout.LayoutParams(-1,-2,Gravity.CENTER_HORIZONTAL));
-        scroll.addView(content,new ScrollView.LayoutParams(-1,-2));
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setId(android.R.id.list);
         homeScroll=state==null?0:state.getInt("homeScroll");

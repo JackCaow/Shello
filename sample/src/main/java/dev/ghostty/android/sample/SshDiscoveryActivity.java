@@ -51,7 +51,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
                 |WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         LinearLayout root=column();root.setBackgroundColor(Color.BLACK);setContentView(root);
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{
-            android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars());
+            android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
@@ -59,7 +59,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         root.addView(header,new LinearLayout.LayoutParams(-1,-2));
         if(original!=null){saveTop=SampleUi.header(this,"check",tr(R.string.save_connection_changes),GREEN,this::verifyConnection);header.addAction(saveTop);}
         ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(form);
+        LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(AdaptiveLayout.centered(this,form,640,header));
         form.addView(label(tr(R.string.name)));
         LinearLayout nameRow=row();nameRow.setPadding(dp(8),0,dp(8),0);nameRow.setBackground(round(CARD,20));
         form.addView(nameRow,new LinearLayout.LayoutParams(-1,dp(68)));
@@ -102,6 +102,10 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
             connectionStatus.setText(tr(R.string.changes_are_saved_after_verification_then_the_connection_reopens));
         }
         if(state!=null){name.setText(state.getString("name",""));host.setText(state.getString("host",""));port.setText(state.getString("port","22"));user.setText(state.getString("user",""));authChoices.check(state.getInt("auth",R.id.auth_password));tmux.setChecked(state.getBoolean("tmux"));}
+        RetainedInput retained=(RetainedInput)getLastNonConfigurationInstance();
+        if(retained!=null){password.setText(retained.password);passphrase.setText(retained.passphrase);
+            privateKey=retained.key.clone();java.util.Arrays.fill(retained.key,(byte)0);
+            if(privateKey.length>0)keyStatus.setText(tr(R.string.private_key_bytes,privateKey.length));}
         root.setFocusableInTouchMode(true);root.requestFocus();
         cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
     }
@@ -156,7 +160,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             WindowManager.LayoutParams p=window.getAttributes();p.gravity=Gravity.BOTTOM;p.dimAmount=.35f;window.setAttributes(p);}
         picker.setOnDismissListener(d->{list=null;listingStatus=null;picker=null;});picker.show();
-        if(window!=null)window.setLayout(-1,(int)(getResources().getDisplayMetrics().heightPixels*.58f));
+        AdaptiveLayout.sheetWindow(this,picker,600,540);
         renderList();
     }
     private void renderList(){
@@ -189,6 +193,12 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         state.putBoolean("tmux",tmux.isChecked());state.putString("user",user.getText().toString());state.putInt("auth",authChoices.getCheckedRadioButtonId());
         state.putString("name",name.getText().toString());state.putString("host",host.getText().toString());state.putString("port",port.getText().toString());super.onSaveInstanceState(state);
     }
+    // Rotation keeps credentials in memory only; never persist secrets to the saved-state Bundle.
+    private static final class RetainedInput {
+        final String password,passphrase;final byte[] key;
+        RetainedInput(String password,String passphrase,byte[] key){this.password=password;this.passphrase=passphrase;this.key=key.clone();}
+    }
+    @Override public Object onRetainNonConfigurationInstance(){return new RetainedInput(password.getText().toString(),passphrase.getText().toString(),privateKey);}
     private EditText secretField(String hint,String description){
         EditText e=field(hint,description);e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         e.setSaveEnabled(false);e.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);return e;
@@ -269,7 +279,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private EditText field(String hint,String description){
         EditText e=new EditText(this);e.setTextColor(TEXT);e.setHintTextColor(MUTED);e.setTextSize(17);e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);e.setHint(hint);e.setContentDescription(description);
-        SampleUi.field(e);return e;
+        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);return e;
     }
     private TextView label(String value){TextView t=text(value,17,MUTED);t.setPadding(0,0,0,dp(10));return t;}
     private TextView text(String value,int size,int color){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;}

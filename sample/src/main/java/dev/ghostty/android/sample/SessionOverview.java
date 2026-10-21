@@ -128,13 +128,14 @@ final class SessionOverview {
         menu.addView(action(tr(R.string.close_all),"close",true,actions::closeAll));
         int mw=Math.min(dp(250),w-dp(32));menu.measure(View.MeasureSpec.makeMeasureSpec(mw,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
         int[] a=new int[2],b=new int[2];thumb.getLocationOnScreen(a);stage.getLocationOnScreen(b);
-        int size=Math.min(thumb.getWidth(),Math.max(dp(80),h-menu.getMeasuredHeight()-dp(48)));
-        int x=Math.max(dp(16),Math.min(a[0]-b[0],w-Math.max(size,mw)-dp(16)));
-        int y=Math.max(dp(16),Math.min(a[1]-b[1],h-size-menu.getMeasuredHeight()-dp(32)));
+        boolean beside=h<dp(480)&&w>=dp(520);
+        int size=Math.min(thumb.getWidth(),Math.max(dp(80),beside?h-dp(32):h-menu.getMeasuredHeight()-dp(48)));
+        int x=Math.max(dp(16),Math.min(a[0]-b[0],w-(beside?size+dp(16)+mw:Math.max(size,mw))-dp(16)));
+        int y=Math.max(dp(16),Math.min(a[1]-b[1],h-(beside?Math.max(size,menu.getMeasuredHeight()):size+menu.getMeasuredHeight()+dp(16))-dp(16)));
         ImageView selected=new ImageView(activity);selected.setImageBitmap(sharp);selected.setScaleType(ImageView.ScaleType.FIT_XY);selected.setBackground(SampleUi.surface(activity,0xff1e1e1e,16));selected.setClipToOutline(true);
         selected.setContentDescription(tr(R.string.selected_session_name,tab.name()));selected.setOnClickListener(v->dismiss());
         FrameLayout.LayoutParams sp=new FrameLayout.LayoutParams(size,size);sp.leftMargin=x;sp.topMargin=y;overlay.addView(selected,sp);
-        FrameLayout.LayoutParams mp=new FrameLayout.LayoutParams(mw,-2);mp.leftMargin=x;mp.topMargin=y+size+dp(12);overlay.addView(menu,mp);
+        FrameLayout.LayoutParams mp=new FrameLayout.LayoutParams(mw,-2);mp.leftMargin=beside?x+size+dp(16):x;mp.topMargin=beside?y:y+size+dp(12);overlay.addView(menu,mp);
         background.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         stage.addView(overlay,new FrameLayout.LayoutParams(-1,-1));overlay.requestFocus();
     }
@@ -164,7 +165,7 @@ final class SessionOverview {
     private int cardWidth(){
         int available=scroll.getWidth()>0?scroll.getWidth():dp(activity.getResources().getConfiguration().screenWidthDp-32);
         boolean landscape=activity.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-        return Math.max(dp(80),Math.min(dp(landscape?160:240),(available-dp(12))/2));
+        return Math.max(dp(80),Math.min(dp(landscape&&activity.getResources().getConfiguration().screenHeightDp<480?160:240),(available-dp(12))/2));
     }
     private int dp(int n){return SampleUi.dp(activity,n);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);return l;}
