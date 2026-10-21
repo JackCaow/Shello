@@ -1,13 +1,28 @@
 package dev.ghostty.android.sample;
 
-import static dev.ghostty.android.sample.AppLanguage.tr;
+import java.util.*;
 
-
-/** Independent shortcuts settings destination. */
-public final class ShortcutsSettingsActivity extends SettingsPageActivity {
+/** Shortcut groups and the runtime panel use exactly the same persisted order. */
+public final class ShortcutsSettingsActivity extends InputSettingsActivity {
+    private String previewGroup="Upload";
+    private android.widget.LinearLayout previewArea;
+    private void shortcutPreview(){
+        android.widget.LinearLayout canvas=column();canvas.setPadding(dp(8),dp(8),dp(8),dp(8));android.graphics.drawable.GradientDrawable gradient=new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xff063a18,0xff164d48});gradient.setCornerRadius(dp(12));canvas.setBackground(gradient);
+        android.widget.TextView caption=label(AppLanguage.tr(R.string.input_live_preview),16,SampleUi.MUTED);caption.setGravity(android.view.Gravity.CENTER);canvas.addView(caption,new android.widget.LinearLayout.LayoutParams(-1,0,1));previewArea=column();previewArea.setBackground(SampleUi.surface(this,CARD,16));canvas.addView(previewArea);renderPreviewPanel();canvas.addView(layoutPreview("layout_toolbar"),new android.widget.LinearLayout.LayoutParams(-1,dp(58)));body.addView(canvas,new android.widget.LinearLayout.LayoutParams(-1,dp(getResources().getConfiguration().screenHeightDp<480?220:300)));
+    }
+    private void renderPreviewPanel(){
+        previewArea.removeAllViews();InputPreferences config=controls();java.util.List<String> names=new java.util.ArrayList<>();if(config.flag("shortcut_upload",true))names.add("Upload");names.addAll(config.list("groups"));if(!names.contains(previewGroup))previewGroup=names.isEmpty()?"":names.get(0);
+        android.widget.HorizontalScrollView tabs=new android.widget.HorizontalScrollView(this);tabs.setHorizontalScrollBarEnabled(false);android.widget.LinearLayout buttons=row();
+        for(String group:names){android.view.View tab;if(config.flag("shortcut_icons_only",true)&&(group.equals("Claude")||group.equals("Codex"))){android.widget.ImageView logo=new android.widget.ImageView(this);logo.setImageResource(group.equals("Codex")?R.drawable.agent_openai:R.drawable.agent_claude);logo.setImageTintList(android.content.res.ColorStateList.valueOf(group.equals(previewGroup)?SampleUi.GREEN:SampleUi.MUTED));logo.setPadding(dp(12),dp(8),dp(12),dp(8));tab=logo;}else{android.widget.TextView word=label(config.flag("shortcut_icons_only",true)?InputActions.groupSymbol(group):InputText.localize(group),14,group.equals(previewGroup)?SampleUi.GREEN:SampleUi.MUTED);word.setGravity(android.view.Gravity.CENTER);tab=word;}tab.setContentDescription(group+AppLanguage.tr(R.string.input_preview));tab.setOnClickListener(v->{previewGroup=group;renderPreviewPanel();});buttons.addView(tab,new android.widget.LinearLayout.LayoutParams(dp(config.flag("shortcut_icons_only",true)?44:84),dp(40)));}tabs.addView(buttons);previewArea.addView(tabs);
+        android.widget.HorizontalScrollView keys=new android.widget.HorizontalScrollView(this);keys.setHorizontalScrollBarEnabled(false);android.widget.LinearLayout columns=row();
+        if(previewGroup.equals("Upload")){for(String source:new String[]{"camera","image","file"}){android.widget.ImageView icon=SampleUi.icon(this,source,SampleUi.TEXT);icon.setPadding(dp(24),dp(24),dp(24),dp(24));columns.addView(icon,new android.widget.LinearLayout.LayoutParams(dp(80),dp(84)));}}
+        else{java.util.List<String> ids=config.list("group_"+previewGroup);for(int i=0;i<ids.size();i+=2){android.widget.LinearLayout column=column();for(int j=i;j<Math.min(i+2,ids.size());j++){InputButton key=new InputButton(this,config.action(ids.get(j)),config.flag("modifier_icons",false));key.setEnabled(false);column.addView(key,new android.widget.LinearLayout.LayoutParams(dp(100),dp(40)));}columns.addView(column);}}keys.addView(columns);previewArea.addView(keys,new android.widget.LinearLayout.LayoutParams(-1,dp(84)));
+    }
     @Override protected void renderSettings(){
-        heading.setText(tr(R.string.shortcuts));section(tr(R.string.terminal_keys));item("Ctrl",tr(R.string.tap_to_combine_with_the_next_character),"keyboard",null);item("Esc / Tab",tr(R.string.send_the_corresponding_terminal_key),"keyboard",null);
-        section(tr(R.string.direction_pad));item(tr(R.string.arrow_keys),tr(R.string.move_up_down_left_or_right),"pad",null);item(tr(R.string.enter_and_backspace),tr(R.string.confirm_input_or_delete_a_character),"return",null);item(tr(R.string.clear_screen),tr(R.string.send_the_clear_screen_shortcut),"clear",null);
-        section(tr(R.string.text_draft));item(tr(R.string.tap_send),tr(R.string.send_text_and_press_enter),"send",null);item(tr(R.string.long_press_send),tr(R.string.send_text_only),"edit",null);
+        heading.setText(AppLanguage.tr(R.string.input_shortcuts_3));section(AppLanguage.tr(R.string.input_preview));shortcutPreview();section(AppLanguage.tr(R.string.input_enabled_groups_drag_to_reorder));List<String> groups=controls().list("groups");ordered("groups",groups,true);
+        section(AppLanguage.tr(R.string.input_available_groups));for(String name:InputActions.GROUPS.keySet())if(!groups.contains(name))item("＋ "+name,null,"plus",()->{List<String> next=controls().list("groups");next.add(name);controls().save("groups",next);refreshSettings();});
+        section(AppLanguage.tr(R.string.input_panel));inputToggle(AppLanguage.tr(R.string.input_hide_label_text),AppLanguage.tr(R.string.input_show_group_icons_only),"shortcut_icons_only",true);inputToggle(AppLanguage.tr(R.string.input_show_upload_panel),AppLanguage.tr(R.string.input_camera_photos_and_files),"shortcut_upload",true);
+        item(AppLanguage.tr(R.string.input_new_shortcut),AppLanguage.tr(R.string.input_add_to_favorites_2),"plus",()->editShortcut(null,"group_Favorites"));
+        item(AppLanguage.tr(R.string.input_restore_default_groups),null,"history",()->{controls().reset("groups");for(String g:InputActions.GROUPS.keySet())controls().reset("group_"+g);refreshSettings();});
     }
 }

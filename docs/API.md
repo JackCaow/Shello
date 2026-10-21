@@ -20,10 +20,33 @@
 
 The view clears selection on output and resize, keeps selection while scrolling during a handle drag, and exposes `getSelectedText()`. The optional `Listener.onSelectionChanged(String)` callback runs synchronously on the UI thread when selection text changes, including an empty string on clear; use it to show or dismiss copy controls. The application owns clipboard access and copy menus.
 
-New sessions and default cursor resets (`CSI 0 SP q`, omitted-parameter DECSCUSR, and RIS) use a blinking block cursor. Explicit remote steady styles or DEC mode 12 reset still disable blinking; checkpoints retain both the current style and the default policy. The cursor follows VT visibility, color and shape (block/bar/underline/hollow); block cursors are opaque and redraw the underlying glyph with contrast. A wide cell occupies both columns; legacy emoji protocol columns remain unchanged. Input, cursor movement, shape/visibility changes and window focus restore the visible phase for 750 ms, followed by 500 ms off/on intervals when the VT requests blinking. Title-only updates do not restart blinking. An inactive window shows a steady outline; hidden, detached or session-less views do not schedule blink redraws. Focus here means window focus, so a sibling IME input view does not incorrectly deactivate the terminal cursor. Alternate-screen swipe is translated into cursor keys; terminal mouse reporting is not implemented.
+New sessions and default cursor resets (`CSI 0 SP q`, omitted-parameter DECSCUSR, and RIS) use a blinking block cursor. Explicit remote steady styles or DEC mode 12 reset still disable blinking; checkpoints retain both the current style and the default policy. The cursor follows VT visibility, color and shape (block/bar/underline/hollow); block cursors are opaque and redraw the underlying glyph with contrast. A wide cell occupies both columns; legacy emoji protocol columns remain unchanged. Input, cursor movement, shape/visibility changes and window focus restore the visible phase for 750 ms, followed by 500 ms off/on intervals when the VT requests blinking. Title-only updates do not restart blinking. An inactive window shows a steady outline; hidden, detached or session-less views do not schedule blink redraws. Focus here means window focus, so a sibling IME input view does not incorrectly deactivate the terminal cursor. Alternate-screen swipe is translated into cursor keys when the remote application has not enabled mouse reporting; negotiated mouse mode uses encoded wheel events. Explicit mouse-selection and right-click modes send negotiated native mouse press/motion/release events.
 
 Rendering and parsing are on the UI thread in this alpha. The renderer batches updates on animation frames, but has no dirty-row atlas or GPU renderer. It uses the system monospace/emoji fonts. Do not infer production performance from a prior prototype benchmark.
 
 On Android 15+ edge-to-edge windows, apply IME insets to the host layout (as in the sample). `adjustResize` alone is insufficient for an edge-to-edge content view; the terminal resizes when its actual view bounds change.
 
 `TerminalView.setFontSize(float sp)` updates cell metrics and notifies the resize listener when the grid changes (8–32 sp). `setSelectionEnabled(boolean)` controls long-press text selection. Both must be called on the UI thread. Existing IME/transport ownership stays with the caller.
+
+## Configurable keys and gestures
+
+The modifier-aware overloads use the pinned VT encoder, including application cursor and negotiated keyboard modes. Existing key enum ordinals are retained; Delete, Insert and F1–F12 are appended. `SHIFT`, `CTRL`, `ALT` and `SUPER` can be combined. `encodeCharacter(codePoint, text, modifiers)` takes the unshifted Unicode code point plus the produced UTF-8 text; bulk input still belongs in `encodePaste`.
+
+```java
+view.sendKey(TerminalSession.Key.TAB, TerminalSession.SHIFT);
+view.sendCharacter('c', "c", TerminalSession.CTRL);
+input.setOptionAsMeta(true);
+view.setGestureListener((gesture, x, y) -> {
+    if (gesture == TerminalView.Gesture.DOUBLE_TAP) {
+        view.sendKey(TerminalSession.Key.ESCAPE);
+        return true;
+    }
+    return false;
+});
+// In the host Activity's onPause, before detaching or switching transports:
+view.cancelPendingGestures();
+```
+
+Gesture coordinates are local view pixels. The typed events cover single/double/triple taps, horizontal and two-finger swipes, pull-down, pinch, and double-tap hold start/move/end/cancel. Returning false leaves the host action unhandled; selection and ordinary terminal scrolling remain built in. The host owns mappings, font changes, session switching and application actions. One-finger quick scaling is disabled so it cannot compete with double-tap hold. Pausing/detaching or replacing a session must cancel pending actions to avoid directing a delayed gesture to another PTY; session replacement also cancels them automatically.
+
+`setMouseSelectionEnabled`, `setRightClickEnabled` and `setDragArrowsEnabled` opt into explicit touch modes. Mouse events follow the terminal's negotiated mouse protocol; they do not force mouse reporting on an application. Long-press selection remains local. The optional input bridge preserves IME composition, encodes physical key modifiers, and supports a host-provided one-shot modifier latch via `setModifiers`; application-level Cmd shortcuts and physical-device toolbar visibility are implemented by the sample, not the core library.

@@ -79,6 +79,7 @@ final class ToolbarIcon extends Drawable {
                 c.drawArc(8,2,16,13,180,180,false,p);line(c,8,7,8,10);
                 if(name.equals("lock"))line(c,16,7,16,10);
                 break;
+            case "shortcuts":for(int y=3;y<20;y+=10)for(int x=3;x<20;x+=10)c.drawRoundRect(x,y,x+7,y+7,1,1,p);break;
             case "pad":
                 c.drawRoundRect(10,2,14,8,1,1,p);c.drawRoundRect(16,10,22,14,1,1,p);
                 c.drawRoundRect(10,16,14,22,1,1,p);c.drawRoundRect(2,10,8,14,1,1,p);break;

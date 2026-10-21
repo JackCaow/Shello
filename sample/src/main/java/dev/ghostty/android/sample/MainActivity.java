@@ -30,6 +30,10 @@ public final class MainActivity extends LocalizedActivity {
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);String id=takeAgentTab();if(id!=null){pendingProfile=id;connectSsh();}}
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
+    private TerminalControls inputControls;
+    private LinearLayout configuredComposer;
+    private boolean padFolded;
+    private final java.util.List<TextView> padCorners=new java.util.ArrayList<>();
     private TerminalSession session;
     private SshSessionService sshService;
     private boolean sshMode, sshConnected, destroyed, serviceSession, bound, connectOnBind;
@@ -79,7 +83,7 @@ public final class MainActivity extends LocalizedActivity {
     private String appliedTheme;
     private TextView hookAttention;
     private boolean guideShown;
-    private TextView subtitle, ctrlButton, padButton, lockButton, sendButton;
+    private TextView subtitle, lockButton, sendButton;
     private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
     private boolean padPositioned;
     private HorizontalScrollView toolScroll;
@@ -93,7 +97,7 @@ public final class MainActivity extends LocalizedActivity {
     private static final int TAKE_ATTACHMENT=76,CAMERA_PERMISSION=77;
     private android.net.Uri attachmentUri;
     private static final int PICK_ATTACHMENT=75;
-    private boolean ctrlArmed, draftMode, imeVisible, minimized, padLocked;
+    private boolean draftMode, imeVisible, minimized, padLocked;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -119,6 +123,13 @@ public final class MainActivity extends LocalizedActivity {
         directInput=new TerminalInputView(this); directInput.setTerminalView(terminal);
         directInput.setAlpha(0); directInput.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         sheet.addView(directInput,new LinearLayout.LayoutParams(1,1));
+        inputControls=new TerminalControls(this,terminal,directInput,sheet,toolbar,configuredComposer,viewport,new TerminalControls.Host(){
+            public void action(String id){controlAction(id);}
+            public void composer(boolean open){setDraftMode(open,true);}
+            public void session(int index,boolean relative){switchSession(index,relative);}
+            public boolean active(){return !destroyed&&!minimized;}
+            public boolean keyboardVisible(){return imeVisible;}
+        });
         session=new TerminalSession(40,20);
         terminal.setListener(new TerminalView.Listener() {
             @Override public void onInput(byte[] bytes) { sendInput(bytes); }
@@ -191,7 +202,7 @@ public final class MainActivity extends LocalizedActivity {
     }
 
     private void buildToolbar() {
-        HorizontalScrollView scroll=new HorizontalScrollView(this);toolScroll=scroll;
+        HorizontalScrollView scroll=new InputToolScroll(this);toolScroll=scroll;
         scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);
         toolbar=row();toolbar.setPadding(dp(5),dp(4),dp(5),dp(4));
         scroll.setBackground(round(Color.BLACK,32));scroll.setClipToOutline(true);
@@ -199,37 +210,6 @@ public final class MainActivity extends LocalizedActivity {
         LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(52));
         outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(scroll,outer);
         scroll.setTag("toolbar");
-        ctrlButton=key("Ctrl",tr(R.string.ctrl_combine_with_the_next_key),()->setCtrl(!ctrlArmed));
-        addTool(ctrlButton);
-        addTool(key("Esc","Escape",()->sendKey(TerminalSession.Key.ESCAPE)));
-        addTool(key("Tab","Tab",()->sendKey(TerminalSession.Key.TAB)));
-        padButton=icon("pad",tr(R.string.direction_pad),this::togglePad);addTool(padButton);
-        addTool(icon("panel",tr(R.string.session_tools),()->tools(toolbar)));
-        addTool(icon("paste",tr(R.string.paste_into_draft),this::paste));
-        addTool(icon("history",tr(R.string.input_history),this::history));
-        addTool(icon("chat",tr(R.string.edit_text),()->setDraftMode(true,true)));
-        addTool(icon("keyboard",tr(R.string.show_or_hide_keyboard),this::toggleKeyboard));
-    }
-    private void addTool(View view) {
-        view.setMinimumWidth(dp(40));
-        view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),toolCircle(KEY),toolCircle(Color.WHITE)));
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(44),1);
-        toolbar.addView(view,p);
-    }
-    /** Equal circular bases even when the toolbar distributes fractional button widths. */
-    private android.graphics.drawable.Drawable toolCircle(int color) {
-        return new android.graphics.drawable.Drawable(){
-            final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            {paint.setColor(color);}
-            @Override public void draw(android.graphics.Canvas canvas){
-                android.graphics.Rect b=getBounds();
-                float radius=Math.max(0,Math.min(b.width(),b.height())/2f-dp(3));
-                canvas.drawCircle(b.exactCenterX(),b.exactCenterY(),radius,paint);
-            }
-            @Override public void setAlpha(int alpha){paint.setAlpha(alpha);invalidateSelf();}
-            @Override public void setColorFilter(android.graphics.ColorFilter filter){paint.setColorFilter(filter);invalidateSelf();}
-            @Override public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}
-        };
     }
     private void buildComposer() {
         composer=column();composer.setPadding(dp(12),dp(8),dp(12),dp(8));
@@ -248,10 +228,10 @@ public final class MainActivity extends LocalizedActivity {
 
         LinearLayout actions=row();composerActions=actions;composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
         addTextButton=icon("plus",tr(R.string.add_attachment),this::addTextMenu);composerAction(actions,addTextButton);
-        composerAction(actions,icon("toolbox",tr(R.string.terminal_tools),()->tools(composer)));
+        HorizontalScrollView configured=new HorizontalScrollView(this);configured.setHorizontalScrollBarEnabled(false);configuredComposer=row();configured.addView(configuredComposer);actions.addView(configured,new LinearLayout.LayoutParams(0,dp(40),1));
         composerAction(actions,icon("close",tr(R.string.close_editor_and_keep_draft),()->setDraftMode(false,true)));
-        actions.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-        TextView voice=icon("mic",tr(R.string.voice_input_not_available_yet),()->{});voice.setEnabled(false);voice.setAlpha(.4f);composerAction(actions,voice);
+
+        TextView voice=icon("mic",AppLanguage.tr(R.string.input_dictation),()->controlAction("dictation"));composerAction(actions,voice);
         sendButton=icon("send",tr(R.string.send_and_press_enter_long_press_to_send_text_only),()->sendDraft(true));
         sendButton.setBackground(round(0xff191b1e,22));sendButton.setEnabled(false);
         sendButton.setOnLongClickListener(v->{sendDraft(false);return true;});
@@ -366,32 +346,41 @@ public final class MainActivity extends LocalizedActivity {
         FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(dp(156),dp(184),Gravity.TOP|Gravity.LEFT);
         viewport.addView(pad,p);
         LinearLayout handle=row();pad.addView(handle,new LinearLayout.LayoutParams(-1,dp(28)));
-        TextView drag=icon("grip",tr(R.string.drag_direction_pad),()->{});drag.setTextColor(MUTED);
+        padLocked=new InputPreferences(this).flag("pad_locked",false);padFolded=new InputPreferences(this).flag("pad_folded",false);
+        TextView drag=icon("grip",AppLanguage.tr(R.string.input_toggle_dpad),()->{padFolded=!padFolded;new InputPreferences(this).setFlag("pad_folded",padFolded);layoutPad();});drag.setTextColor(MUTED);
         ((ControlLabel)drag).setIcon(new ToolbarIcon("grip",dp(44),MUTED));
         handle.addView(new View(this),new LinearLayout.LayoutParams(dp(46),1));
         handle.addView(drag,new LinearLayout.LayoutParams(dp(60),-1));
         lockButton=icon("unlock",tr(R.string.lock_direction_pad_position),()->{
-            padLocked=!padLocked;
+            padLocked=!padLocked;new InputPreferences(this).setFlag("pad_locked",padLocked);
             ((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));
             lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
-        });((ControlLabel)lockButton).setIcon(new ToolbarIcon("unlock",dp(14),MUTED));
+        });((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
         handle.addView(lockButton,new LinearLayout.LayoutParams(dp(28),dp(28)));
         drag.setBackgroundColor(Color.TRANSPARENT);lockButton.setBackgroundColor(Color.TRANSPARENT);
-        drag.setOnTouchListener(new View.OnTouchListener() {
-            float x,y,startX,startY;
-            public boolean onTouch(View v,MotionEvent e) {
-                if(padLocked)return false;
-                if(e.getActionMasked()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();startX=pad.getX();startY=pad.getY();return true;}
-                if(e.getActionMasked()==MotionEvent.ACTION_MOVE){pad.setX(startX+e.getRawX()-x);pad.setY(startY+e.getRawY()-y);clampPad();return true;}
-                if(e.getActionMasked()==MotionEvent.ACTION_UP){v.performClick();return true;}
-                return true;
-            }
+        drag.setOnTouchListener(new View.OnTouchListener(){float x,y,sx,sy;boolean moved,held;final android.os.Handler h=new android.os.Handler(android.os.Looper.getMainLooper());final Runnable lock=()->{held=true;lockButton.performClick();};
+            public boolean onTouch(View v,MotionEvent e){switch(e.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:x=e.getRawX();y=e.getRawY();sx=pad.getX();sy=pad.getY();moved=false;held=false;h.postDelayed(lock,ViewConfiguration.getLongPressTimeout());return true;
+                case MotionEvent.ACTION_MOVE:if(Math.hypot(e.getRawX()-x,e.getRawY()-y)>dp(8)){moved=true;h.removeCallbacks(lock);}if(moved&&!padLocked){pad.setX(sx+e.getRawX()-x);pad.setY(sy+e.getRawY()-y);clampPad();}return true;
+                case MotionEvent.ACTION_UP:h.removeCallbacks(lock);if(!moved&&!held)v.performClick();if(moved)savePadPosition();return true;
+                case MotionEvent.ACTION_CANCEL:h.removeCallbacks(lock);return true;
+            }return true;}
         });
-        padRow(new String[]{"backspace","up","clear"},new String[]{tr(R.string.backspace),tr(R.string.up),tr(R.string.clear_screen_ctrl_l)},new Runnable[]{()->sendKey(TerminalSession.Key.BACKSPACE),()->sendKey(TerminalSession.Key.UP),()->terminal.sendText("\f")});
+        padCornerRow(true);
         padRow(new String[]{"left","return","right"},new String[]{tr(R.string.left),tr(R.string.enter),tr(R.string.right)},new Runnable[]{()->sendKey(TerminalSession.Key.LEFT),()->sendKey(TerminalSession.Key.ENTER),()->sendKey(TerminalSession.Key.RIGHT)});
-        padRow(new String[]{"","down",""},new String[]{"",tr(R.string.down),""},new Runnable[]{null,()->sendKey(TerminalSession.Key.DOWN),null});
+        padCornerRow(false);layoutPad();
         pad.setVisibility(View.GONE);
     }
+    private void padCornerRow(boolean upper){
+        LinearLayout row=row();pad.addView(row,new LinearLayout.LayoutParams(-1,dp(52)));
+        for(int i=0;i<3;i++){View view;if(i==1)view=icon(upper?"up":"down",upper?tr(R.string.up):tr(R.string.down),()->sendKey(upper?TerminalSession.Key.UP:TerminalSession.Key.DOWN));
+            else {String corner=upper?i==0?"corner_ul":"corner_ur":i==0?"corner_ll":"corner_lr";TextView button=key("",corner,()->{if(inputControls!=null)inputControls.perform(new InputPreferences(this).mapping(corner));});button.setTag(corner);padCorners.add(button);view=button;}
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(50),1);p.setMargins(dp(1),dp(1),dp(1),dp(1));row.addView(view,p);
+        }refreshPadCorners();
+    }
+    private void refreshPadCorners(){InputPreferences config=new InputPreferences(this);for(TextView b:padCorners){String action=config.mapping((String)b.getTag());b.setText(config.label(action));b.setTextSize(10);b.setContentDescription(config.label(action));b.setVisibility(action.equals("none")?View.INVISIBLE:View.VISIBLE);}}
+    private void layoutPad(){if(pad==null)return;for(int i=1;i<pad.getChildCount();i++)pad.getChildAt(i).setVisibility(padFolded?View.GONE:View.VISIBLE);FrameLayout.LayoutParams p=(FrameLayout.LayoutParams)pad.getLayoutParams();p.height=dp(padFolded?28:184);pad.setLayoutParams(p);pad.post(this::clampPad);}
+    private void savePadPosition(){if(viewport.getWidth()==0||viewport.getHeight()==0)return;new InputPreferences(this).prefs.edit().putFloat("pad_x",pad.getX()/viewport.getWidth()).putFloat("pad_y",pad.getY()/viewport.getHeight()).apply();}
     private void padRow(String[] titles,String[] descriptions,Runnable[] actions) {
         LinearLayout row=row();pad.addView(row,new LinearLayout.LayoutParams(-1,dp(52)));
         for(int i=0;i<3;i++){
@@ -402,19 +391,19 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void togglePad() {
         boolean show=pad.getVisibility()!=View.VISIBLE;pad.setVisibility(show?View.VISIBLE:View.GONE);
-        padButton.setActivated(show);if(show)pad.post(()->{
-            if(!padPositioned){pad.setX((viewport.getWidth()-pad.getWidth())/2f);pad.setY(viewport.getHeight()*.42f-pad.getHeight()/2f);padPositioned=true;}
+        if(inputControls!=null)inputControls.setActive("pad",show);if(show)pad.post(()->{
+            if(!padPositioned){android.content.SharedPreferences saved=new InputPreferences(this).prefs;pad.setX(saved.contains("pad_x")?saved.getFloat("pad_x",.5f)*viewport.getWidth():(viewport.getWidth()-pad.getWidth())/2f);pad.setY(saved.contains("pad_y")?saved.getFloat("pad_y",.4f)*viewport.getHeight():viewport.getHeight()*.42f-pad.getHeight()/2f);padPositioned=true;}
             clampPad();
         });
     }
     private void clampPad() {
         if(pad==null||viewport.getWidth()==0||pad.getWidth()==0)return;
-        boolean compact=viewport.getHeight()<dp(184)&&viewport.getWidth()>=dp(468);
+        boolean compact=!padFolded&&viewport.getHeight()<dp(184)&&viewport.getWidth()>=dp(468);
         if((pad.getOrientation()==LinearLayout.HORIZONTAL)!=compact){
             pad.setOrientation(compact?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);
             pad.getChildAt(0).setVisibility(compact?View.GONE:View.VISIBLE);
-            for(int i=1;i<pad.getChildCount();i++)pad.getChildAt(i).setLayoutParams(new LinearLayout.LayoutParams(dp(156),dp(52)));
-            FrameLayout.LayoutParams p=(FrameLayout.LayoutParams)pad.getLayoutParams();p.width=dp(compact?468:156);p.height=dp(compact?52:184);pad.setLayoutParams(p);
+            for(int i=1;i<pad.getChildCount();i++)pad.getChildAt(i).setLayoutParams(new LinearLayout.LayoutParams(compact?dp(156):-1,dp(52)));
+            FrameLayout.LayoutParams p=(FrameLayout.LayoutParams)pad.getLayoutParams();p.width=dp(compact?468:156);p.height=dp(padFolded?28:compact?52:184);pad.setLayoutParams(p);
             pad.post(this::clampPad);return;
         }
         pad.setX(Math.max(0,Math.min(pad.getX(),viewport.getWidth()-pad.getWidth())));
@@ -494,6 +483,8 @@ public final class MainActivity extends LocalizedActivity {
                 });
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
+        if(request==78){if(result==RESULT_OK&&data!=null){java.util.ArrayList<String> words=data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);if(words!=null&&!words.isEmpty()){setDraftMode(true,true);draft.append(words.get(0));}}return;}
+
         super.onActivityResult(request,result,data);
         if(request==TAKE_ATTACHMENT){
             android.net.Uri output=cameraUri;cameraUri=null;
@@ -518,7 +509,7 @@ public final class MainActivity extends LocalizedActivity {
         }
     }
     private void minimize() {
-        rememberTab();hideKeyboard();setCtrl(false);minimized=true;sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
+        rememberTab();hideKeyboard();if(inputControls!=null)inputControls.clearModifiers();minimized=true;sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
         if(overview!=null&&sshService!=null)overview.refresh(sshService.tabs());
     }
     private void openTab(String id){
@@ -539,16 +530,18 @@ public final class MainActivity extends LocalizedActivity {
     @Override public void onBackPressed() {
         if(overview!=null&&overview.back())return;
         if(minimized){super.onBackPressed();return;}
+        if(inputControls!=null&&inputControls.back())return;
         if(pad.getVisibility()==View.VISIBLE){togglePad();return;}
         if(!terminal.getSelectedText().isEmpty()){terminal.clearSelection();return;}
         if(draftMode){setDraftMode(false,false);hideKeyboard();return;}
         minimize();
     }
     private void setDraftMode(boolean enabled,boolean keyboard) {
-        setCtrl(false);draftMode=enabled;
+        if(inputControls!=null)inputControls.clearModifiers();draftMode=enabled;
         ((View)toolbar.getParent()).setVisibility(enabled?View.GONE:View.VISIBLE);
         composer.setVisibility(enabled?View.VISIBLE:View.GONE);
-        pad.setVisibility(View.GONE);padButton.setActivated(false);
+        pad.setVisibility(View.GONE);
+        if(inputControls!=null){inputControls.mode(enabled);inputControls.setActive("pad",false);}
         if(keyboard)showKeyboard();
     }
     private void showKeyboard() {
@@ -566,8 +559,7 @@ public final class MainActivity extends LocalizedActivity {
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);root.requestFocus();
     }
     private void toggleKeyboard(){if(imeVisible)hideKeyboard();else showKeyboard();}
-    private void setCtrl(boolean enabled){ctrlArmed=enabled;ctrlButton.setActivated(enabled);ctrlButton.setTextColor(enabled?GREEN:TEXT);}
-    private void sendKey(TerminalSession.Key key){terminal.sendKey(key);}
+    private void sendKey(TerminalSession.Key key){if(inputControls!=null)inputControls.key(key);else terminal.sendKey(key);}
     private void sendDraft(boolean enter) {
         String original=draft.getText().toString();String text=SshSessionService.composeDraft(shownTab,original);if(text==null||text.isEmpty())return;
         if(sshMode&&!sshConnected){toast(tr(R.string.ssh_is_disconnected_draft_kept));return;}
@@ -579,8 +571,9 @@ public final class MainActivity extends LocalizedActivity {
     private void paste() {
         ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         if(!clipboard.hasPrimaryClip()||clipboard.getPrimaryClip()==null)return;
-        CharSequence text=clipboard.getPrimaryClip().getItemAt(0).coerceToText(this);
-        setDraftMode(true,true);int start=Math.max(0,draft.getSelectionStart()),end=Math.max(0,draft.getSelectionEnd());
+        CharSequence text=clipboard.getPrimaryClip().getItemAt(0).coerceToText(this);if(text==null)return;
+        if(!draftMode){terminal.pasteText(text.toString());return;}
+        int start=Math.max(0,draft.getSelectionStart()),end=Math.max(0,draft.getSelectionEnd());
         draft.getText().replace(Math.min(start,end),Math.max(start,end),text);
     }
     private void copySelection() {
@@ -640,7 +633,7 @@ public final class MainActivity extends LocalizedActivity {
         if(request==41&&sshService!=null){sshService.refreshNotification();updateSshView();}
     }
     @Override protected void onPause(){
-        previewHandler.removeCallbacks(previewCheckpoint);rememberTab();super.onPause();
+        previewHandler.removeCallbacks(previewCheckpoint);if(inputControls!=null)inputControls.pause();rememberTab();super.onPause();
     }
     @Override protected void onStop(){
         if(tmuxDialog!=null&&!tmuxDialog.isShowing())tmuxDialog.dismiss();
@@ -685,9 +678,25 @@ public final class MainActivity extends LocalizedActivity {
         if(overview!=null)overview.refresh(sshService.tabs());
         if(next==null&&!minimized)minimize();
     }
+    @Override public boolean dispatchKeyEvent(KeyEvent event){if(inputControls!=null&&inputControls.hardware(event))return true;return super.dispatchKeyEvent(event);}
+    private void switchSession(int index,boolean relative){if(sshService==null)return;java.util.List<SshSessionService.Tab> tabs=sshService.tabs();if(tabs.isEmpty())return;int current=tabs.indexOf(sshService.selected());int selected=relative?Math.floorMod(current+index,tabs.size()):index;if(selected<tabs.size())openTab(tabs.get(selected).id);}
+    private void controlAction(String id){switch(id){
+        case "pad":togglePad();break;case "panel":tools(toolbar);break;case "paste":paste();break;case "history":history();break;case "chat":setDraftMode(true,true);break;case "keyboard":toggleKeyboard();break;case "hide_keyboard":hideKeyboard();break;case "minimize":minimize();break;
+        case "select":terminal.setSelectionEnabled(true);toast(AppLanguage.tr(R.string.input_hold_to_select));break;
+        case "drag_arrows":terminal.setDragArrowsEnabled(!terminal.isDragArrowsEnabled());break;
+        case "mouse":terminal.setMouseSelectionEnabled(!terminal.isMouseSelectionEnabled());break;
+        case "right_click":terminal.setRightClickEnabled(!terminal.isRightClickEnabled());break;
+        case "changes":if(inputControls!=null)inputControls.sequence("text:/diff",true);break;
+        case "preview":openWebPreview();break;
+        case "close_session":if(shownTab!=null)closeTab(shownTab.id);break;
+        case "attachment_camera":setDraftMode(true,false);chooseAttachmentSource(0);break;case "attachment_image":setDraftMode(true,false);chooseAttachmentSource(1);break;case "attachment_file":setDraftMode(true,false);chooseAttachmentSource(2);break;
+        case "dictation":try{Intent speech=new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);startActivityForResult(speech,78);}catch(ActivityNotFoundException error){toast(AppLanguage.tr(R.string.input_no_dictation));}break;
+        case "clipboard":android.content.ClipboardManager clipboard=getSystemService(android.content.ClipboardManager.class);ClipData clip=clipboard.getPrimaryClip();if(clip!=null&&clip.getItemCount()>0&&clip.getItemAt(0).getUri()!=null){attachmentUri=clip.getItemAt(0).getUri();attachmentTab=shownTab==null?null:shownTab.id;uploadPickedAttachment();setDraftMode(true,true);}else paste();break;
+    }}
+    private void openWebPreview(){EditText address=new EditText(this);SampleUi.field(address);address.setHint(AppLanguage.tr(R.string.input_web_address_hint));android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this).setTitle(AppLanguage.tr(R.string.input_web_preview)).setView(address).setNegativeButton(AppLanguage.tr(R.string.input_cancel),null).setPositiveButton(AppLanguage.tr(R.string.input_open),null).create();if(infoDialog!=null)infoDialog.dismiss();infoDialog=dialog;dialog.setOnShowListener(ignored->dialog.getButton(-1).setOnClickListener(v->{try{android.net.Uri uri=android.net.Uri.parse(address.getText().toString());if(!java.util.List.of("http","https").contains(uri.getScheme())){address.setError(AppLanguage.tr(R.string.input_http_required));return;}startActivity(new Intent(Intent.ACTION_VIEW,uri));dialog.dismiss();}catch(ActivityNotFoundException error){address.setError(AppLanguage.tr(R.string.input_no_browser));}}));dialog.show();}
     private void applyAppearance(){
         if(terminal==null)return;android.content.SharedPreferences prefs=getSharedPreferences("appearance",0);terminal.setFontSize(prefs.getInt("fontSize",14));terminal.setSelectionEnabled(prefs.getBoolean("selection",true));
-        for(int i=0;i<toolbar.getChildCount();i++){View tool=toolbar.getChildAt(i);Object tag=tool.getTag();if(tag instanceof String&&java.util.Arrays.asList("history","paste","chat","pad").contains(tag))tool.setVisibility(prefs.getBoolean("tool_"+tag,true)?View.VISIBLE:View.GONE);}
+        if(inputControls!=null){inputControls.refresh();inputControls.setActive("pad",pad.getVisibility()==View.VISIBLE);}refreshPadCorners();
         String theme=ThemePreferences.current(prefs);if(session!=null&&!theme.equals(appliedTheme)){appliedTheme=theme;String fg=theme.equals("light")?"#202124":"#d4d4d4",bg=theme.equals("light")?"#f5f5f5":theme.equals("black")?"#000000":"#1e1e1e";session.write(("\033]10;"+fg+"\007\033]11;"+bg+"\007").getBytes(StandardCharsets.UTF_8));}
     }
     private void detachServiceView(){
@@ -717,7 +726,7 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void sendInput(byte[] bytes) {
         String text=new String(bytes,StandardCharsets.UTF_8);
-        if(ctrlArmed){setCtrl(false);if(text.length()==1&&text.charAt(0)>=64&&text.charAt(0)<128)text=Character.toString((char)(text.charAt(0)&31));}
+
         if(sshMode){if(sshConnected&&sshService!=null)sshService.send(text.getBytes(StandardCharsets.UTF_8));else toast(tr(R.string.ssh_disconnected));return;}
         if(text.equals("\r")||text.equals("\n")){write("\r\n");return;}
         if(text.equals("\f")){write("\033[2J\033[H");return;}
@@ -780,7 +789,7 @@ public final class MainActivity extends LocalizedActivity {
     @Override protected void onDestroy(){
         if(newConnectionDialog!=null)newConnectionDialog.dismiss();if(tmuxDialog!=null)tmuxDialog.dismiss();
         if(connectionDeleteDialog!=null)connectionDeleteDialog.dismiss();if(infoDialog!=null)infoDialog.dismiss();
-        destroyed=true;
+        destroyed=true;if(inputControls!=null)inputControls.close();
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);
         if(session!=null&&!serviceSession)session.close();
         if(overview!=null)overview.dismiss();

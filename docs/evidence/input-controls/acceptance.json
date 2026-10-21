@@ -1,0 +1,71 @@
+{
+  "status": "in_progress",
+  "full_acceptance": false,
+  "scope": [
+    "toolbar_layout",
+    "zen_ring_layout",
+    "composer_layout",
+    "shortcut_groups_and_editor",
+    "gestures_and_direction_pad",
+    "physical_keyboard"
+  ],
+  "device_matrix": [
+    {
+      "device": "Xiaomi 25019PNF3C",
+      "android_api": 36,
+      "configured_ime": "com.bytedance.android.doubaoime/.ImeService",
+      "app_instrumentation_tests": 29,
+      "supplemental_real_ssh_tmux_vim_and_three_panes_tests": 1,
+      "physical_keyboard_connected": false,
+      "coverage": "Real Android views, touch injection, key-event injection, InputConnection contracts, and an isolated SSH/tmux/vim session. OS-level USB/Bluetooth key delivery is not claimed."
+    },
+    {
+      "device": "ARM64 emulator",
+      "android_api": 27,
+      "app_instrumentation_tests": 28,
+      "core_instrumentation_tests": 10
+    },
+    {
+      "device": "ARM64 emulator",
+      "android_api": 35,
+      "orientation": "landscape",
+      "settings_instrumentation_tests": 5,
+      "core_instrumentation_tests": 10
+    }
+  ],
+  "verified": [
+    "Independent persisted toolbar, Zen ring and composer layouts",
+    "Add/remove/drag ordering, reset and legacy button-visibility compatibility",
+    "Custom shortcuts, group visibility/order, favorites, text and explicit Enter",
+    "Editor unsaved changes survive Activity recreation",
+    "Mode-aware modifier/function key encoding, IME composition and Unicode input",
+    "Single/double/triple tap mappings, two-finger gestures, pinch and volume interception",
+    "Ctrl long press, panel lock, correct Claude/Codex presets and icons",
+    "Direction-pad corners, fold, lock and saved position",
+    "Injected Cmd+K/J/W/1/2 application shortcuts",
+    "Pending gestures canceled before another PTY is attached",
+    "SSH shell/vim UTF-8 input, saved emoji, configurable tmux prefix and directional pane navigation"
+  ],
+  "pending": [
+    "Real USB/Bluetooth keyboard: hotplug, toolbar auto-hide, Option/Meta and OS-level shortcut dispatch"
+  ],
+  "notes": [
+    "A single API 27 back-stack timeout occurred during a concurrent emulator run. The complete serial rerun passed without removing the back-stack assertions.",
+    "Configured IME identifies the device environment; InputConnection tests and SSH Unicode input do not constitute a manual provider-specific IME typing claim.",
+    "Other provider preset catalogs were inspected; running every third-party CLI command is not claimed.",
+    "No release tag or remote Maven publication."
+  ],
+  "baseline": "c09dd00",
+  "data_preservation": {
+    "checked": 28,
+    "connection_files": 1,
+    "changed": []
+  },
+  "build": {
+    "java": 17,
+    "release_apk": true,
+    "release_aar": true,
+    "sample_lint": true,
+    "terminal_lint": true
+  }
+}

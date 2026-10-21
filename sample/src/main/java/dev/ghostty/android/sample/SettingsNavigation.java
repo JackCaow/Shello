@@ -17,6 +17,7 @@ final class SettingsNavigation {
             case "font":return FontSettingsActivity.class;
             case "theme":return ThemeSettingsActivity.class;
             case "advanced":return AdvancedSettingsActivity.class;
+            case "hardware":return HardwareKeyboardSettingsActivity.class;
             case "toolbar":return ToolbarSettingsActivity.class;
             case "gestures":return GesturesSettingsActivity.class;
             case "chat":return DraftSettingsActivity.class;
