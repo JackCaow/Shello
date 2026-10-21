@@ -15,7 +15,7 @@ public final class TerminalInputView extends EditText {
         super(context,attrs);
         setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-        setHint("Terminal input");setMinLines(1);setMaxLines(3);
+        setHint(R.string.terminal_input_hint);setMinLines(1);setMaxLines(3);
     }
     public void setTerminalView(TerminalView terminal) { this.terminal=terminal;getText().clear(); }
     private boolean composing(){return BaseInputConnection.getComposingSpanStart(getText())>=0;}

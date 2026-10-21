@@ -41,6 +41,7 @@ Open the downloaded APK on your phone and follow Android's installation prompts.
 - **Touch terminal:** Chinese IME, text selection, scrolling, direction controls and Ctrl / Esc / Tab shortcuts.
 - **Session home:** thumbnails, reordering and closing; cached previews survive app restarts.
 - **Remote agents:** project-grouped Claude Code / Codex history and a Claude Code Hook inbox for events and approvals.
+- **Languages:** English and Simplified Chinese. Follow the system or choose a language in Settings.
 - **Appearance:** Shello, black and light themes, font size and configurable toolbar controls.
 
 ## Quick pairing

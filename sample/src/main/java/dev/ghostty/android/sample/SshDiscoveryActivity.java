@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.app.*;
 import android.content.*;
 import android.graphics.Color;
@@ -13,7 +15,7 @@ import android.widget.*;
 import java.util.*;
 
 /** Local discovery and user-driven SSH setup; no credentials are passed through Intents. */
-public final class SshDiscoveryActivity extends Activity {
+public final class SshDiscoveryActivity extends LocalizedActivity {
     private static final int TEXT=0xffe6e6e8,MUTED=0xff96999f,GREEN=SampleUi.GREEN,CARD=0xff111315;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final List<LanSshDiscovery.Host> hosts=new ArrayList<>();
@@ -43,7 +45,7 @@ public final class SshDiscoveryActivity extends Activity {
         super.onCreate(state);
         editingId=getIntent().getStringExtra("editProfile");
         if(editingId!=null)try{original=new SshProfileStore(this).read(new SshProfileStore(this).directory(editingId));}
-            catch(Exception error){Toast.makeText(this,"无法读取连接，请返回重试",Toast.LENGTH_LONG).show();finish();return;}
+            catch(Exception error){Toast.makeText(this,tr(R.string.cannot_read_this_connection_go_back_and_try_again),Toast.LENGTH_LONG).show();finish();return;}
         getWindow().setStatusBarColor(Color.BLACK);getWindow().setNavigationBarColor(Color.BLACK);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
                 |WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -53,51 +55,51 @@ public final class SshDiscoveryActivity extends Activity {
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
-        SampleUi.NavigationBar header=new SampleUi.NavigationBar(this,original==null?"新建连接":"编辑连接",this::cancelEdit);
+        SampleUi.NavigationBar header=new SampleUi.NavigationBar(this,original==null?tr(R.string.new_connection):tr(R.string.edit_connection),this::cancelEdit);
         root.addView(header,new LinearLayout.LayoutParams(-1,-2));
-        if(original!=null){saveTop=SampleUi.header(this,"check","确认修改连接",GREEN,this::verifyConnection);header.addAction(saveTop);}
+        if(original!=null){saveTop=SampleUi.header(this,"check",tr(R.string.save_connection_changes),GREEN,this::verifyConnection);header.addAction(saveTop);}
         ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout form=column();form.setPadding(dp(24),dp(20),dp(24),dp(24));scroll.addView(form);
-        form.addView(label("名称"));
+        form.addView(label(tr(R.string.name)));
         LinearLayout nameRow=row();nameRow.setPadding(dp(8),0,dp(8),0);nameRow.setBackground(round(CARD,20));
         form.addView(nameRow,new LinearLayout.LayoutParams(-1,dp(68)));
-        name=field("我的 Mac","连接名称");name.setBackgroundColor(Color.TRANSPARENT);
+        name=field(tr(R.string.my_mac),tr(R.string.connection_name));name.setBackgroundColor(Color.TRANSPARENT);
         nameRow.addView(name,new LinearLayout.LayoutParams(0,-1,1));
-        badge=button("正在发现…","局域网 SSH 自动发现",this::showPicker);badge.setTextSize(13);badge.setTextColor(GREEN);
+        badge=button(tr(R.string.discovering),tr(R.string.discover_ssh_servers_on_your_network),this::showPicker);badge.setTextSize(13);badge.setTextColor(GREEN);
         badge.setPadding(dp(12),0,dp(12),0);badge.setBackground(round(0xff0d2412,18));
         nameRow.addView(badge,new LinearLayout.LayoutParams(-2,dp(44)));
         LinearLayout addressRow=row();addressRow.setGravity(Gravity.TOP);margin(form,addressRow,24);
         LinearLayout hostColumn=column(),portColumn=column();addressRow.addView(hostColumn,new LinearLayout.LayoutParams(0,-2,1));
         LinearLayout.LayoutParams portParams=new LinearLayout.LayoutParams(dp(84),-2);portParams.leftMargin=dp(12);addressRow.addView(portColumn,portParams);
-        hostColumn.addView(label("主机"));host=field("192.168.1.100","SSH 主机地址");hostColumn.addView(host,new LinearLayout.LayoutParams(-1,dp(60)));
-        portColumn.addView(label("端口"));port=field("22","SSH 端口");port.setInputType(InputType.TYPE_CLASS_NUMBER);port.setText("22");portColumn.addView(port,new LinearLayout.LayoutParams(-1,dp(60)));
+        hostColumn.addView(label(tr(R.string.host)));host=field("192.168.1.100",tr(R.string.ssh_host_address));hostColumn.addView(host,new LinearLayout.LayoutParams(-1,dp(60)));
+        portColumn.addView(label(tr(R.string.port)));port=field("22",tr(R.string.ssh_port));port.setInputType(InputType.TYPE_CLASS_NUMBER);port.setText("22");portColumn.addView(port,new LinearLayout.LayoutParams(-1,dp(60)));
         status=text("",13,MUTED);margin(form,status,20);
-        TextView refresh=button("重新扫描","重新扫描局域网 SSH",()->rescan(true));refresh.setTextColor(GREEN);margin(form,refresh,12);
-        margin(form,label("用户名"),20);user=field("服务器上的用户名","SSH 用户名");form.addView(user,new LinearLayout.LayoutParams(-1,dp(60)));
-        margin(form,label("认证方式"),24);
+        TextView refresh=button(tr(R.string.scan_again),tr(R.string.scan_the_network_for_ssh_servers_again),()->rescan(true));refresh.setTextColor(GREEN);margin(form,refresh,12);
+        margin(form,label(tr(R.string.username)),20);user=field(tr(R.string.username_on_the_server),tr(R.string.ssh_username));form.addView(user,new LinearLayout.LayoutParams(-1,dp(60)));
+        margin(form,label(tr(R.string.authentication)),24);
         authChoices=new RadioGroup(this);authChoices.setOrientation(RadioGroup.HORIZONTAL);
         authChoices.setPadding(dp(4),dp(4),dp(4),dp(4));authChoices.setBackground(round(CARD,18));
-        RadioButton passwordChoice=SampleUi.segment(this,"密码",R.id.auth_password),keyChoice=SampleUi.segment(this,"私钥",R.id.auth_key);
+        RadioButton passwordChoice=SampleUi.segment(this,tr(R.string.password),R.id.auth_password),keyChoice=SampleUi.segment(this,tr(R.string.private_key),R.id.auth_key);
         authChoices.addView(passwordChoice,new RadioGroup.LayoutParams(0,-2,1));authChoices.addView(keyChoice,new RadioGroup.LayoutParams(0,-2,1));
         form.addView(authChoices,new LinearLayout.LayoutParams(-1,-2));authChoices.check(R.id.auth_password);
-        passwordFields=column();margin(form,passwordFields,12);password=secretField("登录密码","SSH 登录密码");passwordFields.addView(password,new LinearLayout.LayoutParams(-1,dp(60)));
+        passwordFields=column();margin(form,passwordFields,12);password=secretField(tr(R.string.login_password),tr(R.string.ssh_login_password));passwordFields.addView(password,new LinearLayout.LayoutParams(-1,dp(60)));
         keyFields=column();keyFields.setVisibility(View.GONE);margin(form,keyFields,12);
-        TextView importKey=button("选择私钥文件","导入 SSH 私钥",this::importKey);importKey.setTextColor(GREEN);importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,dp(56)));
-        keyStatus=text("支持 OpenSSH / PEM 私钥",13,MUTED);margin(keyFields,keyStatus,12);
-        passphrase=secretField("私钥口令（没有可留空）","SSH 私钥口令");margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(60));
+        TextView importKey=button(tr(R.string.choose_private_key),tr(R.string.import_ssh_private_key),this::importKey);importKey.setTextColor(GREEN);importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,dp(56)));
+        keyStatus=text(tr(R.string.openssh_pem_private_keys_supported),13,MUTED);margin(keyFields,keyStatus,12);
+        passphrase=secretField(tr(R.string.key_passphrase_optional),tr(R.string.ssh_key_passphrase));margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(60));
         authChoices.setOnCheckedChangeListener((group,id)->{passwordFields.setVisibility(id==R.id.auth_password?View.VISIBLE:View.GONE);keyFields.setVisibility(id==R.id.auth_key?View.VISIBLE:View.GONE);});
-        tmux=new SampleUi.Toggle(this);tmux.setText("保持远端会话");tmux.setTextColor(TEXT);tmux.setContentDescription("使用 tmux 保持远端会话");margin(form,tmux,20);
-        TextView tmuxHint=text("服务器需安装 tmux；开启后可在断线重连时回到原来的 shell 和编辑器。",13,MUTED);margin(form,tmuxHint,4);
-        connectionStatus=text("首次连接需核对服务器指纹。认证成功后保存连接，登录凭据在本机加密保存。",13,MUTED);margin(form,connectionStatus,24);
-        connectButton=button(original==null?"保存并连接":"保存修改并连接","保存并连接 SSH",this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
+        tmux=new SampleUi.Toggle(this);tmux.setText(tr(R.string.keep_remote_session));tmux.setTextColor(TEXT);tmux.setContentDescription(tr(R.string.keep_remote_sessions_with_tmux));margin(form,tmux,20);
+        TextView tmuxHint=text(tr(R.string.install_tmux_on_the_server_to_return_to_your_shell_and_editor_aft),13,MUTED);margin(form,tmuxHint,4);
+        connectionStatus=text(tr(R.string.verify_the_server_fingerprint_on_first_connection_connections_are),13,MUTED);margin(form,connectionStatus,24);
+        connectButton=button(original==null?tr(R.string.save_and_connect):tr(R.string.save_changes_and_connect),tr(R.string.save_and_connect_over_ssh),this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
         if(original!=null){
             name.setText(original.name);host.setText(original.host);port.setText(Integer.toString(original.port));user.setText(original.user);
             authChoices.check("key".equals(original.auth)?R.id.auth_key:R.id.auth_password);tmux.setChecked(original.tmux);
             privateKey=original.privateKey.clone();
-            if(privateKey.length>0)keyStatus.setText("已保存私钥 · 选择文件可替换");
-            if(!original.password.isEmpty())password.setHint("已保存密码（留空保留）");
-            if(!original.passphrase.isEmpty())passphrase.setHint("已保存口令（留空保留）");
-            connectionStatus.setText("验证成功后保存修改并重新连接；取消或验证失败会保留原配置。");
+            if(privateKey.length>0)keyStatus.setText(tr(R.string.private_key_saved_choose_a_file_to_replace_it));
+            if(!original.password.isEmpty())password.setHint(tr(R.string.password_saved_leave_blank_to_keep));
+            if(!original.passphrase.isEmpty())passphrase.setHint(tr(R.string.passphrase_saved_leave_blank_to_keep));
+            connectionStatus.setText(tr(R.string.changes_are_saved_after_verification_then_the_connection_reopens));
         }
         if(state!=null){name.setText(state.getString("name",""));host.setText(state.getString("host",""));port.setText(state.getString("port","22"));user.setText(state.getString("user",""));authChoices.check(state.getInt("auth",R.id.auth_password));tmux.setChecked(state.getBoolean("tmux"));}
         root.setFocusableInTouchMode(true);root.requestFocus();
@@ -120,11 +122,11 @@ public final class SshDiscoveryActivity extends Activity {
     private void rescan(boolean force){
         if(!visible)return;
         LanSshDiscovery.Scope scope;
-        try{scope=LanSshDiscovery.wifiScope(cm);}catch(SecurityException e){stopScan();hosts.clear();networkIdentity=null;render(false,"系统不允许访问局域网，请检查权限");return;}
+        try{scope=LanSshDiscovery.wifiScope(cm);}catch(SecurityException e){stopScan();hosts.clear();networkIdentity=null;render(false,tr(R.string.network_access_was_denied_check_permissions));return;}
         String identity=scope==null?null:scope.identity();
         if(!force&&Objects.equals(identity,networkIdentity))return;
         stopScan();networkIdentity=identity;hosts.clear();
-        if(scope==null){render(false,"请连接 Wi-Fi 后重试（需要 IPv4 局域网）");return;}
+        if(scope==null){render(false,tr(R.string.connect_to_wi_fi_and_try_again_ipv4_lan_required));return;}
         scanner=new LanSshDiscovery(this,scope,(results,running,message)->{
             hosts.clear();hosts.addAll(results);render(running,message);
         });
@@ -132,8 +134,8 @@ public final class SshDiscoveryActivity extends Activity {
     }
     private void render(boolean running,String message){
         scanning=running;scanStatus=message;
-        badge.setText(hosts.isEmpty()?(running?"正在发现…":"发现服务器"):"找到 "+hosts.size()+" 台服务器");
-        status.setText(message+(running?"":"\n"+(hosts.isEmpty()?"未发现可用的 SSH 服务器。请确认电脑已开启 SSH。":"仅显示已返回 SSH 协议标识的 22 端口。")));
+        badge.setText(hosts.isEmpty()?(running?tr(R.string.discovering):tr(R.string.discover_servers)):AppLanguage.quantity(R.plurals.servers_found,hosts.size(),hosts.size()));
+        status.setText(message+(running?"":"\n"+(hosts.isEmpty()?tr(R.string.no_ssh_servers_found_make_sure_ssh_is_enabled_on_your_computer):tr(R.string.only_hosts_responding_with_an_ssh_banner_on_port_22_are_shown))));
         renderList();
     }
     private void showPicker(){
@@ -142,14 +144,14 @@ public final class SshDiscoveryActivity extends Activity {
         LinearLayout content=column();content.setPadding(dp(20),dp(10),dp(20),dp(20));content.setBackground(round(0xff161719,26));
         View grip=new View(this);grip.setBackground(round(0xff575b60,3));
         LinearLayout.LayoutParams gp=new LinearLayout.LayoutParams(dp(44),dp(4));gp.gravity=Gravity.CENTER_HORIZONTAL;gp.bottomMargin=dp(20);content.addView(grip,gp);
-        content.setContentDescription("本地 SSH 服务器列表");
+        content.setContentDescription(tr(R.string.local_ssh_server_list));
         LinearLayout heading=row();content.addView(heading);
-        heading.addView(text("本地 SSH 服务器",22,TEXT),new LinearLayout.LayoutParams(0,-2,1));
-        heading.addView(SampleUi.header(this,"close","关闭服务器列表",TEXT,()->picker.dismiss()),new LinearLayout.LayoutParams(dp(44),dp(44)));
+        heading.addView(text(tr(R.string.local_ssh_servers),22,TEXT),new LinearLayout.LayoutParams(0,-2,1));
+        heading.addView(SampleUi.header(this,"close",tr(R.string.close_server_list),TEXT,()->picker.dismiss()),new LinearLayout.LayoutParams(dp(44),dp(44)));
         listingStatus=text("",12,MUTED);margin(content,listingStatus,8);
         ScrollView scroll=new ScrollView(this);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,0,1);sp.topMargin=dp(12);content.addView(scroll,sp);
         list=column();scroll.addView(list);
-        TextView retry=button("重新扫描","重新扫描服务器列表",()->rescan(true));retry.setTextColor(GREEN);content.addView(retry,new LinearLayout.LayoutParams(-1,dp(48)));
+        TextView retry=button(tr(R.string.scan_again),tr(R.string.scan_for_servers_again),()->rescan(true));retry.setTextColor(GREEN);content.addView(retry,new LinearLayout.LayoutParams(-1,dp(48)));
         picker.setContentView(content);Window window=picker.getWindow();
         if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             WindowManager.LayoutParams p=window.getAttributes();p.gravity=Gravity.BOTTOM;p.dimAmount=.35f;window.setAttributes(p);}
@@ -161,7 +163,7 @@ public final class SshDiscoveryActivity extends Activity {
         if(list==null)return;
         listingStatus.setText(scanStatus);list.removeAllViews();
         if(hosts.isEmpty()){
-            TextView empty=text(scanning?"正在查找局域网中的 SSH 服务器…":"未找到服务器，可重新扫描或手动填写地址",15,MUTED);
+            TextView empty=text(scanning?tr(R.string.looking_for_ssh_servers_on_your_network):tr(R.string.no_servers_found_scan_again_or_enter_an_address_manually),15,MUTED);
             empty.setPadding(dp(12),dp(24),dp(12),dp(24));list.addView(empty);return;
         }
         for(LanSshDiscovery.Host item:hosts){
@@ -171,7 +173,7 @@ public final class SshDiscoveryActivity extends Activity {
             TextView title=text(item.name,19,TEXT);title.setMaxLines(2);labels.addView(title);
             TextView address=text(item.address+":22",15,MUTED);address.setTypeface(Typeface.MONOSPACE);labels.addView(address);
             ImageView arrow=SampleUi.icon(this,"right",MUTED);card.addView(arrow,new LinearLayout.LayoutParams(dp(24),dp(24)));
-            card.setContentDescription("选择 SSH 服务器 "+item.name+" "+item.address+":22");
+            card.setContentDescription(tr(R.string.selected_server,item.name,item.address));
             card.setFocusable(true);card.setOnClickListener(v->{name.setText(item.name);host.setText(item.address);port.setText("22");picker.dismiss();});
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(12);list.addView(card,p);
         }
@@ -179,7 +181,7 @@ public final class SshDiscoveryActivity extends Activity {
     private void stopScan(){if(scanner!=null){scanner.close();scanner=null;}}
     @Override protected void onStop(){
         visible=false;main.removeCallbacksAndMessages(null);stopScan();
-        if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText("连接验证已暂停，请重新连接");}
+        if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText(tr(R.string.verification_paused_connect_again_to_continue));}
         if(networkCallback!=null){try{cm.unregisterNetworkCallback(networkCallback);}catch(RuntimeException ignored){}networkCallback=null;}
         if(picker!=null)picker.dismiss();super.onStop();
     }
@@ -194,7 +196,7 @@ public final class SshDiscoveryActivity extends Activity {
     private void importKey(){
         if(busy)return;
         Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
-        try{startActivityForResult(intent,IMPORT_KEY);}catch(ActivityNotFoundException e){connectionStatus.setText("系统未提供文件选择器");}
+        try{startActivityForResult(intent,IMPORT_KEY);}catch(ActivityNotFoundException e){connectionStatus.setText(tr(R.string.no_file_picker_is_available_on_this_device));}
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
@@ -203,8 +205,8 @@ public final class SshDiscoveryActivity extends Activity {
             byte[] bytes=new byte[4096];for(int count;(count=in.read(bytes))!=-1;){if(out.size()+count>1024*1024)throw new java.io.IOException();out.write(bytes,0,count);}
             byte[] loaded=out.toByteArray();String header=new String(loaded,java.nio.charset.StandardCharsets.US_ASCII);
             if(!header.contains("PRIVATE KEY-----"))throw new java.io.IOException();
-            java.util.Arrays.fill(privateKey,(byte)0);privateKey=loaded;passphrase.setText("");passphrase.setHint("私钥口令（没有可留空）");keyStatus.setText("已载入私钥 · "+privateKey.length+" 字节");
-        }catch(Exception error){connectionStatus.setText("无法读取私钥，请选择不超过 1 MB 的 OpenSSH / PEM 私钥文件");}
+            java.util.Arrays.fill(privateKey,(byte)0);privateKey=loaded;passphrase.setText("");passphrase.setHint(tr(R.string.key_passphrase_optional));keyStatus.setText(tr(R.string.private_key_bytes,privateKey.length));
+        }catch(Exception error){connectionStatus.setText(tr(R.string.cannot_read_this_key_choose_an_openssh_pem_private_key_no_larger));}
     }
     private void verifyConnection(){
         if(busy)return;
@@ -228,16 +230,16 @@ public final class SshDiscoveryActivity extends Activity {
         if(saveTop!=null){saveTop.setEnabled(!value);saveTop.setAlpha(value?.5f:1f);}
         for(View field:new View[]{name,host,port,user,password,passphrase,tmux,badge})field.setEnabled(!value);
         for(int i=0;i<authChoices.getChildCount();i++)authChoices.getChildAt(i).setEnabled(!value);
-        connectButton.setEnabled(!value);connectButton.setAlpha(value?.5f:1f);connectButton.setText(value?"正在验证连接…":original==null?"保存并连接":"保存修改并连接");}
+        connectButton.setEnabled(!value);connectButton.setAlpha(value?.5f:1f);connectButton.setText(value?tr(R.string.verifying_connection):original==null?tr(R.string.save_and_connect):tr(R.string.save_changes_and_connect));}
     private void verify(SshProfileStore.Draft d){
-        if(setup!=null)setup.close();setBusy(true);connectionStatus.setText("正在连接 "+d.host+":"+d.port);
+        if(setup!=null)setup.close();setBusy(true);connectionStatus.setText(tr(R.string.connecting_endpoint,d.host+":"+d.port));
         setup=new SshConnectionSetup();setup.start(d,new SshConnectionSetup.Listener(){
             public void trustedHostNeeded(String fingerprint,byte[] knownHosts){
-                connectionStatus.setText("等待确认服务器指纹");
-                Runnable cancel=()->{setBusy(false);connectionStatus.setText("已取消连接，未保存服务器");};
-                trustDialog=SampleUi.confirm(SshDiscoveryActivity.this,"确认服务器指纹",
-                        "请与服务器提供的指纹核对。确认后才会发送登录凭据。",d.host+":"+d.port+"\n\n"+fingerprint,
-                        "取消","信任并连接",false,cancel,
+                connectionStatus.setText(tr(R.string.waiting_for_fingerprint_confirmation));
+                Runnable cancel=()->{setBusy(false);connectionStatus.setText(tr(R.string.connection_cancelled_server_not_saved));};
+                trustDialog=SampleUi.confirm(SshDiscoveryActivity.this,tr(R.string.verify_server_fingerprint),
+                        tr(R.string.compare_this_fingerprint_with_your_server_s_fingerprint_login_cre),d.host+":"+d.port+"\n\n"+fingerprint,
+                        tr(R.string.cancel),tr(R.string.trust_and_connect),false,cancel,
                         ()->{d.knownHosts=knownHosts;trustedKey=knownHosts;trustedEndpoint=d.host+":"+d.port;verify(d);});
             }
             public void verified(){
@@ -246,18 +248,18 @@ public final class SshDiscoveryActivity extends Activity {
                     if(id==null)id=store.save(d);else store.update(id,d);
                     password.setText("");passphrase.setText("");
                     setResult(RESULT_OK,new Intent().putExtra("profile",id));finish();
-                }catch(Exception error){setBusy(false);connectionStatus.setText("连接验证成功，但保存失败，请检查本机存储后重试");}
+                }catch(Exception error){setBusy(false);connectionStatus.setText(tr(R.string.connection_verified_but_saving_failed_check_device_storage_and_tr));}
             }
             public void failed(String message){setBusy(false);connectionStatus.setText(message);}
         });
     }
     private void cancelEdit(){
-        if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText("已暂停验证，原连接保持不变");}
+        if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText(tr(R.string.verification_paused_original_connection_unchanged));}
         boolean changed=original!=null&&(!name.getText().toString().equals(original.name)||!host.getText().toString().equals(original.host)
                 ||!port.getText().toString().equals(Integer.toString(original.port))||!user.getText().toString().equals(original.user)
                 ||tmux.isChecked()!=original.tmux||(!"key".equals(original.auth))!=(authChoices.getCheckedRadioButtonId()==R.id.auth_password)
                 ||password.length()>0||passphrase.length()>0||!java.util.Arrays.equals(privateKey,original.privateKey));
-        if(changed){if(discardDialog==null||!discardDialog.isShowing())discardDialog=SampleUi.confirm(this,"放弃修改？","尚未保存的修改将丢失，原连接保持不变。",null,"继续编辑","放弃修改",true,null,this::finish);}
+        if(changed){if(discardDialog==null||!discardDialog.isShowing())discardDialog=SampleUi.confirm(this,tr(R.string.discard_changes),tr(R.string.unsaved_changes_will_be_lost_your_original_connection_will_be_kep),null,tr(R.string.keep_editing),tr(R.string.discard_changes_71),true,null,this::finish);}
         else finish();
     }
     @Override public void onBackPressed(){cancelEdit();}

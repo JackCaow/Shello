@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="terminal_input_hint">Terminal input</string>
+    <string name="terminal_viewport">Terminal viewport</string>
+    <string name="terminal_gestures">Terminal: long-press to select, drag handles to adjust selection, swipe to scroll</string>
+</resources>

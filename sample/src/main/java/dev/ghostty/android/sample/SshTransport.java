@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.os.Handler;
 import android.os.Looper;
 import com.jcraft.jsch.ChannelShell;
@@ -17,7 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class SshTransport implements AutoCloseable {
     interface Listener {
         void onOutput(byte[] bytes);
-        void onState(String state, boolean connected);
+        default void onState(String state, boolean connected) {}
+        default void onStateResource(int id, boolean connected) { onState(tr(id), connected); }
+        default void onClosedResource(int id, boolean retryable) { onClosed(tr(id), retryable); }
         default void onClosed(String state, boolean retryable) { onState(state, false); }
     }
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -42,11 +46,11 @@ final class SshTransport implements AutoCloseable {
     }
     SshTransport target(String value){if(value!=null)SessionTarget.validate(value);target=value;return this;}
     void connect() {
-        state("连接中", false);
+        state(R.string.connecting_297, false);
         reader = new Thread(this::read, "sample-ssh-reader"); reader.start();
     }
     private void read() {
-        String end = "已断开";
+        int end = R.string.disconnected;
         boolean retryable = false, profileLoaded = false;
         try {
             JSch jsch = new JSch();
@@ -75,7 +79,7 @@ final class SshTransport implements AutoCloseable {
             shell.connect(10000);
             if (closed.get()) return;
             resize(columns, rows);
-            state("tmux".equals(config.getProperty("sessionMode")) ? "已连接 · tmux" : "已连接", true);
+            state("tmux".equals(config.getProperty("sessionMode")) ? R.string.connected_tmux : R.string.connected, true);
             byte[] buffer = new byte[16384];
             for (int count; !closed.get() && (count = output.read(buffer)) != -1;) {
                 outputSlots.acquire();
@@ -92,7 +96,7 @@ final class SshTransport implements AutoCloseable {
             // JSch closes channel streams BEFORE clearing Session.isConnected on transport loss.
             // That flag can still be true here: do not mistake the race for a deliberate remote exit.
             retryable = shell.getExitStatus()<0&&shell.getExitSignal()==null;
-            if(!retryable&&shell.getExitStatus()!=0&&target!=null&&target.startsWith("="))end="远端 tmux 会话已结束，请重新选择或新建";
+            if(!retryable&&shell.getExitStatus()!=0&&target!=null&&target.startsWith("="))end=R.string.remote_tmux_session_ended_choose_another_session_or_create_one;
             if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport EOF: exit="+shell.getExitStatus()
                     +" sessionConnected="+ssh.isConnected()+" channelClosed="+shell.isClosed()+" retry="+retryable);
         } catch (Exception error) {
@@ -100,21 +104,21 @@ final class SshTransport implements AutoCloseable {
             if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport failure: "+error.getClass().getSimpleName()
                     +" cause="+(error.getCause()==null?"none":error.getCause().getClass().getSimpleName())+" retry="+retryable);
             // No credentials, hostnames, or raw server errors in the terminal/logcat.
-            end = SshConnectionSetup.message(error);
+            end = SshConnectionSetup.messageId(error);
         } finally {
             if (channel != null) channel.disconnect();
             if (connection != null) connection.disconnect();
-            String status = end;
+            int status = end;
             boolean canRetry = retryable;
             // FIFO with already-posted output, so EOF does not discard the final screen.
-            main.post(() -> { if (!closed.get()) { close(); listener.onClosed(status, canRetry); } });
+            main.post(() -> { if (!closed.get()) { close(); listener.onClosedResource(status, canRetry); } });
         }
     }
     void send(byte[] bytes) {
         if (closed.get() || input == null || channel == null || !channel.isConnected()) return;
         byte[] owned = bytes.clone();
         enqueue(() -> { try { input.write(owned); input.flush(); }
-            catch (IOException error) { fail("发送失败，连接已断开", true); } });
+            catch (IOException error) { fail(R.string.send_failed_connection_lost, true); } });
     }
     void resize(int columns, int rows) {
         this.columns = columns; this.rows = rows;
@@ -126,7 +130,7 @@ final class SshTransport implements AutoCloseable {
     }
     private void enqueue(Runnable operation) {
         try { writer.execute(operation); }
-        catch (RejectedExecutionException error) { if (!closed.get()) fail("发送队列已满，请重新连接", false); }
+        catch (RejectedExecutionException error) { if (!closed.get()) fail(R.string.send_queue_full_reconnect_to_continue, false); }
     }
     // Retry transport I/O only. Key/config/authentication/protocol failures need user action.
     static boolean isNetworkFailure(Throwable error) {
@@ -137,11 +141,11 @@ final class SshTransport implements AutoCloseable {
         }
         return false;
     }
-    private void fail(String message, boolean retryable) {
-        main.post(() -> { if (!closed.get()) { close(); listener.onClosed(message, retryable); } });
+    private void fail(int message, boolean retryable) {
+        main.post(() -> { if (!closed.get()) { close(); listener.onClosedResource(message, retryable); } });
     }
-    private void state(String message, boolean connected) {
-        main.post(() -> { if (!closed.get()) listener.onState(message, connected); });
+    private void state(int message, boolean connected) {
+        main.post(() -> { if (!closed.get()) listener.onStateResource(message, connected); });
     }
     @Override public void close() {
         if (!closed.compareAndSet(false, true)) return;

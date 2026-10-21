@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.app.*;
 import android.os.*;
 import android.graphics.*;
@@ -8,7 +10,7 @@ import android.view.*;
 import android.widget.*;
 
 /** Shared full-screen dark pages; controls keep native accessibility semantics. */
-public abstract class ScreenActivity extends Activity {
+public abstract class ScreenActivity extends LocalizedActivity {
     LinearLayout body,root,header;TextView heading;ScrollView scroll;
     @Override public void onCreate(Bundle state){super.onCreate(state);getWindow().setStatusBarColor(Color.BLACK);getWindow().setNavigationBarColor(Color.BLACK);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -30,5 +32,5 @@ public abstract class ScreenActivity extends Activity {
         row.addView(SampleUi.icon(this,"right",SampleUi.MUTED),new LinearLayout.LayoutParams(dp(20),dp(20)));row.setOnClickListener(v->action.run());LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(2);body.addView(row,p);return row;
     }
     void toast(String message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
-    void clipboard(String title,String text){getSystemService(android.content.ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(title,text));toast("已复制");}
+    void clipboard(String title,String text){getSystemService(android.content.ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(title,text));toast(tr(R.string.copied));}
 }

@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.os.*;
 import android.util.Base64;
 import com.jcraft.jsch.*;
@@ -64,15 +66,16 @@ final class SshConnectionSetup implements AutoCloseable {
             if(!probe.isClosed()||probe.getExitStatus()!=0||!out.toString("UTF-8").startsWith("tmux "))throw new IOException("tmux unavailable");
         }finally{probe.disconnect();}
     }
-    static String message(Exception error){
-        if(error instanceof JSchHostKeyException)return "服务器指纹不匹配，连接已停止。请向服务器管理员核对密钥。";
+    static String message(Exception error){return tr(messageId(error));}
+    static int messageId(Exception error){
+        if(error instanceof JSchHostKeyException)return R.string.server_fingerprint_mismatch_connection_stopped_verify_the_key_wit;
         String text=error.getMessage()==null?"":error.getMessage().toLowerCase(java.util.Locale.ROOT);
-        if(text.equals("tmux unavailable"))return "服务器未提供可用的 tmux，请先安装或关闭保持远端会话后重试";
-        if(text.contains("auth fail")||text.contains("auth cancel"))return "认证失败，请检查用户名、密码或私钥";
-        if(text.contains("privatekey")||text.contains("private key"))return "私钥无法读取，请检查文件格式和私钥口令";
-        if(text.contains("reject hostkey")||text.contains("hostkey has been changed"))return "服务器指纹不匹配，连接已停止";
-        if(SshTransport.isNetworkFailure(error))return "无法连接服务器，请检查地址、端口和网络后重试";
-        return "SSH 连接失败，请检查认证方式和服务器配置";
+        if(text.equals("tmux unavailable"))return R.string.tmux_is_unavailable_install_it_on_the_server_or_turn_off_keep_rem;
+        if(text.contains("auth fail")||text.contains("auth cancel"))return R.string.authentication_failed_check_your_username_password_or_private_key;
+        if(text.contains("privatekey")||text.contains("private key"))return R.string.cannot_read_the_private_key_check_its_format_and_passphrase;
+        if(text.contains("reject hostkey")||text.contains("hostkey has been changed"))return R.string.server_fingerprint_mismatch_connection_stopped;
+        if(SshTransport.isNetworkFailure(error))return R.string.cannot_reach_the_server_check_the_address_port_and_network_then_t;
+        return R.string.ssh_connection_failed_check_authentication_and_server_settings;
     }
     private void post(Runnable task){main.post(()->{if(!closed)task.run();});}
     @Override public void close(){closed=true;Session s=session;if(s!=null)new Thread(s::disconnect,"ssh-setup-close").start();}

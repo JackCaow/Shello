@@ -34,7 +34,7 @@ public class SettingsActivityTest {
     @Test public void fontStepperBoundsAndRecreation()throws Exception{
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object before=prefs.getAll().get("fontSize");
         try{
-            prefs.edit().putInt("fontSize",14).commit();open("font");click("增大终端字号");assertEquals(15,prefs.getInt("fontSize",0));
+            prefs.edit().putInt("fontSize",14).commit();open("font");click(AppLanguage.tr(R.string.increase_terminal_font_size));assertEquals(15,prefs.getInt("fontSize",0));
             BlockingQueue<SettingsActivity> resumed=new LinkedBlockingQueue<>();Application app=(Application)context.getApplicationContext();
             Application.ActivityLifecycleCallbacks callbacks=new Application.ActivityLifecycleCallbacks(){
                 public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){if(a instanceof SettingsActivity)resumed.add((SettingsActivity)a);}
@@ -42,30 +42,30 @@ public class SettingsActivityTest {
             };
             app.registerActivityLifecycleCallbacks(callbacks);
             try{inst.runOnMainSync(current::recreate);SettingsActivity next=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(next);current=next;inst.waitForIdleSync();}finally{app.unregisterActivityLifecycleCallbacks(callbacks);}
-            inst.runOnMainSync(()->{assertEquals("字体与大小",current.heading.getText().toString());assertNotNull(find(current.root,"终端字号 15"));});
-            for(int i=0;i<9;i++)click("增大终端字号");assertEquals(24,prefs.getInt("fontSize",0));
-            inst.runOnMainSync(()->assertFalse(find(current.root,"增大终端字号").isEnabled()));
-            for(int i=0;i<14;i++)click("减小终端字号");assertEquals(10,prefs.getInt("fontSize",0));
-            inst.runOnMainSync(()->assertFalse(find(current.root,"减小终端字号").isEnabled()));
+            inst.runOnMainSync(()->{assertEquals(AppLanguage.tr(R.string.font_and_size),current.heading.getText().toString());assertNotNull(find(current.root,AppLanguage.tr(R.string.terminal_font_size_value,15)));});
+            for(int i=0;i<9;i++)click(AppLanguage.tr(R.string.increase_terminal_font_size));assertEquals(24,prefs.getInt("fontSize",0));
+            inst.runOnMainSync(()->assertFalse(find(current.root,AppLanguage.tr(R.string.increase_terminal_font_size)).isEnabled()));
+            for(int i=0;i<14;i++)click(AppLanguage.tr(R.string.decrease_terminal_font_size));assertEquals(10,prefs.getInt("fontSize",0));
+            inst.runOnMainSync(()->assertFalse(find(current.root,AppLanguage.tr(R.string.decrease_terminal_font_size)).isEnabled()));
         }finally{finish();restore(prefs,"fontSize",before);}
     }
     @Test public void toolbarSwitchAndThemePersistAcrossPages(){
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object tool=prefs.getAll().get("tool_paste"),theme=prefs.getAll().get("theme");
         try{
-            prefs.edit().putBoolean("tool_paste",true).putString("theme","Shello").commit();open("toolbar");click("粘贴");assertFalse(prefs.getBoolean("tool_paste",true));
-            inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click("工具栏");inst.runOnMainSync(()->assertFalse(((CheckBox)find(current.root,"粘贴")).isChecked()));
-            inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click("主题");click("浅色");assertEquals("浅色",prefs.getString("theme",""));
-            inst.runOnMainSync(()->assertTrue(find(current.root,"浅色，已选中").isSelected()));
+            prefs.edit().putBoolean("tool_paste",true).putString("theme","Shello").commit();open("toolbar");click(AppLanguage.tr(R.string.paste));assertFalse(prefs.getBoolean("tool_paste",true));
+            inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click(AppLanguage.tr(R.string.toolbar));inst.runOnMainSync(()->assertFalse(((CheckBox)find(current.root,AppLanguage.tr(R.string.paste))).isChecked()));
+            inst.runOnMainSync(current::onBackPressed);inst.waitForIdleSync();click(AppLanguage.tr(R.string.theme));click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));
+            inst.runOnMainSync(()->assertTrue(find(current.root,AppLanguage.tr(R.string.selected_option,AppLanguage.tr(R.string.light))).isSelected()));
         }finally{finish();restore(prefs,"tool_paste",tool);restore(prefs,"theme",theme);}
     }
     @Test public void legacyThemeMigratesAndNewInstallUsesShello(){
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object before=prefs.getAll().get("theme");
         try{
             prefs.edit().putString("theme","Moshi").commit();open("theme");
-            assertEquals("Shello",prefs.getString("theme",""));
-            inst.runOnMainSync(()->{assertNotNull(find(current.root,"Shello，已选中"));assertNull(find(current.root,"Moshi"));});
+            assertEquals("shello",prefs.getString("theme",""));
+            inst.runOnMainSync(()->{assertNotNull(find(current.root,AppLanguage.tr(R.string.selected_option,"Shello")));assertNull(find(current.root,"Moshi"));});
             finish();prefs.edit().remove("theme").commit();open("theme");
-            inst.runOnMainSync(()->assertNotNull(find(current.root,"Shello，已选中")));
+            inst.runOnMainSync(()->assertNotNull(find(current.root,AppLanguage.tr(R.string.selected_option,"Shello"))));
         }finally{finish();restore(prefs,"theme",before);}
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{

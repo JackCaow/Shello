@@ -25,7 +25,7 @@ public class SshTransportTest {
         @Override public void onState(String value, boolean ready) {
             state = value;
             if (ready) connected.countDown();
-            else if (!value.equals("连接中")) ended.countDown();
+            else if (!value.equals(AppLanguage.tr(R.string.connecting_297))) ended.countDown();
         }
         synchronized String text() { return new String(output.toByteArray(), StandardCharsets.UTF_8); }
         void expect(String marker) throws Exception {
@@ -72,7 +72,7 @@ public class SshTransportTest {
         Probe probe = new Probe();SshTransport ssh = new SshTransport(context,invalid,80,24,probe);
         try {
             ssh.connect();assertTrue(probe.ended.await(15,TimeUnit.SECONDS));
-            assertEquals(1L,probe.connected.getCount());assertTrue(probe.state.contains("指纹"));
+            assertEquals(1L,probe.connected.getCount());assertTrue(probe.state.contains(AppLanguage.tr(R.string.server_fingerprint_mismatch_connection_stopped)));
             assertFalse("Host-key rejection must not auto-retry", probe.retryable);
         } finally {
             ssh.close();for(File file:invalid.listFiles())file.delete();invalid.delete();

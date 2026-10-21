@@ -132,7 +132,7 @@ public final class TerminalView extends FrameLayout {
             Cell(){}
             Cell(JSONArray a)throws JSONException{text=a.getString(0);fg=a.getInt(1);bg=a.getInt(2);wide=a.getInt(3);flags=a.optInt(4);underline=a.optInt(5);underlineColor=a.optInt(6,fg);}
         }
-        Renderer(){super(TerminalView.this.getContext());paint.setTypeface(faces[0]);paint.setTextSize(dp(14));cellW=paint.measureText("M");cellH=Math.max(dp(18),paint.getFontSpacing());setContentDescription("Ghostty terminal viewport");}
+        Renderer(){super(TerminalView.this.getContext());paint.setTypeface(faces[0]);paint.setTextSize(dp(14));cellW=paint.measureText("M");cellH=Math.max(dp(18),paint.getFontSpacing());setContentDescription(getContext().getString(R.string.terminal_viewport));}
         final String[] ascii=new String[128];final int[] codepoints=new int[128];
         void setRender(byte[] data)throws JSONException{
             java.nio.IntBuffer buffer=java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).asIntBuffer();
@@ -263,7 +263,7 @@ public final class TerminalView extends FrameLayout {
         boolean selecting=false,handleDrag=false;int start,end,dragHandle=1;float previousY,pointerX,pointerY;
         final Paint overlay=new Paint(Paint.ANTI_ALIAS_FLAG);
         final Runnable autoScroll=()->autoScrollTick();
-        TouchLayer(){super(TerminalView.this.getContext());setContentDescription("Terminal: long press to select, drag either handle, swipe to scroll");detector=new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener(){
+        TouchLayer(){super(TerminalView.this.getContext());setContentDescription(getContext().getString(R.string.terminal_gestures));detector=new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener(){
             @Override public boolean onDown(MotionEvent e){previousY=e.getY();return true;}
             @Override public void onLongPress(MotionEvent e){if(!selectionEnabled)return;refreshFrame();selecting=true;dragHandle=1;start=normalize(cell(e.getX(),e.getY()),false);end=normalize(start,true);updateSelection();performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);}
             @Override public boolean onSingleTapUp(MotionEvent e){clear();return true;}

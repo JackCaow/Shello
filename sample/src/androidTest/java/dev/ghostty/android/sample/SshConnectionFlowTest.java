@@ -34,60 +34,60 @@ public class SshConnectionFlowTest {
         try{
             try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -n dev.ghostty.android.sample/.MainActivity -f 0x10008000");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){byte[] b=new byte[512];while(in.read(b)!=-1){}}
             current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
-            click("最小化会话");click("新建 SSH 连接");click("使用自己的 SSH");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
-            set("连接名称","SSH Flow Password");set("SSH 主机地址",p.getProperty("host"));set("SSH 端口","0");set("SSH 用户名",p.getProperty("user"));set("SSH 登录密码","incorrect");
-            click("保存并连接 SSH");await(()->text(root(),"端口必须"),1000);
-            set("SSH 端口",p.getProperty("passwordPort"));click("保存并连接 SSH");
+            click(AppLanguage.tr(R.string.minimize_session));click(AppLanguage.tr(R.string.new_ssh_connection));click(AppLanguage.tr(R.string.use_your_own_ssh));current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
+            set(AppLanguage.tr(R.string.connection_name),"SSH Flow Password");set(AppLanguage.tr(R.string.ssh_host_address),p.getProperty("host"));set(AppLanguage.tr(R.string.ssh_port),"0");set(AppLanguage.tr(R.string.ssh_username),p.getProperty("user"));set(AppLanguage.tr(R.string.ssh_login_password),"incorrect");
+            click(AppLanguage.tr(R.string.save_and_connect_over_ssh));await(()->text(root(),AppLanguage.tr(R.string.port_must_be_between_1_and_65535)),1000);
+            set(AppLanguage.tr(R.string.ssh_port),p.getProperty("passwordPort"));click(AppLanguage.tr(R.string.save_and_connect_over_ssh));
             await(()->value(current,"trustDialog")!=null,15000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_NEGATIVE).performClick());
-            assertEquals(before.size(),store.list().size());click("保存并连接 SSH");
+            assertEquals(before.size(),store.list().size());click(AppLanguage.tr(R.string.save_and_connect_over_ssh));
             await(()->{Dialog d=(Dialog)value(current,"trustDialog");return d!=null&&d.isShowing();},15000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
-            await(()->text(root(),"认证失败"),15000);assertEquals(before.size(),store.list().size());
-            set("SSH 登录密码",p.getProperty("password"));click("保存并连接 SSH");
+            await(()->text(root(),AppLanguage.tr(R.string.authentication_failed_check_your_username_password_or_private_key)),15000);assertEquals(before.size(),store.list().size());
+            set(AppLanguage.tr(R.string.ssh_login_password),p.getProperty("password"));click(AppLanguage.tr(R.string.save_and_connect_over_ssh));
             current=resumed.poll(20,TimeUnit.SECONDS);assertTrue("Form did not return to terminal",current instanceof MainActivity);
             skipTmux();await(()->service()!=null&&service().connected(),15000);
             await(()->{dev.ghostty.android.TerminalSession t=service().terminal();return t!=null&&t.select(0,t.getColumns()*t.getRows()-1).contains("GHOSTTY_PASSWORD_READY");},10000);
             assertEquals(before.size()+1,store.list().size());assertNotNull(store.activeId());
             assertEquals("SSH Flow Password",store.read(store.activeDirectory()).name);
             Activity previous=current;resumed.clear();inst.runOnMainSync(previous::recreate);long recreatedUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);do{current=resumed.poll(1,TimeUnit.SECONDS);}while((current==null||current==previous||current.isDestroyed())&&System.nanoTime()<recreatedUntil);assertNotNull(current);assertNotSame(previous,current);
-            await(()->service()!=null&&service().connected(),10000);click("最小化会话");
-            click("连接 SSH SSH Flow Password");skipTmux();await(()->service()!=null&&service().connected(),15000);
+            await(()->service()!=null&&service().connected(),10000);click(AppLanguage.tr(R.string.minimize_session));
+            click(AppLanguage.tr(R.string.connect_over_ssh_to_name,"SSH Flow Password"));skipTmux();await(()->service()!=null&&service().connected(),15000);
             String editedId=store.activeId();SshSessionService running=service();
-            click("最小化会话");longClick("连接 SSH SSH Flow Password");click("编辑连接 SSH Flow Password");
+            click(AppLanguage.tr(R.string.minimize_session));longClick(AppLanguage.tr(R.string.connect_over_ssh_to_name,"SSH Flow Password"));click(AppLanguage.tr(R.string.edit_connection_179_name,"SSH Flow Password"));
             current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
-            assertEquals("",((EditText)find(root(),"SSH 登录密码")).getText().toString());
-            set("连接名称","SSH Flow Edited");set("SSH 登录密码","wrong-edited-password");click("保存并连接 SSH");
-            await(()->text(root(),"认证失败"),15000);
+            assertEquals("",((EditText)find(root(),AppLanguage.tr(R.string.ssh_login_password))).getText().toString());
+            set(AppLanguage.tr(R.string.connection_name),"SSH Flow Edited");set(AppLanguage.tr(R.string.ssh_login_password),"wrong-edited-password");click(AppLanguage.tr(R.string.save_and_connect_over_ssh));
+            await(()->text(root(),AppLanguage.tr(R.string.authentication_failed_check_your_username_password_or_private_key)),15000);
             assertEquals("SSH Flow Password",store.read(store.directory(editedId)).name);assertTrue(running.connected());
             assertNull("Same endpoint must retain its pin",value(current,"trustDialog"));
             // A changed endpoint requires trust again; cancelling must not overwrite the profile.
-            set("SSH 主机地址",p.getProperty("alternateHost", "10.0.2.2"));set("SSH 端口",p.getProperty("port"));
-            set("SSH 登录密码","");click("保存并连接 SSH");await(()->value(current,"trustDialog")!=null,15000);
+            set(AppLanguage.tr(R.string.ssh_host_address),p.getProperty("alternateHost", "10.0.2.2"));set(AppLanguage.tr(R.string.ssh_port),p.getProperty("port"));
+            set(AppLanguage.tr(R.string.ssh_login_password),"");click(AppLanguage.tr(R.string.save_and_connect_over_ssh));await(()->value(current,"trustDialog")!=null,15000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_NEGATIVE).performClick());
             assertEquals("SSH Flow Password",store.read(store.directory(editedId)).name);
-            set("SSH 主机地址",p.getProperty("host"));set("SSH 端口",p.getProperty("passwordPort"));
+            set(AppLanguage.tr(R.string.ssh_host_address),p.getProperty("host"));set(AppLanguage.tr(R.string.ssh_port),p.getProperty("passwordPort"));
             // Rotation preserves editable metadata; blank credentials keep the encrypted saved password.
             Activity editing=current;inst.runOnMainSync(editing::recreate);current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);
-            assertEquals("SSH Flow Edited",((EditText)find(root(),"连接名称")).getText().toString());
-            click("保存并连接 SSH");current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
+            assertEquals("SSH Flow Edited",((EditText)find(root(),AppLanguage.tr(R.string.connection_name))).getText().toString());
+            click(AppLanguage.tr(R.string.save_and_connect_over_ssh));current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
             skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             assertEquals(editedId,store.activeId());assertEquals(before.size()+1,store.list().size());
             dev.ghostty.android.TerminalSession firstTerminal=service().terminal();
             // Creating another profile while the service owns a terminal must switch profiles.
-            click("最小化会话");click("新建 SSH 连接");click("使用自己的 SSH");current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
-            set("连接名称","SSH Flow Second");set("SSH 主机地址",p.getProperty("host"));set("SSH 端口",p.getProperty("passwordPort"));
-            set("SSH 用户名",p.getProperty("user"));set("SSH 登录密码",p.getProperty("password"));click("保存并连接 SSH");
+            click(AppLanguage.tr(R.string.minimize_session));click(AppLanguage.tr(R.string.new_ssh_connection));click(AppLanguage.tr(R.string.use_your_own_ssh));current=resumed.poll(10,TimeUnit.SECONDS);assertTrue(current instanceof SshDiscoveryActivity);
+            set(AppLanguage.tr(R.string.connection_name),"SSH Flow Second");set(AppLanguage.tr(R.string.ssh_host_address),p.getProperty("host"));set(AppLanguage.tr(R.string.ssh_port),p.getProperty("passwordPort"));
+            set(AppLanguage.tr(R.string.ssh_username),p.getProperty("user"));set(AppLanguage.tr(R.string.ssh_login_password),p.getProperty("password"));click(AppLanguage.tr(R.string.save_and_connect_over_ssh));
             await(()->value(current,"trustDialog")!=null,15000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"trustDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
             current=resumed.poll(20,TimeUnit.SECONDS);assertTrue(current instanceof MainActivity);
             skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Second".equals(service().profileName()),15000);
             assertNotSame(firstTerminal,service().terminal());
-            click("最小化会话");click("连接 SSH SSH Flow Edited");
+            click(AppLanguage.tr(R.string.minimize_session));click(AppLanguage.tr(R.string.connect_over_ssh_to_name,"SSH Flow Edited"));
             skipTmux();await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             String secondId=store.list().stream().filter(e->e.name.equals("SSH Flow Second")).findFirst().get().id;
             inst.runOnMainSync(()->service().closeProfile(secondId));store.delete(secondId);
-            click("最小化会话");longClick("连接 SSH SSH Flow Edited");click("删除连接 SSH Flow Edited");
+            click(AppLanguage.tr(R.string.minimize_session));longClick(AppLanguage.tr(R.string.connect_over_ssh_to_name,"SSH Flow Edited"));click(AppLanguage.tr(R.string.delete_connection_name,"SSH Flow Edited"));
             await(()->{Dialog dialog=(Dialog)value(current,"connectionDeleteDialog");return dialog!=null&&dialog.isShowing();},5000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"connectionDeleteDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
             await(()->store.list().size()==before.size(),5000);
@@ -105,7 +105,7 @@ public class SshConnectionFlowTest {
         if(current instanceof MainActivity){for(String name:new String[]{"newConnectionDialog","tmuxDialog"}){Dialog dialog=(Dialog)value(current,name);if(dialog!=null&&dialog.isShowing())return dialog.getWindow().getDecorView();}PopupWindow menu=(PopupWindow)value(current,"connectionMenu");if(menu!=null&&menu.isShowing())return menu.getContentView();}
         return current.getWindow().getDecorView();
     }
-    void skipTmux()throws Exception {await(()->{Dialog d=(Dialog)value(current,"tmuxDialog");return d!=null&&d.isShowing();},20000);click("跳过 tmux，打开 shell");}
+    void skipTmux()throws Exception {await(()->{Dialog d=(Dialog)value(current,"tmuxDialog");return d!=null&&d.isShowing();},20000);click(AppLanguage.tr(R.string.skip_tmux_and_open_a_shell));}
     void longClick(String desc){inst.runOnMainSync(()->{View v=find(root(),desc);assertNotNull(desc,v);v.performLongClick();});}
     View find(View v,String desc){
         if(desc.contentEquals(v.getContentDescription()==null?"":v.getContentDescription()))return v;

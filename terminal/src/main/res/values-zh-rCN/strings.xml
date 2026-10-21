@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="terminal_input_hint">终端输入</string>
+    <string name="terminal_viewport">终端显示区域</string>
+    <string name="terminal_gestures">终端：长按选择文本，拖动手柄调整选区，上下滑动查看历史</string>
+</resources>

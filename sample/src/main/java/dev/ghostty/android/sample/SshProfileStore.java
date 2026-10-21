@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -31,12 +33,12 @@ final class SshProfileStore {
         }
         String validate(){
             if(host.isEmpty()||host.length()>253||host.matches(".*[\\s/@\\\\].*")||host.startsWith("-")
-                    ||host.indexOf(':')>=0&&!host.matches("[0-9a-fA-F:.%]+"))return "请填写主机名或 IP 地址，不要包含协议和端口";
-            if(port<1||port>65535)return "端口必须为 1–65535";
-            if(user.isEmpty()||user.matches(".*[\\s\\p{Cntrl}].*"))return "请填写有效的 SSH 用户名";
-            if("password".equals(auth)&&password.isEmpty())return "请输入登录密码";
-            if("key".equals(auth)&&privateKey.length==0)return "请选择 SSH 私钥文件";
-            if(!"password".equals(auth)&&!"key".equals(auth))return "请选择认证方式";
+                    ||host.indexOf(':')>=0&&!host.matches("[0-9a-fA-F:.%]+"))return tr(R.string.enter_a_hostname_or_ip_address_without_a_protocol_or_port);
+            if(port<1||port>65535)return tr(R.string.port_must_be_between_1_and_65535);
+            if(user.isEmpty()||user.matches(".*[\\s\\p{Cntrl}].*"))return tr(R.string.enter_a_valid_ssh_username);
+            if("password".equals(auth)&&password.isEmpty())return tr(R.string.enter_your_login_password);
+            if("key".equals(auth)&&privateKey.length==0)return tr(R.string.choose_an_ssh_private_key_file);
+            if(!"password".equals(auth)&&!"key".equals(auth))return tr(R.string.choose_an_authentication_method);
             return null;
         }
     }

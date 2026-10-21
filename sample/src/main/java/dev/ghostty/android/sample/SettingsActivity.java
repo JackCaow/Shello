@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.content.*;
 import android.graphics.*;
 import android.graphics.drawable.GradientDrawable;
@@ -41,6 +43,7 @@ public final class SettingsActivity extends ScreenActivity {
     private void show(String value){
         page=value==null?"":value;group=null;toolbarPreview=null;body.removeAllViews();
         switch(page){
+            case "language":language();break;
             case "hook":hook();break;
             case "notifications":notifications();break;
             case "font":font();break;
@@ -106,67 +109,85 @@ public final class SettingsActivity extends ScreenActivity {
         addRow(toggle);
     }
     private void home(){
-        heading.setText("设置");section("终端");
-        navigation("主题",ThemePreferences.current(prefs),"palette","theme");
-        navigation("字体与大小",prefs.getInt("fontSize",14)+" sp","font","font");navigation("高级",null,"sliders","advanced");
-        section("代理");navigation("Hook",null,"hook","hook");navigation("通知",null,"bell","notifications");navigation("文本草稿",null,"chat","chat");
-        section("输入");navigation("工具栏",null,"toolbox","toolbar");navigation("快捷键",null,"keyboard","shortcuts");navigation("手势",null,"pad","gestures");
-        section("关于");item("Shello","开源 Android 终端库 · API 27+","server",()->startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/JackCaow/Shello"))));
+        heading.setText(tr(R.string.settings));section(tr(R.string.terminal));
+        navigation(tr(R.string.theme),ThemePreferences.label(ThemePreferences.current(prefs)),"palette","theme");
+        navigation(tr(R.string.font_and_size),prefs.getInt("fontSize",14)+" sp","font","font");navigation(tr(R.string.advanced),null,"sliders","advanced");
+        section(tr(R.string.agents));navigation("Hook",null,"hook","hook");navigation(tr(R.string.notifications),null,"bell","notifications");navigation(tr(R.string.text_draft),null,"chat","chat");
+        section(tr(R.string.input));navigation(tr(R.string.toolbar),null,"toolbox","toolbar");navigation(tr(R.string.shortcuts),null,"keyboard","shortcuts");navigation(tr(R.string.gestures),null,"pad","gestures");
+        section(tr(R.string.app_language));navigation(tr(R.string.app_language),languageName(AppLanguage.choice(this)),"chat","language");
+        section(tr(R.string.about));item("Shello",tr(R.string.open_source_android_terminal_library_api_27),"server",()->startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/JackCaow/Shello"))));
+    }
+    private String languageName(String choice){return choice.equals("en")?"English":choice.equals("zh-CN")?"简体中文":tr(R.string.follow_system);}
+    private void language(){
+        heading.setText(tr(R.string.app_language));section(tr(R.string.app_language));
+        String selected=AppLanguage.choice(this);
+        for(String choice:new String[]{"system","en","zh-CN"}){
+            String name=languageName(choice);boolean checked=selected.equals(choice);
+            ImageView check=SampleUi.icon(this,"check",SampleUi.GREEN);check.setMinimumWidth(dp(20));check.setMinimumHeight(dp(20));check.setVisibility(checked?View.VISIBLE:View.INVISIBLE);
+            LinearLayout row=settingRow(name,null,null,check,()->{
+                if(checked)return;
+                AppLanguage.select(this,choice);
+                // Android 13+ recreates via LocaleManager; older versions use our wrapper.
+                if(Build.VERSION.SDK_INT<33)recreate();
+            });
+            row.setSelected(checked);row.setContentDescription(checked?tr(R.string.selected_option,name):name);
+        }
+        copy(tr(R.string.language_help));
     }
     private void notifications(){
-        heading.setText("通知");
-        toggle("Agent 事件通知",null,"bell","agent","notifications",true,null);
-        copy("接收来自 Agent Hook 的审批、提问和完成通知。");
-        section("权限");item("系统通知设置","查看通知权限与通知渠道","bell",()->startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName())));
-        if(Build.VERSION.SDK_INT>=33)item("请求通知权限",null,"bell",()->requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},91));
-        section("Agent 更新");item("安装 Hook","在 SSH 主机上安装，接收 Agent 事件","hook",()->open("hook"));
-        copy("切后台后，活动 SSH 会话会继续获取事件。没有活动连接、强行停止应用或系统断网时，事件将在重新打开后同步。");
+        heading.setText(tr(R.string.notifications));
+        toggle(tr(R.string.agent_event_notifications),null,"bell","agent","notifications",true,null);
+        copy(tr(R.string.receive_approval_requests_questions_and_completion_notifications));
+        section(tr(R.string.permissions));item(tr(R.string.system_notification_settings),tr(R.string.review_notification_permissions_and_channels),"bell",()->startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName())));
+        if(Build.VERSION.SDK_INT>=33)item(tr(R.string.request_notification_permission),null,"bell",()->requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},91));
+        section(tr(R.string.agent_updates));item(tr(R.string.install_hook),tr(R.string.install_on_an_ssh_host_to_receive_agent_events),"hook",()->open("hook"));
+        copy(tr(R.string.active_ssh_sessions_keep_fetching_events_in_the_background_if_no));
     }
     private void font(){
-        heading.setText("字体与大小");section("终端文字");
+        heading.setText(tr(R.string.font_and_size));section(tr(R.string.terminal_text));
         LinearLayout stepper=row();stepper.setBackground(SampleUi.surface(this,0xff222426,24));
         TextView number=label("",15,SampleUi.TEXT);number.setGravity(Gravity.CENTER);number.setSingleLine(true);number.setMinWidth(dp(48));
         TextView preview=label("",14,SampleUi.TEXT);preview.setTypeface(Typeface.MONOSPACE);
-        View minus=SampleUi.header(this,"minus","减小终端字号",SampleUi.TEXT,()->{});
-        View plus=SampleUi.header(this,"plus","增大终端字号",SampleUi.TEXT,()->{});
+        View minus=SampleUi.header(this,"minus",tr(R.string.decrease_terminal_font_size),SampleUi.TEXT,()->{});
+        View plus=SampleUi.header(this,"plus",tr(R.string.increase_terminal_font_size),SampleUi.TEXT,()->{});
         stepper.addView(minus,new LinearLayout.LayoutParams(dp(40),dp(48)));
         stepper.addView(number,new LinearLayout.LayoutParams(-2,dp(48)));
         stepper.addView(plus,new LinearLayout.LayoutParams(dp(40),dp(48)));
-        Runnable refresh=()->{int size=prefs.getInt("fontSize",14);number.setText(size+" sp");number.setContentDescription("终端字号 "+size);preview.setTextSize(size);minus.setEnabled(size>10);minus.setAlpha(size>10?1:.3f);plus.setEnabled(size<24);plus.setAlpha(size<24?1:.3f);};
+        Runnable refresh=()->{int size=prefs.getInt("fontSize",14);number.setText(size+" sp");number.setContentDescription(tr(R.string.terminal_font_size_value,size));preview.setTextSize(size);minus.setEnabled(size>10);minus.setAlpha(size>10?1:.3f);plus.setEnabled(size<24);plus.setAlpha(size<24?1:.3f);};
         minus.setOnClickListener(v->{prefs.edit().putInt("fontSize",Math.max(10,prefs.getInt("fontSize",14)-1)).apply();refresh.run();});
         plus.setOnClickListener(v->{prefs.edit().putInt("fontSize",Math.min(24,prefs.getInt("fontSize",14)+1)).apply();refresh.run();});
-        settingRow("字体大小",null,"font",stepper,null);
-        settingRow("字体",null,"font",trailing("系统等宽",false),null);
-        copy("支持中文和 emoji 字体回退。字号范围为 10–24 sp。");
-        section("预览");preview.setText("$ echo 'Hello, 终端'\nHello, 终端\n❯ 中文输入 👩🏽‍💻 🚀");preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));refresh.run();
+        settingRow(tr(R.string.font_size),null,"font",stepper,null);
+        settingRow(tr(R.string.font),null,"font",trailing(tr(R.string.system_monospace),false),null);
+        copy(tr(R.string.chinese_and_emoji_font_fallback_supported_font_size_10_24_sp));
+        section(tr(R.string.preview));preview.setText(tr(R.string.font_preview_sample));preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));refresh.run();
     }
     private void theme(){
-        heading.setText("主题");section("终端主题");String selected=ThemePreferences.current(prefs);
-        for(String name:new String[]{"Shello","黑色","浅色"}){
+        heading.setText(tr(R.string.theme));section(tr(R.string.terminal_theme));String selected=ThemePreferences.current(prefs);
+        for(String name:new String[]{"shello","black","light"}){
             ImageView check=SampleUi.icon(this,"check",SampleUi.GREEN);check.setMinimumWidth(dp(20));check.setMinimumHeight(dp(20));check.setVisibility(selected.equals(name)?View.VISIBLE:View.INVISIBLE);
-            LinearLayout row=settingRow(name,null,"palette",check,()->{prefs.edit().putString("theme",name).apply();show("theme");});row.setSelected(selected.equals(name));row.setContentDescription(name+(selected.equals(name)?"，已选中":""));
+            LinearLayout row=settingRow(ThemePreferences.label(name),null,"palette",check,()->{prefs.edit().putString("theme",name).apply();show("theme");});row.setSelected(selected.equals(name));row.setContentDescription(selected.equals(name)?tr(R.string.selected_option,ThemePreferences.label(name)):ThemePreferences.label(name));
         }
-        copy("设置终端的默认前景和背景色。程序主动指定的颜色保持有效。");
-        section("预览");TextView preview=label("$ echo 'Shello'\nShello\n❯ 中文 · Aa Bb 0123",14,selected.equals("浅色")?0xff202124:0xffd4d4d4);preview.setTypeface(Typeface.MONOSPACE);preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,selected.equals("浅色")?0xfff5f5f5:selected.equals("黑色")?Color.BLACK:0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));
+        copy(tr(R.string.sets_default_terminal_foreground_and_background_colors_colors_set));
+        section(tr(R.string.preview));TextView preview=label(tr(R.string.theme_preview_sample),14,selected.equals("light")?0xff202124:0xffd4d4d4);preview.setTypeface(Typeface.MONOSPACE);preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,selected.equals("light")?0xfff5f5f5:selected.equals("black")?Color.BLACK:0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));
     }
     private void advanced(){
-        heading.setText("高级");section("首页");
-        toggle("显示连接的 Hook 状态","在保存的连接上显示状态点",null,"appearance","hookStatus",true,null);
-        toggle("显示功能引导","在首页显示功能提示",null,"appearance","guide",true,null);
-        section("后台运行");item("电池与后台运行","查看厂商省电限制","settings",()->startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+getPackageName()))));
-        copy("SSH 会话在后台保持连接，tmux 会话在远端保留。关闭缩略图会断开本机连接，不会终止远端 tmux。");
+        heading.setText(tr(R.string.advanced));section(tr(R.string.home));
+        toggle(tr(R.string.show_connection_hook_status),tr(R.string.show_status_dots_on_saved_connections),null,"appearance","hookStatus",true,null);
+        toggle(tr(R.string.show_feature_guide),tr(R.string.show_feature_tips_on_the_home_screen),null,"appearance","guide",true,null);
+        section(tr(R.string.background_activity));item(tr(R.string.battery_and_background_activity),tr(R.string.review_device_battery_restrictions),"settings",()->startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+getPackageName()))));
+        copy(tr(R.string.ssh_stays_connected_in_the_background_tmux_sessions_stay_on_the_s));
     }
     private void toolbar(){
-        heading.setText("工具栏");section("预览");
+        heading.setText(tr(R.string.toolbar));section(tr(R.string.preview));
         LinearLayout canvas=column();canvas.setPadding(dp(8),dp(8),dp(8),dp(8));
         GradientDrawable gradient=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff063a18,0xff164d48});gradient.setCornerRadius(dp(12));canvas.setBackground(gradient);
-        TextView caption=label("工具栏实时预览",16,SampleUi.MUTED);caption.setGravity(Gravity.CENTER);canvas.addView(caption,new LinearLayout.LayoutParams(-1,0,1));
+        TextView caption=label(tr(R.string.live_toolbar_preview),16,SampleUi.MUTED);caption.setGravity(Gravity.CENTER);canvas.addView(caption,new LinearLayout.LayoutParams(-1,0,1));
         toolbarPreview=row();toolbarPreview.setPadding(dp(6),dp(6),dp(6),dp(6));toolbarPreview.setBackground(SampleUi.surface(this,Color.BLACK,32));toolbarPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         canvas.addView(toolbarPreview,new LinearLayout.LayoutParams(-1,dp(52)));body.addView(canvas,new LinearLayout.LayoutParams(-1,dp(276)));refreshToolbar();
-        section("显示按钮");
-        for(String[] tool:new String[][]{{"pad","方向键浮板"},{"history","输入历史"},{"paste","粘贴"},{"chat","文本草稿"}})
+        section(tr(R.string.visible_buttons));
+        for(String[] tool:new String[][]{{"pad",tr(R.string.direction_pad)},{"history",tr(R.string.input_history)},{"paste",tr(R.string.paste)},{"chat",tr(R.string.text_draft)}})
             toggle(tool[1],null,null,"appearance","tool_"+tool[0],true,this::refreshToolbar);
-        copy("Ctrl、Esc、Tab 和键盘按钮始终保留。更改会在返回终端后生效。");
+        copy(tr(R.string.ctrl_esc_tab_and_the_keyboard_button_are_always_shown_changes_app));
     }
     private void refreshToolbar(){
         if(toolbarPreview==null)return;toolbarPreview.removeAllViews();
@@ -180,36 +201,36 @@ public final class SettingsActivity extends ScreenActivity {
         }
     }
     private void gestures(){
-        heading.setText("手势");section("终端");toggle("长按选择文本",null,null,"appearance","selection",true,null);
-        item("上下滑动","查看终端滚动历史","history",null);item("拖动选择手柄","调整文本选区","pad",null);
-        section("首页");item("长按会话卡片","重新排序、关闭或全部关闭","reorder",null);
+        heading.setText(tr(R.string.gestures));section(tr(R.string.terminal));toggle(tr(R.string.long_press_to_select_text),null,null,"appearance","selection",true,null);
+        item(tr(R.string.swipe_up_or_down),tr(R.string.browse_terminal_scrollback),"history",null);item(tr(R.string.drag_selection_handles),tr(R.string.adjust_the_text_selection),"pad",null);
+        section(tr(R.string.home));item(tr(R.string.long_press_a_session_card),tr(R.string.reorder_close_or_close_all),"reorder",null);
     }
     private void chat(){
-        heading.setText("文本草稿");section("输入方式");toggle("默认使用文本草稿","打开终端时，先编辑再发送","chat","appearance","draftDefault",false,null);
-        copy("支持多行输入。Agent 的提问与审批在收件箱中逐条回应。");
-        section("发送");item("点按发送","发送文本并回车","send",null);item("长按发送","只发送文本，不附加回车","edit",null);
+        heading.setText(tr(R.string.text_draft));section(tr(R.string.input_mode));toggle(tr(R.string.start_with_a_text_draft),tr(R.string.edit_before_sending_when_a_terminal_opens),"chat","appearance","draftDefault",false,null);
+        copy(tr(R.string.multiline_input_is_supported_respond_to_agent_questions_and_appro));
+        section(tr(R.string.send));item(tr(R.string.tap_send),tr(R.string.send_text_and_press_enter),"send",null);item(tr(R.string.long_press_send),tr(R.string.send_text_without_enter),"edit",null);
     }
     private void shortcuts(){
-        heading.setText("快捷键");section("终端按键");item("Ctrl","点按后与下一个字符组合","keyboard",null);item("Esc / Tab","发送对应的终端按键","keyboard",null);
-        section("方向键浮板");item("方向键","上、下、左、右移动","pad",null);item("回车与退格","确认输入或删除字符","return",null);item("清屏","发送清屏快捷键","clear",null);
-        section("文本草稿");item("点按发送","发送文本并回车","send",null);item("长按发送","只发送文本","edit",null);
+        heading.setText(tr(R.string.shortcuts));section(tr(R.string.terminal_keys));item("Ctrl",tr(R.string.tap_to_combine_with_the_next_character),"keyboard",null);item("Esc / Tab",tr(R.string.send_the_corresponding_terminal_key),"keyboard",null);
+        section(tr(R.string.direction_pad));item(tr(R.string.arrow_keys),tr(R.string.move_up_down_left_or_right),"pad",null);item(tr(R.string.enter_and_backspace),tr(R.string.confirm_input_or_delete_a_character),"return",null);item(tr(R.string.clear_screen),tr(R.string.send_the_clear_screen_shortcut),"clear",null);
+        section(tr(R.string.text_draft));item(tr(R.string.tap_send),tr(R.string.send_text_and_press_enter),"send",null);item(tr(R.string.long_press_send),tr(R.string.send_text_only),"edit",null);
     }
     private void hook(){
-        heading.setText("Hook");section("安装");
-        TextView intro=copy("在 SSH 主机上安装 Claude Code Hook，接收审批、提问与完成事件。");intro.setTextColor(SampleUi.TEXT);intro.setTextSize(16);
-        section("SSH 主机");AgentHub hub=AgentHub.get(this);java.util.List<SshProfileStore.Entry> profiles=new SshProfileStore(this).list();
-        if(profiles.isEmpty())item("先添加 SSH 连接",null,"plus",()->startActivity(new Intent(this,SshDiscoveryActivity.class)));
-        for(SshProfileStore.Entry p:profiles){boolean enabled=hub.enabled(p.id);item(p.name,enabled?hub.states.getOrDefault(p.id,"已启用"):"未安装","server",()->{
-            if(working)return;SampleUi.confirm(this,enabled?"卸载 Hook？":"安装 Hook？",p.user+"@"+p.host+"\n"+(enabled?"只移除本应用注册的 Claude Code Hook。":"保留已有配置，安装后请新开 Claude Code 会话。"),null,"取消",enabled?"卸载":"安装",false,null,()->{
-                working=true;toast("正在处理…");hub.configure(p.id,!enabled,(ok,message)->{working=false;if(isDestroyed())return;toast(message);show("hook");});
+        heading.setText("Hook");section(tr(R.string.install));
+        TextView intro=copy(tr(R.string.install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque));intro.setTextColor(SampleUi.TEXT);intro.setTextSize(16);
+        section(tr(R.string.ssh_hosts));AgentHub hub=AgentHub.get(this);java.util.List<SshProfileStore.Entry> profiles=new SshProfileStore(this).list();
+        if(profiles.isEmpty())item(tr(R.string.add_an_ssh_connection_first),null,"plus",()->startActivity(new Intent(this,SshDiscoveryActivity.class)));
+        for(SshProfileStore.Entry p:profiles){boolean enabled=hub.enabled(p.id);item(p.name,enabled?tr(hub.states.getOrDefault(p.id,R.string.enabled)):tr(R.string.not_installed),"server",()->{
+            if(working)return;SampleUi.confirm(this,enabled?tr(R.string.uninstall_hook):tr(R.string.install_hook_387),p.user+"@"+p.host+"\n"+(enabled?tr(R.string.only_the_claude_code_hook_registered_by_this_app_will_be_removed):tr(R.string.existing_settings_are_kept_start_a_new_claude_code_session_after)),null,tr(R.string.cancel),enabled?tr(R.string.uninstall):tr(R.string.install),false,null,()->{
+                working=true;toast(tr(R.string.working));hub.configure(p.id,!enabled,(ok,message)->{working=false;if(isDestroyed())return;toast(message);show("hook");});
             });
         });}
-        copy("通过 SSH 安装和同步，无需额外开放端口。安装会备份并合并现有 Claude Code 配置；卸载只移除本应用的 Hook。");
+        copy(tr(R.string.installation_and_sync_use_ssh_no_extra_ports_are_needed_installat));
         boolean updates=false;for(SshProfileStore.Entry p:profiles)if(hub.enabled(p.id)){
-            if(!updates){section("更新");updates=true;}
-            item(p.name,"更新主机助手与最近会话读取","hook",()->{if(working)return;working=true;toast("正在更新…");hub.configure(p.id,true,(ok,message)->{working=false;if(isDestroyed())return;toast(message);show("hook");});});
+            if(!updates){section(tr(R.string.update));updates=true;}
+            item(p.name,tr(R.string.update_host_helper_and_recent_session_support),"hook",()->{if(working)return;working=true;toast(tr(R.string.updating));hub.configure(p.id,true,(ok,message)->{working=false;if(isDestroyed())return;toast(message);show("hook");});});
         }
-        section("Hook 状态");toggle("显示 Hook 状态","在保存的连接上显示状态点",null,"appearance","hookStatus",true,null);
+        section(tr(R.string.hook_status));toggle(tr(R.string.show_hook_status),tr(R.string.show_status_dots_on_saved_connections),null,"appearance","hookStatus",true,null);
     }
     @Override public void onBackPressed(){if(!page.isEmpty())show("");else super.onBackPressed();}
 
@@ -221,7 +242,7 @@ public final class SettingsActivity extends ScreenActivity {
             setTextSize(16);setTextColor(SampleUi.TEXT);setIncludeFontPadding(false);setGravity(Gravity.CENTER_VERTICAL);setLineSpacing(dp(3),1);
             setPadding(dp(16),dp(12),dp(80),dp(12));setMinHeight(dp(48));setBackground(SampleUi.touch(SettingsActivity.this,Color.TRANSPARENT,0));
             if(subtitle==null)setText(title);else{SpannableString text=new SpannableString(title+"\n"+subtitle);text.setSpan(new ForegroundColorSpan(SampleUi.MUTED),title.length()+1,text.length(),0);text.setSpan(new AbsoluteSizeSpan(Math.round(14*getResources().getDisplayMetrics().scaledDensity)),title.length()+1,text.length(),0);setText(text);}
-            setContentDescription(title+(subtitle==null?"":"，"+subtitle));
+            setContentDescription(subtitle==null?title:tr(R.string.accessibility_subtitle,title,subtitle));
             if(icon!=null){ToolbarIcon glyph=new ToolbarIcon(icon,dp(20),SampleUi.MUTED);glyph.setBounds(0,0,dp(20),dp(20));setCompoundDrawables(glyph,null,null,null);setCompoundDrawablePadding(dp(16));}
         }
         @Override protected void onDraw(Canvas c){

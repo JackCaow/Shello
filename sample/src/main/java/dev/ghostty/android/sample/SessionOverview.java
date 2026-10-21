@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.app.Activity;
 import android.content.ClipData;
 import android.graphics.*;
@@ -28,8 +30,8 @@ final class SessionOverview {
     SessionOverview(Activity activity,FrameLayout stage,View background,Actions actions){
         this.activity=activity;this.stage=stage;this.background=background;this.actions=actions;
         root=column();header=row();header.setMinimumHeight(dp(36));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
-        TextView title=SampleUi.sectionTitle(activity,"会话");header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        done=SampleUi.text(activity,"完成",16,SampleUi.GREEN);done.setGravity(Gravity.CENTER);done.setContentDescription("完成会话排序");done.setFocusable(true);
+        TextView title=SampleUi.sectionTitle(activity,tr(R.string.sessions));header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        done=SampleUi.text(activity,tr(R.string.done),16,SampleUi.GREEN);done.setGravity(Gravity.CENTER);done.setContentDescription(tr(R.string.finish_reordering_sessions));done.setFocusable(true);
         done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));header.addView(done,new LinearLayout.LayoutParams(dp(64),dp(36)));done.setVisibility(View.GONE);
         scroll=new HorizontalScrollView(activity);scroll.setHorizontalScrollBarEnabled(false);scroll.setClipToPadding(false);
         cards=row();cards.setGravity(Gravity.TOP);scroll.addView(cards,new HorizontalScrollView.LayoutParams(-2,-2));root.addView(scroll);
@@ -56,7 +58,7 @@ final class SessionOverview {
         if(dragging!=null)return;
         cards.removeAllViews();
         for(SshSessionService.Tab tab:tabs){
-            LinearLayout card=column();card.setContentDescription("恢复会话 "+tab.name());card.setFocusable(true);
+            LinearLayout card=column();card.setContentDescription(tr(R.string.resume_session_name,tab.name()));card.setFocusable(true);
             card.setOnClickListener(v->{if(!ordering)actions.open(tab.id);});
             FrameLayout thumb=thumbnail(tab);card.addView(thumb,new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
             TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon("server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(4),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,dp(32)));
@@ -67,7 +69,7 @@ final class SessionOverview {
             // Directional accessibility actions let keyboard/TalkBack users reorder without dragging.
             card.setAccessibilityDelegate(new View.AccessibilityDelegate(){
                 public void onInitializeAccessibilityNodeInfo(View host,AccessibilityNodeInfo info){super.onInitializeAccessibilityNodeInfo(host,info);
-                    if(ordering){info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x01020001,"向前移动"));info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x01020002,"向后移动"));}}
+                    if(ordering){info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x01020001,tr(R.string.move_earlier)));info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x01020002,tr(R.string.move_later)));}}
                 public boolean performAccessibilityAction(View host,int action,Bundle args){
                     if(ordering&&(action==0x01020001||action==0x01020002)){actions.move(tab.id,tabs.indexOf(tab)+(action==0x01020001?-1:1));return true;}
                     return super.performAccessibilityAction(host,action,args);
@@ -75,22 +77,22 @@ final class SessionOverview {
             });
             if(ordering){
                 LinearLayout controls=row();
-                TextView left=SampleUi.header(activity,"left","向前移动 "+tab.name(),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)-1));
-                TextView right=SampleUi.header(activity,"right","向后移动 "+tab.name(),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)+1));
+                TextView left=SampleUi.header(activity,"left",tr(R.string.move_earlier_258_name,tab.name()),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)-1));
+                TextView right=SampleUi.header(activity,"right",tr(R.string.move_later_259_name,tab.name()),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)+1));
                 left.setEnabled(tabs.indexOf(tab)>0);right.setEnabled(tabs.indexOf(tab)<tabs.size()-1);left.setAlpha(left.isEnabled()?1:.3f);right.setAlpha(right.isEnabled()?1:.3f);
                 controls.addView(left,new LinearLayout.LayoutParams(0,dp(44),1));controls.addView(right,new LinearLayout.LayoutParams(0,dp(44),1));card.addView(controls);
             }
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(cardWidth(),-2);cp.rightMargin=dp(12);cards.addView(card,cp);
         }
-        if(tabs.isEmpty()){hint.setText("暂无打开的会话，点击已保存的连接或 + 新建连接");setOrdering(false);}
-        else hint.setText(ordering?(tabs.size()==1?"只有一个会话；打开更多连接后可拖动排序":"长按并拖动会话调整顺序"):"长按显示选项。");
+        if(tabs.isEmpty()){hint.setText(tr(R.string.no_open_sessions_tap_a_saved_connection_or_to_add_one));setOrdering(false);}
+        else hint.setText(ordering?(tabs.size()==1?tr(R.string.only_one_session_open_more_connections_to_reorder_them):tr(R.string.long_press_and_drag_sessions_to_reorder)):tr(R.string.long_press_for_options));
     }
     private FrameLayout thumbnail(SshSessionService.Tab tab){
         FrameLayout thumb=new FrameLayout(activity);thumb.setBackground(SampleUi.surface(activity,0xff111113,16));thumb.setClipToOutline(true);
         ImageView image=new ImageView(activity);image.setScaleType(ImageView.ScaleType.FIT_START);image.setImageBitmap(tab.preview);image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);thumb.addView(image,new FrameLayout.LayoutParams(-1,-1));
-        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":"LOCAL",12,0xffe6efff);badge.setIncludeFontPadding(false);badge.setTypeface(Typeface.MONOSPACE);badge.setPadding(dp(9),dp(3),dp(9),dp(3));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff245ca0:0xff375166,10));
+        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":tr(R.string.local),12,0xffe6efff);badge.setIncludeFontPadding(false);badge.setTypeface(Typeface.MONOSPACE);badge.setPadding(dp(9),dp(3),dp(9),dp(3));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff245ca0:0xff375166,10));
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.RIGHT);bp.setMargins(dp(8),dp(8),dp(8),0);thumb.addView(badge,bp);
-        if(tab.preview==null){TextView title=SampleUi.text(activity,"暂无预览",15,SampleUi.MUTED);title.setGravity(Gravity.CENTER);thumb.addView(title,new FrameLayout.LayoutParams(-1,-1));}
+        if(tab.preview==null){TextView title=SampleUi.text(activity,tr(R.string.no_preview_yet),15,SampleUi.MUTED);title.setGravity(Gravity.CENTER);thumb.addView(title,new FrameLayout.LayoutParams(-1,-1));}
         return thumb;
     }
     private void beginDrag(View card,String id){
@@ -106,22 +108,22 @@ final class SessionOverview {
         dismiss();card.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         int w=stage.getWidth(),h=stage.getHeight();if(w==0||h==0)return;
         Bitmap backdrop=blurred(stage);Bitmap sharp=Bitmap.createBitmap(thumb.getWidth(),thumb.getHeight(),Bitmap.Config.ARGB_8888);thumb.draw(new Canvas(sharp));
-        overlay=new FrameLayout(activity);overlay.setContentDescription("会话操作 "+tab.name());overlay.setClickable(true);overlay.setFocusableInTouchMode(true);overlay.setOnClickListener(v->dismiss());
+        overlay=new FrameLayout(activity);overlay.setContentDescription(tr(R.string.session_actions_for_name,tab.name()));overlay.setClickable(true);overlay.setFocusableInTouchMode(true);overlay.setOnClickListener(v->dismiss());
         ImageView blurred=new ImageView(activity);blurred.setScaleType(ImageView.ScaleType.FIT_XY);blurred.setImageBitmap(backdrop);overlay.addView(blurred,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(activity);dim.setBackgroundColor(0x66000000);overlay.addView(dim,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout menu=column();menu.setBackground(SampleUi.surface(activity,SampleUi.PANEL,22));menu.setClipToOutline(true);
-        menu.addView(action("重新排序","reorder",false,()->setOrdering(true)));
+        menu.addView(action(tr(R.string.reorder),"reorder",false,()->setOrdering(true)));
         View line=new View(activity);line.setBackgroundColor(0xff303033);menu.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
-        menu.addView(action("关闭","close",true,()->actions.close(tab.id)));
+        menu.addView(action(tr(R.string.close),"close",true,()->actions.close(tab.id)));
         View gap=new View(activity);gap.setBackgroundColor(0xff101113);menu.addView(gap,new LinearLayout.LayoutParams(-1,dp(8)));
-        menu.addView(action("全部关闭","close",true,actions::closeAll));
+        menu.addView(action(tr(R.string.close_all),"close",true,actions::closeAll));
         int mw=Math.min(dp(250),w-dp(32));menu.measure(View.MeasureSpec.makeMeasureSpec(mw,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
         int[] a=new int[2],b=new int[2];thumb.getLocationOnScreen(a);stage.getLocationOnScreen(b);
         int size=Math.min(thumb.getWidth(),Math.max(dp(80),h-menu.getMeasuredHeight()-dp(48)));
         int x=Math.max(dp(16),Math.min(a[0]-b[0],w-Math.max(size,mw)-dp(16)));
         int y=Math.max(dp(16),Math.min(a[1]-b[1],h-size-menu.getMeasuredHeight()-dp(32)));
         ImageView selected=new ImageView(activity);selected.setImageBitmap(sharp);selected.setScaleType(ImageView.ScaleType.FIT_XY);selected.setBackground(SampleUi.surface(activity,0xff1e1e1e,16));selected.setClipToOutline(true);
-        selected.setContentDescription("选中会话 "+tab.name());selected.setOnClickListener(v->dismiss());
+        selected.setContentDescription(tr(R.string.selected_session_name,tab.name()));selected.setOnClickListener(v->dismiss());
         FrameLayout.LayoutParams sp=new FrameLayout.LayoutParams(size,size);sp.leftMargin=x;sp.topMargin=y;overlay.addView(selected,sp);
         FrameLayout.LayoutParams mp=new FrameLayout.LayoutParams(mw,-2);mp.leftMargin=x;mp.topMargin=y+size+dp(12);overlay.addView(menu,mp);
         background.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);

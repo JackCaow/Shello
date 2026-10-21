@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.content.Context;
 import android.os.*;
 import android.net.*;
@@ -20,7 +22,9 @@ final class SshSessionConnection {
     TerminalSession terminal;
     private SshTransport ssh;
     private String profileIdentity;
-    String profileName="本机",status="已断开";
+    String profileName=tr(R.string.local);
+    private int statusId=R.string.disconnected;private long retrySeconds;
+    String status(){return statusId==R.string.reconnect_countdown?tr(statusId,retrySeconds):tr(statusId);}
     boolean connected,foreground;
     private boolean autoReconnect,destroyed;
     private ConnectivityManager.NetworkCallback networkCallback;
@@ -31,7 +35,7 @@ final class SshSessionConnection {
     SshSessionConnection(Context context,File directory,String id,Listener listener){
         this.context=context;this.profileDirectory=directory;this.listener=listener;target=SessionTarget.target(id);
         resumeState=new SshResumeState(directory,context.getSharedPreferences("session_resume_"+SessionTarget.storageKey(id),0),target==null?null:!target.startsWith("plain_"));
-        try{profileName=SshProfileStore.properties(directory).getProperty("name","本机");}catch(IOException ignored){}
+        try{profileName=SshProfileStore.properties(directory).getProperty("name",tr(R.string.local));}catch(IOException ignored){}
     }
     boolean shouldResume(){return resumeState.pending();}
     void visible(){if(foreground&&autoReconnect&&retryTask!=null){closeAttempt();retryAttempt=0;startAttempt();}}
@@ -61,7 +65,7 @@ final class SshSessionConnection {
             }
             @Override public void onLost(Network network){
                 if(!current()||!network.equals(activeNetwork))return;
-                activeNetwork=null;closeAttempt();status="网络不可用，等待恢复";changed();
+                activeNetwork=null;closeAttempt();statusId=R.string.network_unavailable_waiting_to_reconnect;changed();
             }
         };
         try{manager.registerDefaultNetworkCallback(networkCallback,handler);}
@@ -84,12 +88,12 @@ final class SshSessionConnection {
         File nextDirectory=profileDirectory;
         Properties config;
         try{config=SshProfileStore.properties(nextDirectory);}
-        catch(IOException|IllegalArgumentException error){finish("配置无效");return;}
+        catch(IOException|IllegalArgumentException error){finish(R.string.invalid_configuration);return;}
         if(profileConfig!=null&&!config.equals(profileConfig)&&terminal!=null){
             listener.detach();terminal.close();terminal=null;
         }
         profileConfig=config;profileIdentity=resumeState.identity();
-        profileName=config.getProperty("name","本机");autoReconnect=target==null?"tmux".equals(config.getProperty("sessionMode")):!target.startsWith("plain_");
+        profileName=config.getProperty("name",tr(R.string.local));autoReconnect=target==null?"tmux".equals(config.getProperty("sessionMode")):!target.startsWith("plain_");
         if(terminal==null)terminal=new TerminalSession(40,20);
         if(autoReconnect)startNetworkMonitoring();
         changed();startAttempt();
@@ -97,23 +101,23 @@ final class SshSessionConnection {
     private void startAttempt(){
         if(destroyed||!foreground)return;
         retryTask=null;
-        if(networkCallback!=null&&activeNetwork==null){status="网络不可用，等待恢复";changed();return;}
+        if(networkCallback!=null&&activeNetwork==null){statusId=R.string.network_unavailable_waiting_to_reconnect;changed();return;}
         final int attempt=++generation;
         final boolean[] firstOutput={true};
         ssh=new SshTransport(context,profileDirectory,terminal.getColumns(),terminal.getRows(),new SshTransport.Listener(){
             private boolean current(){return !destroyed&&attempt==generation;}
-            @Override public void onState(String value,boolean ready){
+            @Override public void onStateResource(int value,boolean ready){
                 if(!current())return;
-                connected=ready;status=value;changed();
+                connected=ready;statusId=value;changed();
                 if(ready){resumeState.remember(profileIdentity);stableTask=()->{if(current()&&connected)retryAttempt=0;};handler.postDelayed(stableTask,10000);}
             }
-            @Override public void onClosed(String value,boolean retryable){
+            @Override public void onClosedResource(int value,boolean retryable){
                 if(!current())return;
                 ssh=null;connected=false;
                 if(stableTask!=null){handler.removeCallbacks(stableTask);stableTask=null;}
                 if(autoReconnect&&retryable){
                     long delay=Math.min(15000,1000L<<Math.min(retryAttempt++,4));
-                    status="已断开，"+(delay/1000)+" 秒后重连";changed();
+                    retrySeconds=delay/1000;statusId=R.string.reconnect_countdown;changed();
                     retryTask=()->{if(current()&&autoReconnect)startAttempt();};handler.postDelayed(retryTask,delay);
                 }else finish(value);
             }
@@ -131,11 +135,11 @@ final class SshSessionConnection {
     }
     void send(byte[] bytes){if(connected&&ssh!=null)ssh.send(bytes);}
     void resize(int columns,int rows){if(ssh!=null)ssh.resize(columns,rows);}
-    void disconnect(){finish("已断开");}
-    private void finish(String value){finish(value,true);}
-    private void finish(String value,boolean clearResume){
+    void disconnect(){finish(R.string.disconnected);}
+    private void finish(int value){finish(value,true);}
+    private void finish(int value,boolean clearResume){
         if(clearResume)resumeState.clear();
-        cancelConnection();status=value;
+        cancelConnection();statusId=value;
         foreground=false;
         changed();
     }

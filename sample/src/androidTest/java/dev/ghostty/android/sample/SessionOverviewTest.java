@@ -53,12 +53,12 @@ public class SessionOverviewTest {
                 ui.service().select(ids.get(0));ui.service().send("SESSION_A_MARKER\r".getBytes(java.nio.charset.StandardCharsets.UTF_8));
             });
             ui.await(()->terminals.get(0).select(0,terminals.get(0).getColumns()*terminals.get(0).getRows()-1).contains("SESSION_A_MARKER"),5000);
-            ui.click("最小化会话");ui.longClick("恢复会话 Menu Test A");
-            screenshot(inst,context,"session-context.png");ui.click("重新排序");screenshot(inst,context,"session-order.png");
-            drag(inst,ui,"恢复会话 Menu Test A","恢复会话 Menu Test B");
+            ui.click(AppLanguage.tr(R.string.minimize_session));ui.longClick(AppLanguage.tr(R.string.resume_session_name,"Menu Test A"));
+            screenshot(inst,context,"session-context.png");ui.click(AppLanguage.tr(R.string.reorder));screenshot(inst,context,"session-order.png");
+            drag(inst,ui,AppLanguage.tr(R.string.resume_session_name,"Menu Test A"),AppLanguage.tr(R.string.resume_session_name,"Menu Test B"));
             ui.await(()->ui.service().tabs().get(0).id.equals(ids.get(1)),3000);
             screenshot(inst,context,"session-reordered.png");
-            ui.click("向前移动 Menu Test A");ui.click("向后移动 Menu Test A");ui.click("完成会话排序");
+            ui.click(AppLanguage.tr(R.string.move_earlier_258_name,"Menu Test A"));ui.click(AppLanguage.tr(R.string.move_later_259_name,"Menu Test A"));ui.click(AppLanguage.tr(R.string.finish_reordering_sessions));
             inst.runOnMainSync(()->{assertEquals(ids.get(1),ui.service().tabs().get(0).id);assertSame(terminals.get(0),ui.service().find(ids.get(0)).terminal());});
             Activity first=ui.current;inst.runOnMainSync(first::recreate);ui.current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(ui.current);ui.await(()->ui.service()!=null,10000);
             inst.runOnMainSync(()->{
@@ -66,16 +66,16 @@ public class SessionOverviewTest {
                 assertTrue(ui.service().find(ids.get(0)).connection.connected);assertTrue(ui.service().find(ids.get(1)).connection.connected);
             });
             assertTrue(tabState.getString("order","").indexOf(ids.get(1))<tabState.getString("order","").indexOf(ids.get(0)));
-            ui.longClick("恢复会话 Menu Test B");ui.click("关闭");
+            ui.longClick(AppLanguage.tr(R.string.resume_session_name,"Menu Test B"));ui.click(AppLanguage.tr(R.string.close));
             inst.runOnMainSync(()->{assertNull(ui.service().find(ids.get(1)));assertSame(terminals.get(0),ui.service().terminal());assertTrue(ui.service().connected());});
             assertTrue(SshProfileStore.exists(store.directory(ids.get(1))));
-            ui.longClick("恢复会话 Menu Test A");ui.click("全部关闭");
+            ui.longClick(AppLanguage.tr(R.string.resume_session_name,"Menu Test A"));ui.click(AppLanguage.tr(R.string.close_all));
             inst.runOnMainSync(()->{assertTrue(ui.service().tabs().isEmpty());assertNull(ui.service().terminal());assertFalse(ui.service().active());assertFalse(ui.service().shouldResume());});
             screenshot(inst,context,"session-empty.png");
             assertEquals("[]",tabState.getString("order",null));assertTrue(SshProfileStore.exists(store.directory(ids.get(0))));
             Activity second=ui.current;inst.runOnMainSync(second::recreate);ui.current=resumed.poll(10,TimeUnit.SECONDS);ui.await(()->ui.service()!=null,10000);
             inst.runOnMainSync(()->assertTrue(ui.service().tabs().isEmpty()));
-            ui.click("连接 SSH Menu Test A");ui.skipTmux();ui.await(()->ui.service().connected(),15000);
+            ui.click(AppLanguage.tr(R.string.connect_over_ssh_to_name,"Menu Test A"));ui.skipTmux();ui.await(()->ui.service().connected(),15000);
             inst.runOnMainSync(()->{assertEquals(1,ui.service().tabs().size());assertNotSame(terminals.get(0),ui.service().terminal());});
         }finally{
             inst.runOnMainSync(()->{if(ui.current instanceof MainActivity&&ui.service()!=null){for(String id:ids)ui.service().closeProfile(id);}if(ui.current!=null)ui.current.finish();});

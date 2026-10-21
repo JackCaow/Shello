@@ -42,26 +42,26 @@ public class SshDiscoveryActivityTest {
             progress("Launcher opened");
             inst.runOnMainSync(()->context.startActivity(new Intent(context,SshDiscoveryActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
             activity=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(activity);
-            click("局域网 SSH 自动发现");awaitHosts(expected);progress("Both hosts visible");
+            click(AppLanguage.tr(R.string.discover_ssh_servers_on_your_network));awaitHosts(expected);progress("Both hosts visible");
             for(String address:expected.split(",")){
                 inst.runOnMainSync(()->{
                     View card=find(pickerRoot()," "+address+":22",true);assertNotNull(card);card.performClick();
-                    assertEquals(address,((EditText)find(root(),"SSH 主机地址",false)).getText().toString());
-                    assertEquals("22",((EditText)find(root(),"SSH 端口",false)).getText().toString());
-                    assertTrue(((EditText)find(root(),"连接名称",false)).getText().toString().contains("Mac mini"));
+                    assertEquals(address,((EditText)find(root(),AppLanguage.tr(R.string.ssh_host_address),false)).getText().toString());
+                    assertEquals("22",((EditText)find(root(),AppLanguage.tr(R.string.ssh_port),false)).getText().toString());
+                    assertTrue(((EditText)find(root(),AppLanguage.tr(R.string.connection_name),false)).getText().toString().contains("Mac mini"));
                 });
-                click("局域网 SSH 自动发现");awaitHosts(expected);
+                click(AppLanguage.tr(R.string.discover_ssh_servers_on_your_network));awaitHosts(expected);
             }
             progress("Both selections filled");
             String last=expected.split(",")[expected.split(",").length-1];
             inst.runOnMainSync(()->{Dialog d=picker();d.dismiss();activity.recreate();});
             Activity previous=activity;activity=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(activity);assertNotSame(previous,activity);
-            inst.runOnMainSync(()->assertEquals(last,((EditText)find(root(),"SSH 主机地址",false)).getText().toString()));
-            click("局域网 SSH 自动发现");awaitHosts(expected);
+            inst.runOnMainSync(()->assertEquals(last,((EditText)find(root(),AppLanguage.tr(R.string.ssh_host_address),false)).getText().toString()));
+            click(AppLanguage.tr(R.string.discover_ssh_servers_on_your_network));awaitHosts(expected);
             progress("Recreation retained draft");
             shell("svc wifi disable");
-            await(()->textContains(pickerRoot(),"请连接 Wi-Fi"),15000);
-            inst.runOnMainSync(()->assertNull(find(pickerRoot(),"选择 SSH 服务器 ",true)));
+            await(()->textContains(pickerRoot(),AppLanguage.tr(R.string.connect_to_wi_fi_and_try_again_ipv4_lan_required)),15000);
+            inst.runOnMainSync(()->assertNull(find(pickerRoot(),":22",true)));
             progress("Wi-Fi off clears hosts");
             shell("svc wifi enable");awaitHosts(expected);progress("Wi-Fi return finds both hosts");
         }finally{

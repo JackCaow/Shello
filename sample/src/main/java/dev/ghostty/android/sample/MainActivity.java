@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,7 +20,7 @@ import dev.ghostty.android.*;
 import java.nio.charset.StandardCharsets;
 
 /** Shello terminal controls around offline echo or a sample SSH shell. */
-public final class MainActivity extends Activity {
+public final class MainActivity extends LocalizedActivity {
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
     private TerminalSession session;
@@ -41,7 +43,7 @@ public final class MainActivity extends Activity {
         public void onServiceDisconnected(ComponentName name){
             if(destroyed||!bound)return;
             detachServiceView();sshService=null;sshConnected=false;
-            subtitle.setText("本机 · 服务已停止");
+            subtitle.setText(tr(R.string.local_service_stopped));
         }
     };
     private TextView protocolBadge;
@@ -99,7 +101,7 @@ public final class MainActivity extends Activity {
         terminal.setListener(new TerminalView.Listener() {
             @Override public void onInput(byte[] bytes) { sendInput(bytes); }
             @Override public void onResize(int columns,int rows) {
-                subtitle.setContentDescription((sshMode?"SSH 终端":"本地终端")+"，"+columns+" 列，"+rows+" 行");
+                subtitle.setContentDescription(tr(R.string.terminal_dimensions,sshMode?tr(R.string.ssh_terminal):tr(R.string.local_terminal),columns,rows));
                 if(sshMode&&sshService!=null)sshService.resize(columns,rows);
                 if(directInput.hasFocus()||draft.hasFocus())terminal.post(terminal::scrollToBottom);
             }
@@ -115,7 +117,7 @@ public final class MainActivity extends Activity {
             imeVisible=root.getRootView().getHeight()-visible.bottom>dp(120);
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
-        write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› "); root.requestFocus();
+        write(tr(R.string.local_demo_banner)); root.requestFocus();
         pendingProfile=state==null?null:state.getString("pendingProfile");
         boolean legacyFixture=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
         // Explicit debug fixture launches select files/ssh without deleting saved UI profiles.
@@ -131,19 +133,19 @@ public final class MainActivity extends Activity {
         gripParams.gravity=Gravity.CENTER_HORIZONTAL;gripParams.topMargin=dp(8);sheet.addView(grip,gripParams);
         LinearLayout header=row(); header.setPadding(dp(16),0,dp(16),0);
         sheet.addView(header,new LinearLayout.LayoutParams(-1,dp(28)));
-        TextView minimize=key("−","最小化会话",this::minimize); minimize.setTextColor(Color.BLACK);
+        TextView minimize=key("−",tr(R.string.minimize_session),this::minimize); minimize.setTextColor(Color.BLACK);
         minimize.setTextSize(14);
         minimize.setBackground(new android.graphics.drawable.InsetDrawable(round(0xffffcc00,9),dp(4)));
         header.addView(minimize,new LinearLayout.LayoutParams(dp(26),dp(26)));
-        TextView menu=icon("panel","会话工具",()->tools(header));
+        TextView menu=icon("panel",tr(R.string.session_tools),()->tools(header));
         ((ControlLabel)menu).setIcon(new ToolbarIcon("panel",dp(11),Color.BLACK));
         menu.setBackground(new android.graphics.drawable.InsetDrawable(round(GREEN,9),dp(4)));
         header.addView(menu,new LinearLayout.LayoutParams(dp(26),dp(26)));
-        subtitle=label("本地终端",12,MUTED);subtitle.setTypeface(Typeface.MONOSPACE);
+        subtitle=label(tr(R.string.local_terminal),12,MUTED);subtitle.setTypeface(Typeface.MONOSPACE);
         subtitle.setSingleLine();subtitle.setEllipsize(TextUtils.TruncateAt.END);
         subtitle.setPadding(dp(8),0,dp(8),0);
         header.addView(subtitle,new LinearLayout.LayoutParams(0,-2,1));
-        TextView badge=label("LOCAL",10,0xff75b6ff);protocolBadge=badge;badge.setPadding(dp(5),dp(3),dp(5),dp(3));
+        TextView badge=label(tr(R.string.local),10,0xff75b6ff);protocolBadge=badge;badge.setPadding(dp(5),dp(3),dp(5),dp(3));
         badge.setBackground(round(0xff173247,10)); header.addView(badge);
     }
 
@@ -156,16 +158,16 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(52));
         outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(scroll,outer);
         scroll.setTag("toolbar");
-        ctrlButton=key("Ctrl","Ctrl：点击后组合下一个按键",()->setCtrl(!ctrlArmed));
+        ctrlButton=key("Ctrl",tr(R.string.ctrl_combine_with_the_next_key),()->setCtrl(!ctrlArmed));
         addTool(ctrlButton);
         addTool(key("Esc","Escape",()->sendKey(TerminalSession.Key.ESCAPE)));
         addTool(key("Tab","Tab",()->sendKey(TerminalSession.Key.TAB)));
-        padButton=icon("pad","方向键浮板",this::togglePad);addTool(padButton);
-        addTool(icon("panel","会话工具",()->tools(toolbar)));
-        addTool(icon("paste","粘贴到草稿",this::paste));
-        addTool(icon("history","输入历史",this::history));
-        addTool(icon("chat","编辑文本",()->setDraftMode(true,true)));
-        addTool(icon("keyboard","显示或隐藏键盘",this::toggleKeyboard));
+        padButton=icon("pad",tr(R.string.direction_pad),this::togglePad);addTool(padButton);
+        addTool(icon("panel",tr(R.string.session_tools),()->tools(toolbar)));
+        addTool(icon("paste",tr(R.string.paste_into_draft),this::paste));
+        addTool(icon("history",tr(R.string.input_history),this::history));
+        addTool(icon("chat",tr(R.string.edit_text),()->setDraftMode(true,true)));
+        addTool(icon("keyboard",tr(R.string.show_or_hide_keyboard),this::toggleKeyboard));
     }
     private void addTool(View view) {
         view.setMinimumWidth(dp(40));
@@ -194,19 +196,19 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);
         params.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(composer,params);
         draft=new EditText(this);draft.setTextColor(TEXT);draft.setHintTextColor(MUTED);
-        draft.setTextSize(14);draft.setTypeface(Typeface.MONOSPACE);draft.setHint("对终端说…");draft.setBackgroundColor(Color.TRANSPARENT);
+        draft.setTextSize(14);draft.setTypeface(Typeface.MONOSPACE);draft.setHint(tr(R.string.type_a_message));draft.setBackgroundColor(Color.TRANSPARENT);
         // Command drafts must not autocorrect printf/stty into different commands.
         draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         draft.setMinLines(1);draft.setMaxLines(4);draft.setPadding(dp(8),dp(10),dp(8),dp(8));
-        draft.setContentDescription("本地文本草稿");composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
+        draft.setContentDescription(tr(R.string.local_text_draft));composer.addView(draft,new LinearLayout.LayoutParams(-1,-2));
         LinearLayout actions=row();composer.addView(actions,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView add=icon("plus","添加文本",this::addTextMenu);composerAction(actions,add);
-        composerAction(actions,icon("toolbox","终端工具",()->tools(composer)));
-        composerAction(actions,icon("close","关闭文本框，保留草稿",()->setDraftMode(false,true)));
+        TextView add=icon("plus",tr(R.string.add_text),this::addTextMenu);composerAction(actions,add);
+        composerAction(actions,icon("toolbox",tr(R.string.terminal_tools),()->tools(composer)));
+        composerAction(actions,icon("close",tr(R.string.close_editor_and_keep_draft),()->setDraftMode(false,true)));
         actions.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-        TextView voice=icon("mic","语音输入（暂未接入）",()->{});voice.setEnabled(false);voice.setAlpha(.4f);composerAction(actions,voice);
-        sendButton=icon("send","发送并回车；长按仅发送",()->sendDraft(true));
+        TextView voice=icon("mic",tr(R.string.voice_input_not_available_yet),()->{});voice.setEnabled(false);voice.setAlpha(.4f);composerAction(actions,voice);
+        sendButton=icon("send",tr(R.string.send_and_press_enter_long_press_to_send_text_only),()->sendDraft(true));
         sendButton.setBackground(round(0xff191b1e,22));sendButton.setEnabled(false);
         sendButton.setOnLongClickListener(v->{sendDraft(false);return true;});
         actions.addView(sendButton,new LinearLayout.LayoutParams(dp(40),dp(40)));
@@ -226,20 +228,20 @@ public final class MainActivity extends Activity {
         if(connectionMenu!=null)connectionMenu.dismiss();connectionMenu=SampleUi.menu(this,anchor,actions);
     }
     private void addTextMenu(){
-        showMenu(composer,java.util.Arrays.asList(new SampleUi.Action("粘贴文本","paste",true,false,this::paste),
-                new SampleUi.Action("附件（暂未接入）","plus",false,false,null)));
+        showMenu(composer,java.util.Arrays.asList(new SampleUi.Action(tr(R.string.paste_text),"paste",true,false,this::paste),
+                new SampleUi.Action(tr(R.string.attachments_not_available_yet),"plus",false,false,null)));
     }
     private void history(){
         java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
-        if(draftHistory.isEmpty())actions.add(new SampleUi.Action("暂无输入历史","history",false,false,null));
+        if(draftHistory.isEmpty())actions.add(new SampleUi.Action(tr(R.string.no_input_history),"history",false,false,null));
         for(String entry:draftHistory)actions.add(new SampleUi.Action(entry,"history",true,false,()->{setDraftMode(true,true);draft.setText(entry);draft.setSelection(draft.length());}));
         showMenu(toolbar,actions);
     }
     private void buildSelectionBar() {
         selectionBar=row();selectionBar.setPadding(dp(4),dp(4),dp(4),dp(4));
         selectionBar.setBackground(round(Color.BLACK,24));selectionBar.setElevation(dp(8));
-        selectionBar.addView(key("复制","复制选中内容",this::copySelection),new LinearLayout.LayoutParams(dp(64),dp(44)));
-        selectionBar.addView(key("×","取消选择",()->terminal.clearSelection()),new LinearLayout.LayoutParams(dp(44),dp(44)));
+        selectionBar.addView(key(tr(R.string.copy),tr(R.string.copy_selection),this::copySelection),new LinearLayout.LayoutParams(dp(64),dp(44)));
+        selectionBar.addView(key("×",tr(R.string.clear_selection),()->terminal.clearSelection()),new LinearLayout.LayoutParams(dp(44),dp(44)));
         FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.END);
         p.setMargins(dp(8),dp(8),dp(8),0);viewport.addView(selectionBar,p);selectionBar.setVisibility(View.GONE);
     }
@@ -248,14 +250,14 @@ public final class MainActivity extends Activity {
         FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(dp(156),dp(184),Gravity.TOP|Gravity.LEFT);
         viewport.addView(pad,p);
         LinearLayout handle=row();pad.addView(handle,new LinearLayout.LayoutParams(-1,dp(28)));
-        TextView drag=icon("grip","拖动方向键浮板",()->{});drag.setTextColor(MUTED);
+        TextView drag=icon("grip",tr(R.string.drag_direction_pad),()->{});drag.setTextColor(MUTED);
         ((ControlLabel)drag).setIcon(new ToolbarIcon("grip",dp(44),MUTED));
         handle.addView(new View(this),new LinearLayout.LayoutParams(dp(46),1));
         handle.addView(drag,new LinearLayout.LayoutParams(dp(60),-1));
-        lockButton=icon("unlock","锁定方向键位置",()->{
+        lockButton=icon("unlock",tr(R.string.lock_direction_pad_position),()->{
             padLocked=!padLocked;
             ((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));
-            lockButton.setContentDescription(padLocked?"解锁方向键位置":"锁定方向键位置");
+            lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
         });((ControlLabel)lockButton).setIcon(new ToolbarIcon("unlock",dp(14),MUTED));
         handle.addView(lockButton,new LinearLayout.LayoutParams(dp(28),dp(28)));
         drag.setBackgroundColor(Color.TRANSPARENT);lockButton.setBackgroundColor(Color.TRANSPARENT);
@@ -269,9 +271,9 @@ public final class MainActivity extends Activity {
                 return true;
             }
         });
-        padRow(new String[]{"backspace","up","clear"},new String[]{"退格","上","清屏 Ctrl+L"},new Runnable[]{()->sendKey(TerminalSession.Key.BACKSPACE),()->sendKey(TerminalSession.Key.UP),()->terminal.sendText("\f")});
-        padRow(new String[]{"left","return","right"},new String[]{"左","回车","右"},new Runnable[]{()->sendKey(TerminalSession.Key.LEFT),()->sendKey(TerminalSession.Key.ENTER),()->sendKey(TerminalSession.Key.RIGHT)});
-        padRow(new String[]{"","down",""},new String[]{"","下",""},new Runnable[]{null,()->sendKey(TerminalSession.Key.DOWN),null});
+        padRow(new String[]{"backspace","up","clear"},new String[]{tr(R.string.backspace),tr(R.string.up),tr(R.string.clear_screen_ctrl_l)},new Runnable[]{()->sendKey(TerminalSession.Key.BACKSPACE),()->sendKey(TerminalSession.Key.UP),()->terminal.sendText("\f")});
+        padRow(new String[]{"left","return","right"},new String[]{tr(R.string.left),tr(R.string.enter),tr(R.string.right)},new Runnable[]{()->sendKey(TerminalSession.Key.LEFT),()->sendKey(TerminalSession.Key.ENTER),()->sendKey(TerminalSession.Key.RIGHT)});
+        padRow(new String[]{"","down",""},new String[]{"",tr(R.string.down),""},new Runnable[]{null,()->sendKey(TerminalSession.Key.DOWN),null});
         pad.setVisibility(View.GONE);
     }
     private void padRow(String[] titles,String[] descriptions,Runnable[] actions) {
@@ -298,27 +300,27 @@ public final class MainActivity extends Activity {
         home=new ScrollView(this);home.setClipToPadding(false);home.setBackground(new HomeBackdrop());
         LinearLayout content=column();content.setClipChildren(false);content.setPadding(dp(16),0,dp(16),dp(110));home.addView(content);
         LinearLayout top=row();top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        top.addView(SampleUi.header(this,"inbox","Agent 收件箱",MUTED,()->startActivity(new Intent(this,AgentActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));
-        top.addView(SampleUi.header(this,"settings","设置",MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
+        top.addView(SampleUi.header(this,"inbox",tr(R.string.agent_inbox),MUTED,()->startActivity(new Intent(this,AgentActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));
+        top.addView(SampleUi.header(this,"settings",tr(R.string.settings),MUTED,()->startActivity(new Intent(this,SettingsActivity.class))),new LinearLayout.LayoutParams(dp(48),dp(56)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
         overview=new SessionOverview(this,stage,home,new SessionOverview.Actions(){
             public void open(String id){openTab(id);}public void close(String id){closeTab(id);}public void closeAll(){closeAllTabs();}
             public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
         });content.addView(overview.view());
-        LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,"连接");connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connectionHeaderParams.topMargin=dp(16);content.addView(connectionHeading,connectionHeaderParams);
+        LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,tr(R.string.connections));connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connectionHeaderParams.topMargin=dp(16);content.addView(connectionHeading,connectionHeaderParams);
         savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
         guideShown=getSharedPreferences("appearance",0).getBoolean("guide",true);if(guideShown){
-            LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,"发现 Shello");guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+            LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,tr(R.string.discover_shello));guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
             android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
             LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(16);content.addView(guideHeader,hp);
-            String[] names={"扫码配对","远端会话","收件箱与审批","终端主题","快捷键","文本选择"};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
+            String[] names={tr(R.string.qr_pairing),tr(R.string.remote_sessions),tr(R.string.inbox_and_approvals),tr(R.string.terminal_theme),tr(R.string.shortcuts),tr(R.string.text_selection)};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
             Runnable update=()->{int count=0;for(int i=0;i<names.length;i++)if(visited.getBoolean("viewed_"+i,false))count++;progress.setText(count+"/"+names.length);};update.run();
             HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout cards=row();scroll.addView(cards);content.addView(scroll);
             for(int i=0;i<names.length;i++){final int index=i;LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setBackground(SampleUi.touch(this,0xff191b1d,16));card.setContentDescription(names[i]);card.addView(SampleUi.icon(this,icons[i],0xff00ee00),new LinearLayout.LayoutParams(dp(26),dp(26)));TextView text=label(names[i],13,MUTED);text.setGravity(Gravity.CENTER);text.setPadding(0,dp(10),0,0);card.addView(text);
-                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,"远端会话","点击已保存的连接，选择远端 tmux 会话，或新建一个会话。切换、排序和关闭可从会话卡片操作。",null,"关闭","知道了",false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(new Intent(this,SettingsActivity.class).putExtra("page",index==3?"theme":index==4?"shortcuts":"gestures"));}});
+                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(new Intent(this,SettingsActivity.class).putExtra("page",index==3?"theme":index==4?"shortcuts":"gestures"));}});
                 LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(112),dp(100));cp.rightMargin=dp(8);cards.addView(card,cp);}
         }
         stage.addView(home,new FrameLayout.LayoutParams(-1,-1));home.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);
-        addConnection=SampleUi.header(this,"plus","新建 SSH 连接",Color.BLACK,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
+        addConnection=SampleUi.header(this,"plus",tr(R.string.new_ssh_connection),Color.BLACK,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
     }
     private final class HomeBackdrop extends android.graphics.drawable.Drawable {
         final android.graphics.Paint paint=new android.graphics.Paint();
@@ -327,9 +329,9 @@ public final class MainActivity extends Activity {
     }
     private void chooseConnection(){
         newConnectionDialog=new android.app.Dialog(this);LinearLayout panel=column();panel.setPadding(dp(20),dp(20),dp(20),dp(28));panel.setBackground(round(SampleUi.PANEL,28));
-        for(int i=0;i<2;i++){final boolean pair=i==0;LinearLayout card=column();card.setPadding(dp(22),dp(22),dp(22),dp(22));card.setBackground(SampleUi.touch(this,pair?0xff122c14:KEY,20));card.setContentDescription(pair?"扫码轻松配对":"使用自己的 SSH");
-            card.addView(label(pair?"最快":"熟悉 SSH",12,pair?0xff00ef00:MUTED));TextView title=label(pair?"扫码轻松配对":"使用自己的 SSH",22,TEXT);title.setPadding(0,dp(10),0,dp(10));title.setTypeface(null,Typeface.BOLD);card.addView(title);
-            card.addView(label(pair?"在 Mac 或 Linux 上运行一条命令，然后扫描二维码。手机会替你装好 SSH 公钥。":"填写主机名、用户和密钥或密码，通过 SSH + tmux 保留远端会话。",15,MUTED));TextView hint=label(pair?"推荐 · 约 1 分钟":"约 3 分钟 · 需要 SSH 登录信息",12,pair?0xff00ef00:MUTED);hint.setPadding(0,dp(16),0,0);card.addView(hint);
+        for(int i=0;i<2;i++){final boolean pair=i==0;LinearLayout card=column();card.setPadding(dp(22),dp(22),dp(22),dp(22));card.setBackground(SampleUi.touch(this,pair?0xff122c14:KEY,20));card.setContentDescription(pair?tr(R.string.pair_with_a_qr_code):tr(R.string.use_your_own_ssh));
+            card.addView(label(pair?tr(R.string.quickest):tr(R.string.know_ssh),12,pair?0xff00ef00:MUTED));TextView title=label(pair?tr(R.string.pair_with_a_qr_code):tr(R.string.use_your_own_ssh),22,TEXT);title.setPadding(0,dp(10),0,dp(10));title.setTypeface(null,Typeface.BOLD);card.addView(title);
+            card.addView(label(pair?tr(R.string.run_one_command_on_mac_or_linux_and_scan_its_qr_code_shello_insta):tr(R.string.enter_a_host_username_and_key_or_password_keep_remote_sessions_wi),15,MUTED));TextView hint=label(pair?tr(R.string.recommended_about_1_minute):tr(R.string.about_3_minutes_ssh_credentials_needed),12,pair?0xff00ef00:MUTED);hint.setPadding(0,dp(16),0,0);card.addView(hint);
             card.setOnClickListener(v->{newConnectionDialog.dismiss();startActivityForResult(new Intent(this,pair?PairingActivity.class:SshDiscoveryActivity.class),pair?74:73);});LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.bottomMargin=dp(12);panel.addView(card,cp);}
         newConnectionDialog.setContentView(panel);newConnectionDialog.show();Window w=newConnectionDialog.getWindow();w.setBackgroundDrawableResource(android.R.color.transparent);w.setGravity(Gravity.BOTTOM);w.setDimAmount(.55f);w.setLayout(-1,-2);
     }
@@ -339,25 +341,25 @@ public final class MainActivity extends Activity {
         for(SshProfileStore.Entry entry:store.list()){
             LinearLayout card=row();card.setPadding(dp(16),dp(12),dp(8),dp(12));card.setBackground(round(KEY,16));
             FrameLayout glyph=new FrameLayout(this);glyph.addView(SampleUi.icon(this,"server",MUTED),new FrameLayout.LayoutParams(dp(26),dp(26),Gravity.CENTER));
-            if(getSharedPreferences("appearance",0).getBoolean("hookStatus",true)){View dot=new View(this);dot.setContentDescription(hub.enabled(entry.id)?"Hook "+hub.states.getOrDefault(entry.id,"等待同步"):"Hook 未安装");dot.setBackground(round(hub.pending(entry.id)>0?0xffffc33d:hub.enabled(entry.id)&&"已连接".equals(hub.states.get(entry.id))?GREEN:0xffbd9036,4));FrameLayout.LayoutParams d=new FrameLayout.LayoutParams(dp(8),dp(8),Gravity.TOP|Gravity.RIGHT);d.topMargin=dp(10);glyph.addView(dot,d);}
+            if(getSharedPreferences("appearance",0).getBoolean("hookStatus",true)){View dot=new View(this);dot.setContentDescription(hub.enabled(entry.id)?"Hook "+tr(hub.states.getOrDefault(entry.id,R.string.waiting_to_sync)):tr(R.string.hook_not_installed));dot.setBackground(round(hub.pending(entry.id)>0?0xffffc33d:hub.enabled(entry.id)&&Integer.valueOf(R.string.connected).equals(hub.states.get(entry.id))?GREEN:0xffbd9036,4));FrameLayout.LayoutParams d=new FrameLayout.LayoutParams(dp(8),dp(8),Gravity.TOP|Gravity.RIGHT);d.topMargin=dp(10);glyph.addView(dot,d);}
             LinearLayout.LayoutParams gp=new LinearLayout.LayoutParams(dp(32),dp(48));gp.rightMargin=dp(16);card.addView(glyph,gp);
-            LinearLayout labels=column();TextView name=label(entry.name,20,TEXT);name.setTypeface(null,Typeface.BOLD);name.setSingleLine();name.setEllipsize(TextUtils.TruncateAt.END);labels.addView(name);TextView endpoint=label(entry.id.equals(connectingProfile)?"正在连接…":entry.user+"@"+entry.host+":"+entry.port,16,MUTED);endpoint.setTypeface(Typeface.MONOSPACE);endpoint.setSingleLine();endpoint.setEllipsize(TextUtils.TruncateAt.END);labels.addView(endpoint);card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
-            card.setContentDescription("连接 SSH "+entry.name);card.setFocusable(true);card.setOnClickListener(v->chooseSession(entry.id));
+            LinearLayout labels=column();TextView name=label(entry.name,20,TEXT);name.setTypeface(null,Typeface.BOLD);name.setSingleLine();name.setEllipsize(TextUtils.TruncateAt.END);labels.addView(name);TextView endpoint=label(entry.id.equals(connectingProfile)?tr(R.string.connecting):entry.user+"@"+entry.host+":"+entry.port,16,MUTED);endpoint.setTypeface(Typeface.MONOSPACE);endpoint.setSingleLine();endpoint.setEllipsize(TextUtils.TruncateAt.END);labels.addView(endpoint);card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+            card.setContentDescription(tr(R.string.connect_over_ssh_to_name,entry.name));card.setFocusable(true);card.setOnClickListener(v->chooseSession(entry.id));
             card.addView(SampleUi.icon(this,"right",MUTED),new LinearLayout.LayoutParams(dp(24),dp(24)));card.setOnLongClickListener(v->{showConnectionMenu(card,entry);return true;});LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(86));cp.bottomMargin=dp(12);savedConnections.addView(card,cp);
         }
-        if(hookAttention!=null){int needs=0;for(SshProfileStore.Entry e:store.list())if(!hub.enabled(e.id)||hub.pending(e.id)>0||!"已连接".equals(hub.states.get(e.id)))needs++;boolean show=getSharedPreferences("appearance",0).getBoolean("hookStatus",true);hookAttention.setText(needs>0&&show?"● "+needs:"");hookAttention.setContentDescription("Hook 需要处理 "+needs);}
-        if(savedConnections.getChildCount()==0)savedConnections.addView(label("点击 + 新建 SSH 连接",14,MUTED));
+        if(hookAttention!=null){int needs=0;for(SshProfileStore.Entry e:store.list())if(!hub.enabled(e.id)||hub.pending(e.id)>0||!Integer.valueOf(R.string.connected).equals(hub.states.get(e.id)))needs++;boolean show=getSharedPreferences("appearance",0).getBoolean("hookStatus",true);hookAttention.setText(needs>0&&show?"● "+needs:"");hookAttention.setContentDescription(AppLanguage.quantity(R.plurals.hook_attention_count,needs,needs));}
+        if(savedConnections.getChildCount()==0)savedConnections.addView(label(tr(R.string.tap_to_add_an_ssh_connection),14,MUTED));
     }
     private void showConnectionMenu(View anchor,SshProfileStore.Entry entry){
         showMenu(anchor,java.util.Arrays.asList(
-                new SampleUi.Action("编辑","编辑连接 "+entry.name,"edit",true,false,()->startActivityForResult(new Intent(this,SshDiscoveryActivity.class).putExtra("editProfile",entry.id),73)),
-                new SampleUi.Action("删除","删除连接 "+entry.name,"trash",true,true,()->deleteConnection(entry))));
+                new SampleUi.Action(tr(R.string.edit),tr(R.string.edit_connection_179_name,entry.name),"edit",true,false,()->startActivityForResult(new Intent(this,SshDiscoveryActivity.class).putExtra("editProfile",entry.id),73)),
+                new SampleUi.Action(tr(R.string.delete),tr(R.string.delete_connection_name,entry.name),"trash",true,true,()->deleteConnection(entry))));
     }
     private void deleteConnection(SshProfileStore.Entry entry){
         SshProfileStore store=new SshProfileStore(this);
-        connectionDeleteDialog=SampleUi.confirm(this,"删除连接？","删除 "+entry.name+" 的本机连接配置和登录凭据。",null,"取消","删除",true,null,()->{
+        connectionDeleteDialog=SampleUi.confirm(this,tr(R.string.delete_connection_182),tr(R.string.delete_connection_body,entry.name),null,tr(R.string.cancel),tr(R.string.delete),true,null,()->{
                     try{if(sshService!=null)sshService.closeProfile(entry.id);
-                        store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
+                        store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast(tr(R.string.deletion_failed_try_again));}
                 });
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
@@ -421,7 +423,7 @@ public final class MainActivity extends Activity {
     private void sendKey(TerminalSession.Key key){terminal.sendKey(key);}
     private void sendDraft(boolean enter) {
         String text=draft.getText().toString();if(text.isEmpty())return;
-        if(sshMode&&!sshConnected){toast("SSH 未连接，草稿已保留");return;}
+        if(sshMode&&!sshConnected){toast(tr(R.string.ssh_is_disconnected_draft_kept));return;}
         draftHistory.remove(text);draftHistory.add(0,text);if(draftHistory.size()>20)draftHistory.remove(20);
         // Explicit submission finishes this local draft; it is never sent during composition.
         terminal.sendText(text);if(enter)terminal.sendKey(TerminalSession.Key.ENTER);
@@ -436,11 +438,11 @@ public final class MainActivity extends Activity {
     }
     private void copySelection() {
         String text=terminal.getSelectedText();if(text.isEmpty())return;
-        ((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("Terminal",text));
-        terminal.clearSelection();toast("已复制");
+        ((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText(tr(R.string.terminal),text));
+        terminal.clearSelection();toast(tr(R.string.copied));
     }
     private void tools(View anchor) {
-        String[] titles={"回到底部","Unicode 示例","滚动示例","保存本地快照","恢复本地快照",sshMode?"重新连接 SSH":"连接 SSH","断开 SSH","返回离线演示","通知设置","后台运行设置","新建连接 · 局域网发现"};
+        String[] titles={tr(R.string.scroll_to_bottom),tr(R.string.unicode_demo),tr(R.string.scrolling_demo),tr(R.string.save_local_snapshot),tr(R.string.restore_local_snapshot),sshMode?tr(R.string.reconnect_ssh):tr(R.string.connect_ssh),tr(R.string.disconnect_ssh),tr(R.string.return_to_offline_demo),tr(R.string.notification_settings),tr(R.string.background_settings),tr(R.string.new_connection_lan_discovery)};
         String[] symbols={"down","chat","panel","paste","history","server","close","return","settings","settings","plus"};
         java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
         for(int i=0;i<titles.length;i++){
@@ -459,20 +461,20 @@ public final class MainActivity extends Activity {
                 case 10:startActivityForResult(new Intent(this,SshDiscoveryActivity.class),73);break;
                 case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
-                case 9:infoDialog=SampleUi.confirm(this,"后台会话与省电限制",
-                        "系统省电策略可能暂停联网或关闭应用，前台服务不能保证一直在线。\n\n"
-                        +"需要持续后台连接时，可在应用信息中查看省电策略。设置名称因手机而异。\n\n"
-                        +"网络恢复或重新打开应用后，会重新连接远端仍在运行的 tmux 会话。",null,
-                        "关闭","打开应用信息",false,null,()->startActivity(new Intent(
+                case 9:infoDialog=SampleUi.confirm(this,tr(R.string.background_sessions_and_battery_limits),
+                        tr(R.string.system_battery_policies_may_pause_networking_or_close_the_app_a_f)
+                        +tr(R.string.for_background_connectivity_review_battery_policies_in_app_info_s)
+                        +tr(R.string.when_networking_returns_or_the_app_reopens_shello_reconnects_to_t),null,
+                        tr(R.string.close),tr(R.string.open_app_info),false,null,()->startActivity(new Intent(
                                 android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 android.net.Uri.parse("package:"+getPackageName()))));break;
                 case 6:disconnectSsh();break;
-                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");demo();break;
+                case 7:returnOffline();sshMode=false;subtitle.setText(tr(R.string.local_terminal));protocolBadge.setText(tr(R.string.local));demo();break;
                 case 0:terminal.scrollToBottom();break;
                 case 1:demo();break;
-                case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
-                case 3:checkpoint=session.checkpoint();toast("已保存本地快照");break;
-                case 4:TerminalSession restored=TerminalSession.restore(checkpoint);terminal.setSession(null);session.close();session=restored;if(shownTab!=null&&!shownTab.remote())shownTab.local=restored;terminal.setSession(session);toast("已恢复本地快照");break;
+                case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,tr(R.string.unicode_scrollback_line),i));break;
+                case 3:checkpoint=session.checkpoint();toast(tr(R.string.local_snapshot_saved));break;
+                case 4:TerminalSession restored=TerminalSession.restore(checkpoint);terminal.setSession(null);session.close();session=restored;if(shownTab!=null&&!shownTab.remote())shownTab.local=restored;terminal.setSession(session);toast(tr(R.string.local_snapshot_restored));break;
                 default:break;
             }
     }
@@ -519,9 +521,9 @@ public final class MainActivity extends Activity {
             session=remote;serviceSession=remote!=null;terminal.setSession(session);appliedTheme=null;
         }
         sshMode=next!=null&&next.remote();sshConnected=sshService.connected();
-        protocolBadge.setText(sshMode?"SSH":"LOCAL");
+        protocolBadge.setText(sshMode?"SSH":tr(R.string.local));
         subtitle.setText(sshMode?sshService.profileName()+" · "+sshService.status()
-                +(sshService.active()&&!notificationsVisible()?" · 通知已关闭":""):"本地终端");
+                +(sshService.active()&&!notificationsVisible()?tr(R.string.notifications_off):""):tr(R.string.local_terminal));
         applyAppearance();
         if(overview!=null)overview.refresh(sshService.tabs());
         if(next==null&&!minimized)minimize();
@@ -529,7 +531,7 @@ public final class MainActivity extends Activity {
     private void applyAppearance(){
         if(terminal==null)return;android.content.SharedPreferences prefs=getSharedPreferences("appearance",0);terminal.setFontSize(prefs.getInt("fontSize",14));terminal.setSelectionEnabled(prefs.getBoolean("selection",true));
         for(int i=0;i<toolbar.getChildCount();i++){View tool=toolbar.getChildAt(i);Object tag=tool.getTag();if(tag instanceof String&&java.util.Arrays.asList("history","paste","chat","pad").contains(tag))tool.setVisibility(prefs.getBoolean("tool_"+tag,true)?View.VISIBLE:View.GONE);}
-        String theme=ThemePreferences.current(prefs);if(session!=null&&!theme.equals(appliedTheme)){appliedTheme=theme;String fg=theme.equals("浅色")?"#202124":"#d4d4d4",bg=theme.equals("浅色")?"#f5f5f5":theme.equals("黑色")?"#000000":"#1e1e1e";session.write(("\033]10;"+fg+"\007\033]11;"+bg+"\007").getBytes(StandardCharsets.UTF_8));}
+        String theme=ThemePreferences.current(prefs);if(session!=null&&!theme.equals(appliedTheme)){appliedTheme=theme;String fg=theme.equals("light")?"#202124":"#d4d4d4",bg=theme.equals("light")?"#f5f5f5":theme.equals("black")?"#000000":"#1e1e1e";session.write(("\033]10;"+fg+"\007\033]11;"+bg+"\007").getBytes(StandardCharsets.UTF_8));}
     }
     private void detachServiceView(){
         if(serviceSession){terminal.setSession(null);session=null;serviceSession=false;}
@@ -550,7 +552,7 @@ public final class MainActivity extends Activity {
         // Permission denial does not prevent an SSH foreground service; automatic recovery never re-prompts.
         String rejected=SshSessionService.requestConnect(this,pendingProfile,!requestNotification);
         if(rejected==null){pendingProfile=null;if(requestNotification||!minimized)resumeSession();}
-        if(rejected!=null){subtitle.setText("本机 · 系统暂不允许启动会话");toast("请回到应用后重新连接 SSH");}
+        if(rejected!=null){subtitle.setText(tr(R.string.local_cannot_start_a_session_right_now));toast(tr(R.string.return_to_the_app_and_reconnect_ssh));}
     }
     private void disconnectSsh(){if(sshService!=null)sshService.disconnect();}
     private void returnOffline(){
@@ -559,26 +561,26 @@ public final class MainActivity extends Activity {
     private void sendInput(byte[] bytes) {
         String text=new String(bytes,StandardCharsets.UTF_8);
         if(ctrlArmed){setCtrl(false);if(text.length()==1&&text.charAt(0)>=64&&text.charAt(0)<128)text=Character.toString((char)(text.charAt(0)&31));}
-        if(sshMode){if(sshConnected&&sshService!=null)sshService.send(text.getBytes(StandardCharsets.UTF_8));else toast("SSH 未连接");return;}
+        if(sshMode){if(sshConnected&&sshService!=null)sshService.send(text.getBytes(StandardCharsets.UTF_8));else toast(tr(R.string.ssh_disconnected));return;}
         if(text.equals("\r")||text.equals("\n")){write("\r\n");return;}
         if(text.equals("\f")){write("\033[2J\033[H");return;}
-        if(text.equals("\u007f")||text.equals("\b")){toast("退格");return;}
+        if(text.equals("\u007f")||text.equals("\b")){toast(tr(R.string.backspace));return;}
         if(text.codePoints().anyMatch(cp->cp<32&&cp!='\n'&&cp!='\t')){
             String display=text.replace("\033","Esc ");
             if(text.length()==1&&text.charAt(0)<27)display="Ctrl+"+(char)(text.charAt(0)+64);
-            toast("按键："+display);return;
+            toast(tr(R.string.key_feedback,display));return;
         }
         write(text.replace("\n","\r\n"));
     }
     private void demo() {
         write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007"
                 +"\033[1;32mShello\033[0m\r\n\r\n"
-                +"本地交互演示\r\n输入仅在此回显，不执行命令。\r\n\r\n"
-                +"\033[32m›\033[0m 中文输入 · 滚动 · 长按选择\r\n\r\n"
+                +tr(R.string.local_demo_intro)
+                +tr(R.string.local_demo_gestures)
                 +"\033[?2027h👨‍👩‍👧‍👦  👍🏽  🇨🇳  1️⃣  👩‍❤️‍👩\r\n"
                 +"🧑🏽‍🚀  👩🏻‍🤝‍👨🏿  é\r\n\r\n"
-                +"Ctrl / Esc / Tab   方向键浮板\r\n\r\n"
-                +"点击气泡编辑文本，点击键盘直接输入。\r\n长按发送仅输入文字，不附加回车。\r\n\r\n\033[32m›\033[0m ");
+                +tr(R.string.local_demo_keys)
+                +tr(R.string.local_demo_help));
     }
     @android.annotation.TargetApi(30) private void applyModernInsets() {
         root.setOnApplyWindowInsetsListener((v,insets)->{

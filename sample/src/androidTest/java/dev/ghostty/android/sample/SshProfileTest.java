@@ -94,13 +94,13 @@ public class SshProfileTest {
                 String encryptedId=store.save(d);try{Result roundTrip=verify(store.read(store.directory(encryptedId)));assertTrue(roundTrip.error,roundTrip.verified);}finally{store.delete(encryptedId);}
                 d.passphrase="incorrect-passphrase";Result locked=verify(d);assertFalse(locked.verified);assertNull(locked.key);
             }
-            if(password){d.password="deliberately-incorrect";Result rejected=verify(d);assertFalse(rejected.verified);assertNull(rejected.key);assertTrue(rejected.error.contains("认证失败"));}
+            if(password){d.password="deliberately-incorrect";Result rejected=verify(d);assertFalse(rejected.verified);assertNull(rejected.key);assertTrue(rejected.error.contains(AppLanguage.tr(R.string.authentication_failed_check_your_username_password_or_private_key)));}
             d=draft(password);d.knownHosts=first.key.clone();
             // A valid but different host key must fail closed, with no new trust prompt.
             String line=new String(d.knownHosts,StandardCharsets.UTF_8);String[] fields=line.trim().split(" ");
             byte[] key=android.util.Base64.decode(fields[2],0);key[key.length-1]^=1;
             d.knownHosts=(fields[0]+" "+fields[1]+" "+android.util.Base64.encodeToString(key,android.util.Base64.NO_WRAP)+"\n").getBytes(StandardCharsets.UTF_8);
-            Result changed=verify(d);assertFalse(changed.verified);assertNull(changed.key);assertTrue(changed.error,changed.error.contains("指纹"));
+            Result changed=verify(d);assertFalse(changed.verified);assertNull(changed.key);assertTrue(changed.error,changed.error.contains(AppLanguage.tr(R.string.server_fingerprint_mismatch_connection_stopped)));
         }
     }
     private static final class Output implements SshTransport.Listener {

@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -79,7 +81,7 @@ final class SampleUi {
         final TextView title;
         NavigationBar(Context context,String text,Runnable back){
             super(context);setOrientation(HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);setMinimumHeight(dp(context,56));
-            addView(header(context,"back","返回",TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
+            addView(header(context,"back",tr(R.string.back),TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
             title=SampleUi.text(context,text,20,TEXT);title.setIncludeFontPadding(false);
             title.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));title.setSingleLine();title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.leftMargin=dp(context,16);p.rightMargin=dp(context,16);addView(title,p);

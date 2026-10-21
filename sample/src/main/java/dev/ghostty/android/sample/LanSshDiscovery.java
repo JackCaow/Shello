@@ -1,5 +1,7 @@
 package dev.ghostty.android.sample;
 
+import static dev.ghostty.android.sample.AppLanguage.tr;
+
 import android.content.Context;
 import android.net.*;
 import android.net.nsd.*;
@@ -29,7 +31,7 @@ final class LanSshDiscovery implements AutoCloseable {
             this.network=network;addresses=targets(local,prefix);
             int effective=Math.max(prefix,24);
             long ip=number(local.getAddress()), mask=(0xffffffffL<<(32-effective))&0xffffffffL;
-            label=dotted(ip&mask)+"/"+effective+(prefix<24?"（仅扫描本机所在 /24）":"");
+            label=dotted(ip&mask)+"/"+effective+(prefix<24?tr(R.string.scanning_this_device_s_24_subnet_only):"");
         }
         String identity(){return network+":"+label+":"+addresses.toString()+":"+dnsServers.toString();}
     }
@@ -143,7 +145,7 @@ final class LanSshDiscovery implements AutoCloseable {
         return null;
     }
     private void publish(){if(!closed)listener.update(new ArrayList<>(found.values()),scanning,
-            (scanning?"正在扫描 ":"扫描完成 · ")+scope.label);}
+            (scanning?tr(R.string.scanning):tr(R.string.scan_complete))+scope.label);}
     private void finish(){
         if(closed||!scanning)return;
         scanning=false;stopWork();main.removeCallbacksAndMessages(null);publish();

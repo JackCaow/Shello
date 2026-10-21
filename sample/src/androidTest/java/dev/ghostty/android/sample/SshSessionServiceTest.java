@@ -15,7 +15,7 @@ import static org.junit.Assume.assumeTrue;
 
 /** Opt-in real fixture check: recreate() must not recreate the service-owned VT or stop SSH. */
 public class SshSessionServiceTest {
-    @Test public void recreationKeepsServiceAndTerminalUntilExplicitDisconnect() throws Exception {
+    @Test public void languageChangeKeepsServiceAndTerminalUntilExplicitDisconnect() throws Exception {
         Instrumentation instrumentation=InstrumentationRegistry.getInstrumentation();
         Context context=instrumentation.getTargetContext();
         File profile=new File(context.getFilesDir(),"ssh/connection.properties");
@@ -40,6 +40,7 @@ public class SshSessionServiceTest {
             public void onServiceConnected(ComponentName n,IBinder b){owner.set(((SshSessionService.LocalBinder)b).service());bound.countDown();}
             public void onServiceDisconnected(ComponentName n){}
         };
+        String originalLanguage=AppLanguage.choice(context);
         Activity first=null,second=null;
         boolean binding=false;
         app.registerActivityLifecycleCallbacks(lifecycle);
@@ -60,7 +61,10 @@ public class SshSessionServiceTest {
             assertNotNull("SSH did not connect",terminal.get());
             assertTrue("Successful tmux attach must permit reopen recovery",new SshResumeState(context).pending());
             Activity original=first;
-            instrumentation.runOnMainSync(original::recreate);
+            instrumentation.runOnMainSync(()->{
+                AppLanguage.select(context,originalLanguage.equals("zh-CN")?"en":"zh-CN");
+                if(Build.VERSION.SDK_INT<33)original.recreate();
+            });
             second=resumed.poll(5,TimeUnit.SECONDS);
             assertNotNull(second);assertNotSame(first,second);
             instrumentation.runOnMainSync(()->{
@@ -76,6 +80,7 @@ public class SshSessionServiceTest {
             instrumentation.runOnMainSync(()->{if(owner.get()!=null)owner.get().disconnect();if(last!=null)last.finish();});
             if(binding)app.unbindService(connection);
             app.unregisterActivityLifecycleCallbacks(lifecycle);
+            instrumentation.runOnMainSync(()->AppLanguage.select(context,originalLanguage));
         }
     }
 }

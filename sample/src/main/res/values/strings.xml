@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cannot_read_this_connection_go_back_and_try_again" formatted="false">"Cannot read this connection. Go back and try again."</string>
+    <string name="new_connection" formatted="false">"New connection"</string>
+    <string name="edit_connection" formatted="false">"Edit connection"</string>
+    <string name="save_connection_changes" formatted="false">"Save connection changes"</string>
+    <string name="name" formatted="false">"Name"</string>
+    <string name="my_mac" formatted="false">"My Mac"</string>
+    <string name="connection_name" formatted="false">"Connection name"</string>
+    <string name="discovering" formatted="false">"Discovering…"</string>
+    <string name="discover_ssh_servers_on_your_network" formatted="false">"Discover SSH servers on your network"</string>
+    <string name="host" formatted="false">"Host"</string>
+    <string name="ssh_host_address" formatted="false">"SSH host address"</string>
+    <string name="port" formatted="false">"Port"</string>
+    <string name="ssh_port" formatted="false">"SSH port"</string>
+    <string name="scan_again" formatted="false">"Scan again"</string>
+    <string name="scan_the_network_for_ssh_servers_again" formatted="false">"Scan the network for SSH servers again"</string>
+    <string name="username" formatted="false">"Username"</string>
+    <string name="username_on_the_server" formatted="false">"Username on the server"</string>
+    <string name="ssh_username" formatted="false">"SSH username"</string>
+    <string name="authentication" formatted="false">"Authentication"</string>
+    <string name="password" formatted="false">"Password"</string>
+    <string name="private_key" formatted="false">"Private key"</string>
+    <string name="login_password" formatted="false">"Login password"</string>
+    <string name="ssh_login_password" formatted="false">"SSH login password"</string>
+    <string name="choose_private_key" formatted="false">"Choose private key"</string>
+    <string name="import_ssh_private_key" formatted="false">"Import SSH private key"</string>
+    <string name="openssh_pem_private_keys_supported" formatted="false">"OpenSSH / PEM private keys supported"</string>
+    <string name="key_passphrase_optional" formatted="false">"Key passphrase (optional)"</string>
+    <string name="ssh_key_passphrase" formatted="false">"SSH key passphrase"</string>
+    <string name="keep_remote_session" formatted="false">"Keep remote session"</string>
+    <string name="keep_remote_sessions_with_tmux" formatted="false">"Keep remote sessions with tmux"</string>
+    <string name="install_tmux_on_the_server_to_return_to_your_shell_and_editor_aft" formatted="false">"Install tmux on the server to return to your shell and editor after reconnecting."</string>
+    <string name="verify_the_server_fingerprint_on_first_connection_connections_are" formatted="false">"Verify the server fingerprint on first connection. Connections are saved after authentication; credentials are encrypted on this device."</string>
+    <string name="save_and_connect" formatted="false">"Save and connect"</string>
+    <string name="save_changes_and_connect" formatted="false">"Save changes and connect"</string>
+    <string name="save_and_connect_over_ssh" formatted="false">"Save and connect over SSH"</string>
+    <string name="private_key_saved_choose_a_file_to_replace_it" formatted="false">"Private key saved · Choose a file to replace it"</string>
+    <string name="password_saved_leave_blank_to_keep" formatted="false">"Password saved (leave blank to keep)"</string>
+    <string name="passphrase_saved_leave_blank_to_keep" formatted="false">"Passphrase saved (leave blank to keep)"</string>
+    <string name="changes_are_saved_after_verification_then_the_connection_reopens" formatted="false">"Changes are saved after verification, then the connection reopens. Cancelling or failed verification keeps the original settings."</string>
+    <string name="network_access_was_denied_check_permissions" formatted="false">"Network access was denied. Check permissions."</string>
+    <string name="connect_to_wi_fi_and_try_again_ipv4_lan_required" formatted="false">"Connect to Wi-Fi and try again (IPv4 LAN required)."</string>
+    <string name="discover_servers" formatted="false">"Discover servers"</string>
+    <string name="no_ssh_servers_found_make_sure_ssh_is_enabled_on_your_computer" formatted="false">"No SSH servers found. Make sure SSH is enabled on your computer."</string>
+    <string name="only_hosts_responding_with_an_ssh_banner_on_port_22_are_shown" formatted="false">"Only hosts responding with an SSH banner on port 22 are shown."</string>
+    <string name="local_ssh_server_list" formatted="false">"Local SSH server list"</string>
+    <string name="local_ssh_servers" formatted="false">"Local SSH servers"</string>
+    <string name="close_server_list" formatted="false">"Close server list"</string>
+    <string name="scan_for_servers_again" formatted="false">"Scan for servers again"</string>
+    <string name="looking_for_ssh_servers_on_your_network" formatted="false">"Looking for SSH servers on your network…"</string>
+    <string name="no_servers_found_scan_again_or_enter_an_address_manually" formatted="false">"No servers found. Scan again or enter an address manually."</string>
+    <string name="verification_paused_connect_again_to_continue" formatted="false">"Verification paused. Connect again to continue."</string>
+    <string name="no_file_picker_is_available_on_this_device" formatted="false">"No file picker is available on this device."</string>
+    <string name="cannot_read_this_key_choose_an_openssh_pem_private_key_no_larger" formatted="false">"Cannot read this key. Choose an OpenSSH / PEM private key no larger than 1 MB."</string>
+    <string name="verifying_connection" formatted="false">"Verifying connection…"</string>
+    <string name="waiting_for_fingerprint_confirmation" formatted="false">"Waiting for fingerprint confirmation"</string>
+    <string name="connection_cancelled_server_not_saved" formatted="false">"Connection cancelled. Server not saved."</string>
+    <string name="verify_server_fingerprint" formatted="false">"Verify server fingerprint"</string>
+    <string name="compare_this_fingerprint_with_your_server_s_fingerprint_login_cre" formatted="false">"Compare this fingerprint with your server\'s fingerprint. Login credentials are sent only after you confirm."</string>
+    <string name="cancel" formatted="false">"Cancel"</string>
+    <string name="trust_and_connect" formatted="false">"Trust and connect"</string>
+    <string name="connection_verified_but_saving_failed_check_device_storage_and_tr" formatted="false">"Connection verified, but saving failed. Check device storage and try again."</string>
+    <string name="verification_paused_original_connection_unchanged" formatted="false">"Verification paused. Original connection unchanged."</string>
+    <string name="discard_changes" formatted="false">"Discard changes?"</string>
+    <string name="unsaved_changes_will_be_lost_your_original_connection_will_be_kep" formatted="false">"Unsaved changes will be lost. Your original connection will be kept."</string>
+    <string name="keep_editing" formatted="false">"Keep editing"</string>
+    <string name="discard_changes_71" formatted="false">"Discard changes"</string>
+    <string name="recent" formatted="false">"Recent"</string>
+    <string name="skip" formatted="false">"Skip"</string>
+    <string name="skip_tmux_and_open_a_shell" formatted="false">"Skip tmux and open a shell"</string>
+    <string name="new_tmux_session" formatted="false">"＋ New tmux session"</string>
+    <string name="new_tmux_session_76" formatted="false">"New tmux session"</string>
+    <string name="install_the_host_helper_to_browse_claude_code_and_codex_history" formatted="false">"Install the host helper to browse Claude Code and Codex history."</string>
+    <string name="set_up_hook" formatted="false">"Set up Hook"</string>
+    <string name="loading_remote_sessions" formatted="false">"Loading remote sessions…"</string>
+    <string name="active" formatted="false">" · Active"</string>
+    <string name="no_claude_code_or_codex_history_yet" formatted="false">"No Claude Code or Codex history yet."</string>
+    <string name="no_remote_sessions_create_one_or_skip_to_a_shell" formatted="false">"No remote sessions. Create one or skip to a shell."</string>
+    <string name="ssh_is_connected_but_tmux_is_unavailable_you_can_skip_to_open_a_s" formatted="false">"SSH is connected, but tmux is unavailable. You can skip to open a shell."</string>
+    <string name="connection_failed_check_your_network_credentials_and_server_finge" formatted="false">"Connection failed. Check your network, credentials and server fingerprint."</string>
+    <string name="cannot_load_agent_history_check_the_connection_and_update_the_hos" formatted="false">"Cannot load agent history. Check the connection and update the host helper in Settings."</string>
+    <string name="cannot_load_tmux_sessions_check_your_network_credentials_and_tmux" formatted="false">"Cannot load tmux sessions. Check your network, credentials and tmux installation."</string>
+    <string name="retry" formatted="false">"Retry"</string>
+    <string name="back_to_projects" formatted="false">"‹ Back to projects"</string>
+    <string name="just_now" formatted="false">"Just now"</string>
+    <string name="agent_event" formatted="false">"Agent event"</string>
+    <string name="connected" formatted="false">"Connected"</string>
+    <string name="cannot_read_hook_check_the_connection_or_reinstall" formatted="false">"Cannot read Hook. Check the connection or reinstall."</string>
+    <string name="an_agent_needs_your_response" formatted="false">"An agent needs your response"</string>
+    <string name="new_agent_event" formatted="false">"New agent event"</string>
+    <string name="hook_installed_start_a_new_claude_code_session_to_use_it" formatted="false">"Hook installed. Start a new Claude Code session to use it."</string>
+    <string name="hook_uninstalled" formatted="false">"Hook uninstalled"</string>
+    <string name="operation_failed_check_ssh_python_3_and_remote_directory_permissi" formatted="false">"Operation failed. Check SSH, Python 3 and remote directory permissions."</string>
+    <string name="responded" formatted="false">"Responded"</string>
+    <string name="not_delivered_or_expired_refresh_to_confirm" formatted="false">"Not delivered or expired. Refresh to confirm."</string>
+    <string name="scanning_this_device_s_24_subnet_only" formatted="false">" (scanning this device\'s /24 subnet only)"</string>
+    <string name="scanning" formatted="false">"Scanning "</string>
+    <string name="scan_complete" formatted="false">"Scan complete · "</string>
+    <string name="copied" formatted="false">"Copied"</string>
+    <string name="local_service_stopped" formatted="false">"Local · Service stopped"</string>
+    <string name="ssh_terminal" formatted="false">"SSH terminal"</string>
+    <string name="local_terminal" formatted="false">"Local terminal"</string>
+    <string name="local_demo_banner" formatted="false">"\u001b]10;#d4d4d4\u0007\u001b]11;#1e1e1e\u0007\u001b]12;#00d86c\u0007Local demo · Offline echo\u000d\n\u000d\n› "</string>
+    <string name="minimize_session" formatted="false">"Minimize session"</string>
+    <string name="session_tools" formatted="false">"Session tools"</string>
+    <string name="ctrl_combine_with_the_next_key" formatted="false">"Ctrl: combine with the next key"</string>
+    <string name="direction_pad" formatted="false">"Direction pad"</string>
+    <string name="paste_into_draft" formatted="false">"Paste into draft"</string>
+    <string name="input_history" formatted="false">"Input history"</string>
+    <string name="edit_text" formatted="false">"Edit text"</string>
+    <string name="show_or_hide_keyboard" formatted="false">"Show or hide keyboard"</string>
+    <string name="type_a_message" formatted="false">"Type a message…"</string>
+    <string name="local_text_draft" formatted="false">"Local text draft"</string>
+    <string name="add_text" formatted="false">"Add text"</string>
+    <string name="terminal_tools" formatted="false">"Terminal tools"</string>
+    <string name="close_editor_and_keep_draft" formatted="false">"Close editor and keep draft"</string>
+    <string name="voice_input_not_available_yet" formatted="false">"Voice input (not available yet)"</string>
+    <string name="send_and_press_enter_long_press_to_send_text_only" formatted="false">"Send and press Enter; long-press to send text only"</string>
+    <string name="paste_text" formatted="false">"Paste text"</string>
+    <string name="attachments_not_available_yet" formatted="false">"Attachments (not available yet)"</string>
+    <string name="no_input_history" formatted="false">"No input history"</string>
+    <string name="copy" formatted="false">"Copy"</string>
+    <string name="copy_selection" formatted="false">"Copy selection"</string>
+    <string name="clear_selection" formatted="false">"Clear selection"</string>
+    <string name="drag_direction_pad" formatted="false">"Drag direction pad"</string>
+    <string name="lock_direction_pad_position" formatted="false">"Lock direction pad position"</string>
+    <string name="unlock_direction_pad_position" formatted="false">"Unlock direction pad position"</string>
+    <string name="backspace" formatted="false">"Backspace"</string>
+    <string name="up" formatted="false">"Up"</string>
+    <string name="clear_screen_ctrl_l" formatted="false">"Clear screen (Ctrl+L)"</string>
+    <string name="left" formatted="false">"Left"</string>
+    <string name="enter" formatted="false">"Enter"</string>
+    <string name="right" formatted="false">"Right"</string>
+    <string name="down" formatted="false">"Down"</string>
+    <string name="agent_inbox" formatted="false">"Agent inbox"</string>
+    <string name="settings" formatted="false">"Settings"</string>
+    <string name="connections" formatted="false">"Connections"</string>
+    <string name="discover_shello" formatted="false">"Discover Shello"</string>
+    <string name="qr_pairing" formatted="false">"QR pairing"</string>
+    <string name="remote_sessions" formatted="false">"Remote sessions"</string>
+    <string name="inbox_and_approvals" formatted="false">"Inbox and approvals"</string>
+    <string name="terminal_theme" formatted="false">"Terminal theme"</string>
+    <string name="shortcuts" formatted="false">"Shortcuts"</string>
+    <string name="text_selection" formatted="false">"Text selection"</string>
+    <string name="tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session" formatted="false">"Tap a saved connection to choose or create a remote tmux session. Use session cards to switch, reorder or close sessions."</string>
+    <string name="close" formatted="false">"Close"</string>
+    <string name="got_it" formatted="false">"Got it"</string>
+    <string name="new_ssh_connection" formatted="false">"New SSH connection"</string>
+    <string name="pair_with_a_qr_code" formatted="false">"Pair with a QR code"</string>
+    <string name="use_your_own_ssh" formatted="false">"Use your own SSH"</string>
+    <string name="quickest" formatted="false">"Quickest"</string>
+    <string name="know_ssh" formatted="false">"Know SSH?"</string>
+    <string name="run_one_command_on_mac_or_linux_and_scan_its_qr_code_shello_insta" formatted="false">"Run one command on Mac or Linux and scan its QR code. Shello installs your SSH public key for you."</string>
+    <string name="enter_a_host_username_and_key_or_password_keep_remote_sessions_wi" formatted="false">"Enter a host, username and key or password. Keep remote sessions with SSH + tmux."</string>
+    <string name="recommended_about_1_minute" formatted="false">"Recommended · About 1 minute"</string>
+    <string name="about_3_minutes_ssh_credentials_needed" formatted="false">"About 3 minutes · SSH credentials needed"</string>
+    <string name="waiting_to_sync" formatted="false">"Waiting to sync"</string>
+    <string name="hook_not_installed" formatted="false">"Hook not installed"</string>
+    <string name="connecting" formatted="false">"Connecting…"</string>
+    <string name="tap_to_add_an_ssh_connection" formatted="false">"Tap + to add an SSH connection"</string>
+    <string name="edit" formatted="false">"Edit"</string>
+    <string name="delete" formatted="false">"Delete"</string>
+    <string name="delete_connection_182" formatted="false">"Delete connection?"</string>
+    <string name="deletion_failed_try_again" formatted="false">"Deletion failed. Try again."</string>
+    <string name="ssh_is_disconnected_draft_kept" formatted="false">"SSH is disconnected. Draft kept."</string>
+    <string name="scroll_to_bottom" formatted="false">"Scroll to bottom"</string>
+    <string name="unicode_demo" formatted="false">"Unicode demo"</string>
+    <string name="scrolling_demo" formatted="false">"Scrolling demo"</string>
+    <string name="save_local_snapshot" formatted="false">"Save local snapshot"</string>
+    <string name="restore_local_snapshot" formatted="false">"Restore local snapshot"</string>
+    <string name="reconnect_ssh" formatted="false">"Reconnect SSH"</string>
+    <string name="connect_ssh" formatted="false">"Connect SSH"</string>
+    <string name="disconnect_ssh" formatted="false">"Disconnect SSH"</string>
+    <string name="return_to_offline_demo" formatted="false">"Return to offline demo"</string>
+    <string name="notification_settings" formatted="false">"Notification settings"</string>
+    <string name="background_settings" formatted="false">"Background settings"</string>
+    <string name="new_connection_lan_discovery" formatted="false">"New connection · LAN discovery"</string>
+    <string name="background_sessions_and_battery_limits" formatted="false">"Background sessions and battery limits"</string>
+    <string name="system_battery_policies_may_pause_networking_or_close_the_app_a_f" formatted="false">"System battery policies may pause networking or close the app. A foreground service cannot guarantee a constant connection.\n\n"</string>
+    <string name="for_background_connectivity_review_battery_policies_in_app_info_s" formatted="false">"For background connectivity, review battery policies in App info. Settings vary by device.\n\n"</string>
+    <string name="when_networking_returns_or_the_app_reopens_shello_reconnects_to_t" formatted="false">"When networking returns or the app reopens, Shello reconnects to tmux sessions still running on the server."</string>
+    <string name="open_app_info" formatted="false">"Open App info"</string>
+    <string name="unicode_scrollback_line" formatted="false">"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\u000d\n"</string>
+    <string name="local_snapshot_saved" formatted="false">"Local snapshot saved"</string>
+    <string name="local_snapshot_restored" formatted="false">"Local snapshot restored"</string>
+    <string name="notifications_off" formatted="false">" · Notifications off"</string>
+    <string name="light" formatted="false">"Light"</string>
+    <string name="black" formatted="false">"Black"</string>
+    <string name="local_cannot_start_a_session_right_now" formatted="false">"Local · Cannot start a session right now"</string>
+    <string name="return_to_the_app_and_reconnect_ssh" formatted="false">"Return to the app and reconnect SSH."</string>
+    <string name="ssh_disconnected" formatted="false">"SSH disconnected"</string>
+    <string name="local_demo_intro" formatted="false">"Local interactive demo\u000d\nInput is echoed here; commands are not executed.\u000d\n\u000d\n"</string>
+    <string name="local_demo_gestures" formatted="false">"\u001b[32m›\u001b[0m Chinese input · Scroll · Long-press to select\u000d\n\u000d\n"</string>
+    <string name="local_demo_keys" formatted="false">"Ctrl / Esc / Tab   Direction pad\u000d\n\u000d\n"</string>
+    <string name="local_demo_help" formatted="false">"Tap the bubble to edit text or the keyboard to type directly.\u000d\nLong-press Send to send text without Enter.\u000d\n\u000d\n\u001b[32m›\u001b[0m "</string>
+    <string name="server_fingerprint_mismatch_connection_stopped_verify_the_key_wit" formatted="false">"Server fingerprint mismatch. Connection stopped. Verify the key with your server administrator."</string>
+    <string name="tmux_is_unavailable_install_it_on_the_server_or_turn_off_keep_rem" formatted="false">"tmux is unavailable. Install it on the server or turn off Keep remote session and try again."</string>
+    <string name="authentication_failed_check_your_username_password_or_private_key" formatted="false">"Authentication failed. Check your username, password or private key."</string>
+    <string name="cannot_read_the_private_key_check_its_format_and_passphrase" formatted="false">"Cannot read the private key. Check its format and passphrase."</string>
+    <string name="server_fingerprint_mismatch_connection_stopped" formatted="false">"Server fingerprint mismatch. Connection stopped."</string>
+    <string name="cannot_reach_the_server_check_the_address_port_and_network_then_t" formatted="false">"Cannot reach the server. Check the address, port and network, then try again."</string>
+    <string name="ssh_connection_failed_check_authentication_and_server_settings" formatted="false">"SSH connection failed. Check authentication and server settings."</string>
+    <string name="back" formatted="false">"Back"</string>
+    <string name="connect_your_computer" formatted="false">"Connect your computer"</string>
+    <string name="run_the_pairing_command_then_place_the_qr_code_in_the_frame" formatted="false">"Run the pairing command, then place the QR code in the frame"</string>
+    <string name="opening_camera" formatted="false">"Opening camera…"</string>
+    <string name="copy_command" formatted="false">"Copy command"</string>
+    <string name="copy_pairing_command" formatted="false">"Copy pairing command"</string>
+    <string name="shello_pairing_command" formatted="false">"Shello pairing command"</string>
+    <string name="scan_from_image" formatted="false">"Scan from image"</string>
+    <string name="choose_a_saved_pairing_qr_code" formatted="false">"Choose a saved pairing QR code"</string>
+    <string name="about_pairing" formatted="false">"About pairing"</string>
+    <string name="enable_ssh_and_install_tmux_on_your_computer_first_your_private_k" formatted="false">"Enable SSH and install tmux on your computer first. Your private key is generated and encrypted on this device; only the public key is installed on the computer. The QR code pins the HTTPS certificate and contains a one-time token that expires after 3 minutes."</string>
+    <string name="point_at_a_qr_code_to_scan" formatted="false">"Point at a QR code to scan"</string>
+    <string name="camera_unavailable_reopen_this_page_or_scan_from_an_image" formatted="false">"Camera unavailable. Reopen this page or scan from an image."</string>
+    <string name="camera_access_is_off_scan_from_an_image_or_allow_camera_access_in" formatted="false">"Camera access is off. Scan from an image or allow camera access in system settings."</string>
+    <string name="invalid_or_expired_qr_code_generate_a_new_pairing_code" formatted="false">"Invalid or expired QR code. Generate a new pairing code."</string>
+    <string name="qr_code_recognized_confirm_the_computer" formatted="false">"QR code recognized. Confirm the computer."</string>
+    <string name="pair_with_this_computer" formatted="false">"Pair with this computer?"</string>
+    <string name="pair" formatted="false">"Pair"</string>
+    <string name="cancelled_ready_to_scan_again" formatted="false">"Cancelled. Ready to scan again."</string>
+    <string name="pairing_securely" formatted="false">"Pairing securely…"</string>
+    <string name="pairing_failed_check_your_network_qr_code_expiry_and_computer_clo" formatted="false">"Pairing failed. Check your network, QR code expiry and computer clock."</string>
+    <string name="public_key_installed_verifying_ssh_and_tmux" formatted="false">"Public key installed. Verifying SSH and tmux…"</string>
+    <string name="ssh_fingerprint_differs_from_the_pairing_key_connection_stopped" formatted="false">"SSH fingerprint differs from the pairing key. Connection stopped."</string>
+    <string name="retry_ssh_verification" formatted="false">"Retry SSH verification"</string>
+    <string name="connection_verified_but_saving_failed_try_again" formatted="false">"Connection verified, but saving failed. Try again."</string>
+    <string name="no_valid_qr_code_found_in_the_image" formatted="false">"No valid QR code found in the image."</string>
+    <string name="sessions" formatted="false">"Sessions"</string>
+    <string name="done" formatted="false">"Done"</string>
+    <string name="finish_reordering_sessions" formatted="false">"Finish reordering sessions"</string>
+    <string name="move_earlier" formatted="false">"Move earlier"</string>
+    <string name="move_later" formatted="false">"Move later"</string>
+    <string name="no_open_sessions_tap_a_saved_connection_or_to_add_one" formatted="false">"No open sessions. Tap a saved connection or + to add one."</string>
+    <string name="only_one_session_open_more_connections_to_reorder_them" formatted="false">"Only one session. Open more connections to reorder them."</string>
+    <string name="long_press_and_drag_sessions_to_reorder" formatted="false">"Long-press and drag sessions to reorder"</string>
+    <string name="long_press_for_options" formatted="false">"Long-press for options."</string>
+    <string name="no_preview_yet" formatted="false">"No preview yet"</string>
+    <string name="reorder" formatted="false">"Reorder"</string>
+    <string name="close_all" formatted="false">"Close all"</string>
+    <string name="local" formatted="false">"Local"</string>
+    <string name="disconnected" formatted="false">"Disconnected"</string>
+    <string name="network_unavailable_waiting_to_reconnect" formatted="false">"Network unavailable. Waiting to reconnect."</string>
+    <string name="invalid_configuration" formatted="false">"Invalid configuration"</string>
+    <string name="no_agent_events_yet" formatted="false">"No agent events yet"</string>
+    <string name="approval_requests_questions_and_completed_tasks_will_appear_here" formatted="false">"Approval requests, questions and completed tasks will appear here."</string>
+    <string name="install_claude_code_hook_on_your_ssh_host" formatted="false">"Install Claude Code Hook on your SSH host"</string>
+    <string name="agent_question" formatted="false">"Agent question"</string>
+    <string name="task_completed" formatted="false">"Task completed"</string>
+    <string name="task_failed" formatted="false">"Task failed"</string>
+    <string name="agent_notification" formatted="false">"Agent notification"</string>
+    <string name="refresh" formatted="false">"Refresh"</string>
+    <string name="awaiting_response" formatted="false">"Awaiting response"</string>
+    <string name="expired_return_to_the_terminal" formatted="false">"Expired · Return to the terminal"</string>
+    <string name="offline_waiting_to_sync" formatted="false">"Offline · Waiting to sync"</string>
+    <string name="received" formatted="false">"Received"</string>
+    <string name="choose_an_option_or_type_an_answer" formatted="false">"Choose an option or type an answer"</string>
+    <string name="respond_to_this_request_only_if_it_expires_or_the_network_disconn" formatted="false">"Respond to this request only. If it expires or the network disconnects, continue in the terminal."</string>
+    <string name="allow_once" formatted="false">"Allow once"</string>
+    <string name="send_answer" formatted="false">"Send answer"</string>
+    <string name="enter_an_answer" formatted="false">"Enter an answer"</string>
+    <string name="deny" formatted="false">"Deny"</string>
+    <string name="back_to_inbox" formatted="false">"Back to inbox"</string>
+    <string name="connecting_297" formatted="false">"Connecting"</string>
+    <string name="connected_tmux" formatted="false">"Connected · tmux"</string>
+    <string name="remote_tmux_session_ended_choose_another_session_or_create_one" formatted="false">"Remote tmux session ended. Choose another session or create one."</string>
+    <string name="send_failed_connection_lost" formatted="false">"Send failed. Connection lost."</string>
+    <string name="send_queue_full_reconnect_to_continue" formatted="false">"Send queue full. Reconnect to continue."</string>
+    <string name="terminal_sessions" formatted="false">"Terminal sessions"</string>
+    <string name="disconnect_all" formatted="false">"Disconnect all"</string>
+    <string name="terminal" formatted="false">"Terminal"</string>
+    <string name="theme" formatted="false">"Theme"</string>
+    <string name="font_and_size" formatted="false">"Font and size"</string>
+    <string name="advanced" formatted="false">"Advanced"</string>
+    <string name="agents" formatted="false">"Agents"</string>
+    <string name="notifications" formatted="false">"Notifications"</string>
+    <string name="text_draft" formatted="false">"Text draft"</string>
+    <string name="input" formatted="false">"Input"</string>
+    <string name="toolbar" formatted="false">"Toolbar"</string>
+    <string name="gestures" formatted="false">"Gestures"</string>
+    <string name="about" formatted="false">"About"</string>
+    <string name="open_source_android_terminal_library_api_27" formatted="false">"Open-source Android terminal library · API 27+"</string>
+    <string name="agent_event_notifications" formatted="false">"Agent event notifications"</string>
+    <string name="receive_approval_requests_questions_and_completion_notifications" formatted="false">"Receive approval requests, questions and completion notifications from Agent Hook."</string>
+    <string name="permissions" formatted="false">"Permissions"</string>
+    <string name="system_notification_settings" formatted="false">"System notification settings"</string>
+    <string name="review_notification_permissions_and_channels" formatted="false">"Review notification permissions and channels"</string>
+    <string name="request_notification_permission" formatted="false">"Request notification permission"</string>
+    <string name="agent_updates" formatted="false">"Agent updates"</string>
+    <string name="install_hook" formatted="false">"Install Hook"</string>
+    <string name="install_on_an_ssh_host_to_receive_agent_events" formatted="false">"Install on an SSH host to receive agent events"</string>
+    <string name="active_ssh_sessions_keep_fetching_events_in_the_background_if_no" formatted="false">"Active SSH sessions keep fetching events in the background. If no connection is active, the app is force-stopped or networking is suspended, events sync when you reopen the app."</string>
+    <string name="terminal_text" formatted="false">"Terminal text"</string>
+    <string name="decrease_terminal_font_size" formatted="false">"Decrease terminal font size"</string>
+    <string name="increase_terminal_font_size" formatted="false">"Increase terminal font size"</string>
+    <string name="font_size" formatted="false">"Font size"</string>
+    <string name="font" formatted="false">"Font"</string>
+    <string name="system_monospace" formatted="false">"System monospace"</string>
+    <string name="chinese_and_emoji_font_fallback_supported_font_size_10_24_sp" formatted="false">"Chinese and emoji font fallback supported. Font size: 10–24 sp."</string>
+    <string name="preview" formatted="false">"Preview"</string>
+    <string name="font_preview_sample" formatted="false">"$ echo \'Hello, 终端\'\nHello, 终端\n❯ 中文输入 👩🏽‍💻 🚀"</string>
+    <string name="sets_default_terminal_foreground_and_background_colors_colors_set" formatted="false">"Sets default terminal foreground and background colors. Colors set by terminal programs still apply."</string>
+    <string name="theme_preview_sample" formatted="false">"$ echo \'Shello\'\nShello\n❯ 中文 · Aa Bb 0123"</string>
+    <string name="home" formatted="false">"Home"</string>
+    <string name="show_connection_hook_status" formatted="false">"Show connection Hook status"</string>
+    <string name="show_status_dots_on_saved_connections" formatted="false">"Show status dots on saved connections"</string>
+    <string name="show_feature_guide" formatted="false">"Show feature guide"</string>
+    <string name="show_feature_tips_on_the_home_screen" formatted="false">"Show feature tips on the home screen"</string>
+    <string name="background_activity" formatted="false">"Background activity"</string>
+    <string name="battery_and_background_activity" formatted="false">"Battery and background activity"</string>
+    <string name="review_device_battery_restrictions" formatted="false">"Review device battery restrictions"</string>
+    <string name="ssh_stays_connected_in_the_background_tmux_sessions_stay_on_the_s" formatted="false">"SSH stays connected in the background; tmux sessions stay on the server. Closing a thumbnail disconnects this device without ending remote tmux sessions."</string>
+    <string name="live_toolbar_preview" formatted="false">"Live toolbar preview"</string>
+    <string name="visible_buttons" formatted="false">"Visible buttons"</string>
+    <string name="paste" formatted="false">"Paste"</string>
+    <string name="ctrl_esc_tab_and_the_keyboard_button_are_always_shown_changes_app" formatted="false">"Ctrl, Esc, Tab and the keyboard button are always shown. Changes apply when you return to the terminal."</string>
+    <string name="long_press_to_select_text" formatted="false">"Long-press to select text"</string>
+    <string name="swipe_up_or_down" formatted="false">"Swipe up or down"</string>
+    <string name="browse_terminal_scrollback" formatted="false">"Browse terminal scrollback"</string>
+    <string name="drag_selection_handles" formatted="false">"Drag selection handles"</string>
+    <string name="adjust_the_text_selection" formatted="false">"Adjust the text selection"</string>
+    <string name="long_press_a_session_card" formatted="false">"Long-press a session card"</string>
+    <string name="reorder_close_or_close_all" formatted="false">"Reorder, close or close all"</string>
+    <string name="input_mode" formatted="false">"Input mode"</string>
+    <string name="start_with_a_text_draft" formatted="false">"Start with a text draft"</string>
+    <string name="edit_before_sending_when_a_terminal_opens" formatted="false">"Edit before sending when a terminal opens"</string>
+    <string name="multiline_input_is_supported_respond_to_agent_questions_and_appro" formatted="false">"Multiline input is supported. Respond to agent questions and approvals individually in the inbox."</string>
+    <string name="send" formatted="false">"Send"</string>
+    <string name="tap_send" formatted="false">"Tap Send"</string>
+    <string name="send_text_and_press_enter" formatted="false">"Send text and press Enter"</string>
+    <string name="long_press_send" formatted="false">"Long-press Send"</string>
+    <string name="send_text_without_enter" formatted="false">"Send text without Enter"</string>
+    <string name="terminal_keys" formatted="false">"Terminal keys"</string>
+    <string name="tap_to_combine_with_the_next_character" formatted="false">"Tap to combine with the next character"</string>
+    <string name="send_the_corresponding_terminal_key" formatted="false">"Send the corresponding terminal key"</string>
+    <string name="arrow_keys" formatted="false">"Arrow keys"</string>
+    <string name="move_up_down_left_or_right" formatted="false">"Move up, down, left or right"</string>
+    <string name="enter_and_backspace" formatted="false">"Enter and Backspace"</string>
+    <string name="confirm_input_or_delete_a_character" formatted="false">"Confirm input or delete a character"</string>
+    <string name="clear_screen" formatted="false">"Clear screen"</string>
+    <string name="send_the_clear_screen_shortcut" formatted="false">"Send the clear-screen shortcut"</string>
+    <string name="send_text_only" formatted="false">"Send text only"</string>
+    <string name="install" formatted="false">"Install"</string>
+    <string name="install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque" formatted="false">"Install Claude Code Hook on an SSH host to receive approval requests, questions and completion events."</string>
+    <string name="ssh_hosts" formatted="false">"SSH hosts"</string>
+    <string name="add_an_ssh_connection_first" formatted="false">"Add an SSH connection first"</string>
+    <string name="enabled" formatted="false">"Enabled"</string>
+    <string name="not_installed" formatted="false">"Not installed"</string>
+    <string name="uninstall_hook" formatted="false">"Uninstall Hook?"</string>
+    <string name="install_hook_387" formatted="false">"Install Hook?"</string>
+    <string name="only_the_claude_code_hook_registered_by_this_app_will_be_removed" formatted="false">"Only the Claude Code Hook registered by this app will be removed."</string>
+    <string name="existing_settings_are_kept_start_a_new_claude_code_session_after" formatted="false">"Existing settings are kept. Start a new Claude Code session after installation."</string>
+    <string name="uninstall" formatted="false">"Uninstall"</string>
+    <string name="working" formatted="false">"Working…"</string>
+    <string name="installation_and_sync_use_ssh_no_extra_ports_are_needed_installat" formatted="false">"Installation and sync use SSH; no extra ports are needed. Installation backs up and merges existing Claude Code settings. Uninstalling removes only this app\'s Hook."</string>
+    <string name="update" formatted="false">"Update"</string>
+    <string name="update_host_helper_and_recent_session_support" formatted="false">"Update host helper and recent session support"</string>
+    <string name="updating" formatted="false">"Updating…"</string>
+    <string name="hook_status" formatted="false">"Hook status"</string>
+    <string name="show_hook_status" formatted="false">"Show Hook status"</string>
+    <string name="enter_a_hostname_or_ip_address_without_a_protocol_or_port" formatted="false">"Enter a hostname or IP address without a protocol or port."</string>
+    <string name="port_must_be_between_1_and_65535" formatted="false">"Port must be between 1 and 65535."</string>
+    <string name="enter_a_valid_ssh_username" formatted="false">"Enter a valid SSH username."</string>
+    <string name="enter_your_login_password" formatted="false">"Enter your login password."</string>
+    <string name="choose_an_ssh_private_key_file" formatted="false">"Choose an SSH private key file."</string>
+    <string name="choose_an_authentication_method" formatted="false">"Choose an authentication method."</string>
+    <string name="app_language">"App language"</string>
+    <string name="follow_system">"Follow system"</string>
+    <string name="language_help">"Choose the language used by Shello. Remote terminal output and agent messages keep their original language."</string>
+    <string name="selected_option">"%1$s, selected"</string>
+    <string name="terminal_dimensions">"%1$s, %2$d columns, %3$d rows"</string>
+    <string name="terminal_font_size_value">"Terminal font size: %1$d sp"</string>
+    <string name="private_key_bytes">"Private key loaded · %1$d bytes"</string>
+    <string name="connecting_endpoint">"Connecting to %1$s"</string>
+    <string name="delete_connection_body">"Delete the local settings and credentials for %1$s."</string>
+    <string name="resume_agent_session">"Resume %1$s session in %2$s"</string>
+    <string name="choose_project_history">"Choose history for %1$s"</string>
+    <string name="approval_request_tool">"Approval request · %1$s"</string>
+    <string name="reconnect_countdown">"Disconnected. Reconnecting in %1$d s"</string>
+    <string name="selected_server">"Select SSH server %1$s at %2$s:22"</string>
+    <string name="key_feedback">"Key: %1$s"</string>
+    <string name="pair_confirmation_body">"%1$s\nConfirm this is the QR code you just generated on your computer."</string>
+    <string name="accessibility_subtitle">"%1$s, %2$s"</string>
+    <plurals name="servers_found">
+        <item quantity="one">"Found %1$d server"</item>
+        <item quantity="other">"Found %1$d servers"</item>
+    </plurals>
+    <plurals name="tmux_window_count">
+        <item quantity="one">"%1$d window"</item>
+        <item quantity="other">"%1$d windows"</item>
+    </plurals>
+    <plurals name="minutes_ago_count">
+        <item quantity="one">"%1$d minute ago"</item>
+        <item quantity="other">"%1$d minutes ago"</item>
+    </plurals>
+    <plurals name="hours_ago_count">
+        <item quantity="one">"%1$d hour ago"</item>
+        <item quantity="other">"%1$d hours ago"</item>
+    </plurals>
+    <plurals name="days_ago_count">
+        <item quantity="one">"%1$d day ago"</item>
+        <item quantity="other">"%1$d days ago"</item>
+    </plurals>
+    <plurals name="inbox_pending_count">
+        <item quantity="one">"Inbox · %1$d pending request"</item>
+        <item quantity="other">"Inbox · %1$d pending requests"</item>
+    </plurals>
+    <plurals name="active_ssh_count">
+        <item quantity="one">"%1$d SSH terminal session"</item>
+        <item quantity="other">"%1$d SSH terminal sessions"</item>
+    </plurals>
+    <plurals name="hook_attention_count">
+        <item quantity="one">"%1$d connection needs Hook attention"</item>
+        <item quantity="other">"%1$d connections need Hook attention"</item>
+    </plurals>
+    <string name="open_tmux_name">"Open tmux %1$s"</string>
+    <string name="connect_over_ssh_to_name">"Connect over SSH to %1$s"</string>
+    <string name="edit_connection_179_name">"Edit connection %1$s"</string>
+    <string name="delete_connection_name">"Delete connection %1$s"</string>
+    <string name="resume_session_name">"Resume session %1$s"</string>
+    <string name="move_earlier_258_name">"Move earlier: %1$s"</string>
+    <string name="move_later_259_name">"Move later: %1$s"</string>
+    <string name="session_actions_for_name">"Session actions for %1$s"</string>
+    <string name="selected_session_name">"Selected session %1$s"</string>
+</resources>
