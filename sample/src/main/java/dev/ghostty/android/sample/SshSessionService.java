@@ -1,227 +1,169 @@
 package dev.ghostty.android.sample;
 
 import android.app.*;
-import android.content.Intent;
-import android.content.Context;
+import android.content.*;
 import android.content.pm.ServiceInfo;
+import android.graphics.Bitmap;
 import android.os.*;
-import android.net.ConnectivityManager;
-import android.net.Network;
 import dev.ghostty.android.TerminalSession;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Properties;
+import java.util.*;
+import org.json.*;
 
-/** Sample-only owner of the SSH connection and main-thread VT, independent of any Activity. */
+/** Owns the ordered open tabs and independent SSH connections; Activities only attach views. */
 public final class SshSessionService extends Service {
     static final String CONNECT="dev.ghostty.android.sample.CONNECT", DISCONNECT="dev.ghostty.android.sample.DISCONNECT";
     private static final String CHANNEL="ssh_session";
     private static final int NOTIFICATION=41;
     interface Observer { void changed(); void detach(); }
     final class LocalBinder extends Binder { SshSessionService service(){return SshSessionService.this;} }
-    private final LocalBinder binder=new LocalBinder();
-    private final Handler handler=new Handler(Looper.getMainLooper());
-    private Observer observer;
-    private TerminalSession terminal;
-    private SshTransport ssh;
-    private SshResumeState resumeState;
-    private String profileIdentity;
-    private File profileDirectory;
-    private String profileName="本机";
-    private PowerManager.WakeLock wakeLock;
-    private ConnectivityManager.NetworkCallback networkCallback;
-    private Network activeNetwork;
-    private Runnable retryTask,stableTask;
-    private boolean connected,autoReconnect,foreground,destroyed;
-    private Properties profileConfig;
-    private int generation,retryAttempt;
-    private String status="已断开";
-
-    /** A visibility change can race the request; let the user retry rather than crash the app. */
-    static String requestConnect(Context context){
-        return requestConnect(context,null);
+    static final class Tab {
+        final String id;final SshSessionConnection connection;
+        TerminalSession local;Bitmap preview;String draft="";boolean draftMode;
+        Tab(String id,SshSessionConnection connection){this.id=id;this.connection=connection;}
+        boolean remote(){return connection!=null;}
+        String name(){return remote()?connection.profileName:"本地终端";}
+        TerminalSession terminal(){return remote()?connection.terminal:local;}
     }
-    static String requestConnect(Context context,String profile){
-        try{context.startForegroundService(new Intent(context,SshSessionService.class).setAction(CONNECT).putExtra("profile",profile));return null;}
+    private final LocalBinder binder=new LocalBinder();
+    private final ArrayList<Tab> tabs=new ArrayList<>();
+    private Observer observer;
+    private Tab selected;
+    private PowerManager.WakeLock wakeLock;
+    private boolean foreground,destroyed,mutating;
+    private SharedPreferences state;
+
+    static String requestConnect(Context context){return requestConnect(context,null);}
+    static String requestConnect(Context context,String profile){return requestConnect(context,profile,false);}
+    static String requestConnect(Context context,String profile,boolean restore){
+        try{context.startForegroundService(new Intent(context,SshSessionService.class).setAction(CONNECT).putExtra("profile",profile).putExtra("restore",restore));return null;}
         catch(IllegalStateException|SecurityException rejected){
-            String reason=rejected.getClass().getSimpleName();
-            android.util.Log.i("GhosttySsh","Foreground service request rejected: "+reason);
-            return reason;
+            android.util.Log.i("GhosttySsh","Foreground service request rejected: "+rejected.getClass().getSimpleName());
+            return rejected.getClass().getSimpleName();
         }
     }
     @Override public void onCreate(){
-        super.onCreate();
-        resumeState=new SshResumeState(this);
-        getSystemService(NotificationManager.class).createNotificationChannel(
-                new NotificationChannel(CHANNEL,"终端会话",NotificationManager.IMPORTANCE_LOW));
-        wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"ghostty:SSHSession");
-        wakeLock.setReferenceCounted(false);
+        super.onCreate();state=getSharedPreferences("terminal_tabs",0);
+        getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL,"终端会话",NotificationManager.IMPORTANCE_LOW));
+        wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"ghostty:SSHSession");wakeLock.setReferenceCounted(false);
+        try{JSONArray ids=new JSONArray(state.getString("order","[]"));for(int i=0;i<ids.length();i++)add(ids.getString(i));}catch(JSONException ignored){}
+        if(!state.getBoolean("initialized",false)){
+            if(new SshResumeState(this).pending())add(profileId());else add("local");
+        }
+        selected=find(state.getString("selected",null));if(selected==null&&!tabs.isEmpty())selected=tabs.get(0);persist();
     }
+    private String profileId(){String id=new SshProfileStore(this).activeId();return id==null?"fixture":id;}
+    private Tab add(String id){
+        Tab existing=find(id);if(existing!=null)return existing;
+        Tab tab;
+        if("local".equals(id)){
+            tab=new Tab(id,null);tab.local=new TerminalSession(40,20);
+            tab.local.write("\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007本地演示 · Offline echo\r\n\r\n› ".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }else{
+            File directory;
+            try{directory="fixture".equals(id)?new File(getFilesDir(),"ssh"):new SshProfileStore(this).directory(id);}
+            catch(IllegalArgumentException invalid){return null;}
+            if(!SshProfileStore.exists(directory))return null;
+            tab=new Tab(id,new SshSessionConnection(this,directory,id,new SshSessionConnection.Listener(){
+                public void changed(){SshSessionService.this.changed();}
+                public void detach(){if(selected!=null&&selected.id.equals(id)&&observer!=null)observer.detach();}
+            }));
+        }
+        tabs.add(tab);return tab;
+    }
+    List<Tab> tabs(){return new ArrayList<>(tabs);}
+    Tab selected(){return selected;}
+    Tab find(String id){for(Tab tab:tabs)if(tab.id.equals(id))return tab;return null;}
+    void select(String id){
+        Tab next=find(id);if(next==null)return;
+        if(selected!=next&&observer!=null)observer.detach();selected=next;
+        if(next.remote())try{if(!"fixture".equals(id))new SshProfileStore(this).activate(id);else getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();}catch(IOException ignored){}
+        persist();changed();
+    }
+    void openLocal(){Tab tab=add("local");select(tab.id);}
+    void move(String id,int index){Tab tab=find(id);if(tab==null)return;tabs.remove(tab);tabs.add(Math.max(0,Math.min(index,tabs.size())),tab);persist();changed();}
+    void close(String id){
+        Tab tab=find(id);if(tab==null)return;
+        mutating=true;
+        if(selected==tab){if(observer!=null)observer.detach();selected=null;}
+        tabs.remove(tab);persist(); // Remove restore intent before closing sockets.
+        if(tab.remote())tab.connection.destroy(true);else if(tab.local!=null)tab.local.close();
+        if(tab.preview!=null){tab.preview.recycle();tab.preview=null;}
+        if(id.equals(profileId()))new SshResumeState(this).clear();
+        if(selected==null&&!tabs.isEmpty())select(tabs.get(0).id);
+        mutating=false;persist();changed();
+    }
+    void closeAll(){for(Tab tab:new ArrayList<>(tabs))close(tab.id);new SshResumeState(this).clear();}
+    private void persist(){JSONArray ids=new JSONArray();for(Tab tab:tabs)ids.put(tab.id);state.edit().putBoolean("initialized",true).putString("order",ids.toString()).putString("selected",selected==null?null:selected.id).commit();}
     @Override public IBinder onBind(Intent intent){return binder;}
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         if(intent!=null&&CONNECT.equals(intent.getAction())){
-            // Called by a visible Activity. Publish the notification before any connection work.
             try{
                 if(Build.VERSION.SDK_INT>=34)startForeground(NOTIFICATION,notification(),ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
                 else startForeground(NOTIFICATION,notification());
             }catch(IllegalStateException|SecurityException rejected){
-                // Promotion is checked separately by Android; retain tmux resume intent for a visible retry.
-                android.util.Log.i("GhosttySsh","Foreground promotion rejected: "+rejected.getClass().getSimpleName());
-                finish("系统暂不允许启动会话",false);return START_NOT_STICKY;
+                android.util.Log.i("GhosttySsh","Foreground promotion rejected: "+rejected.getClass().getSimpleName());if(!foreground)stopSelf();return START_NOT_STICKY;
             }
-            foreground=true;
-            String selected=intent.getStringExtra("profile");
-            if(selected!=null)try{new SshProfileStore(this).activate(selected);}catch(Exception error){finish("连接配置不存在");return START_NOT_STICKY;}
-            connect();
-        }else if(intent!=null&&DISCONNECT.equals(intent.getAction()))disconnect();
-        // Do not silently recreate a terminated app/session after process death or force-stop.
+            foreground=true;mutating=true;
+            String id=intent.getStringExtra("profile");if(id==null)id=profileId();
+            Tab tab=add(id);
+            boolean restore=intent.getBooleanExtra("restore",false);
+            if(restore&&(tab==null||!tab.connection.shouldResume())){
+                Tab eligible=null;for(Tab candidate:tabs)if(candidate.remote()&&candidate.connection.shouldResume()){eligible=candidate;break;}
+                // Migration from the single-session release uses its legacy resume marker once.
+                if(eligible!=null)tab=eligible;else if(!new SshResumeState(this).pending())tab=null;
+            }
+            if(tab!=null){select(tab.id);tab.connection.connect();}
+            // Reopen eligible tmux tabs only after a visible Activity starts the service.
+            for(Tab other:tabs)if(other!=tab&&other.remote()&&!other.connection.foreground&&other.connection.shouldResume())other.connection.connect();
+            mutating=false;persist();changed();
+        }else if(intent!=null&&DISCONNECT.equals(intent.getAction()))disconnectAll();
         return START_NOT_STICKY;
     }
-    TerminalSession terminal(){return terminal;}
-    boolean connected(){return connected;}
+    TerminalSession terminal(){return selected==null?null:selected.terminal();}
+    boolean connected(){return selected!=null&&selected.remote()&&selected.connection.connected;}
     boolean active(){return foreground;}
-    boolean shouldResume(){return terminal==null&&!foreground&&resumeState.pending();}
-    String status(){return status;}
-    String profileName(){return profileName;}
+    boolean shouldResume(){
+        if(foreground)return false;
+        for(Tab tab:tabs)if(tab.remote()&&tab.connection.shouldResume())return true;
+        return new SshResumeState(this).pending();
+    }
+    String status(){return selected==null?"已断开":selected.remote()?selected.connection.status:"本地终端";}
+    String profileName(){return selected==null?"本机":selected.name();}
     void observe(Observer value){
-        if(observer!=null&&observer!=value)observer.detach();
-        // A vendor may suspend retries while locked. Do not make a visible user wait for backoff.
-        if(value!=null&&foreground&&autoReconnect&&retryTask!=null){
-            closeAttempt();retryAttempt=0;startAttempt();
-        }
-        observer=value;if(observer!=null)observer.changed();refreshNotification();
+        if(observer!=null&&observer!=value)observer.detach();observer=value;
+        for(Tab tab:tabs)if(tab.remote())tab.connection.visible();
+        if(observer!=null)observer.changed();refreshNotification();
     }
     void removeObserver(Observer value){if(observer==value)observer=null;}
     private void changed(){
-        if(observer!=null)observer.changed();
-        refreshNotification();
+        if(mutating||destroyed)return;
+        boolean running=false;for(Tab tab:tabs)if(tab.remote()&&tab.connection.foreground)running=true;
+        if(running){if(!wakeLock.isHeld())wakeLock.acquire();}
+        else {if(wakeLock.isHeld())wakeLock.release();if(foreground){foreground=false;stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();}}
+        if(connected())new SshResumeState(this).remember(new SshResumeState(this).identity());
+        if(observer!=null)observer.changed();refreshNotification();
     }
-    void refreshNotification(){
-        if(foreground)getSystemService(NotificationManager.class).notify(NOTIFICATION,notification());
-    }
+    void refreshNotification(){if(foreground)getSystemService(NotificationManager.class).notify(NOTIFICATION,notification());}
     private Notification notification(){
         Intent open=new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent content=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        PendingIntent stop=PendingIntent.getService(this,1,new Intent(this,SshSessionService.class).setAction(DISCONNECT),
-                PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent stop=PendingIntent.getService(this,1,new Intent(this,SshSessionService.class).setAction(DISCONNECT),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        int count=0;for(Tab tab:tabs)if(tab.remote()&&tab.connection.foreground)count++;
         Notification.Builder builder=new Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
-                .setContentTitle("SSH 终端会话").setContentText(status).setContentIntent(content)
+                .setContentTitle(count>1?count+" 个 SSH 终端会话":"SSH 终端会话").setContentText(status()).setContentIntent(content)
                 .setOngoing(true).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PRIVATE)
-                .addAction(new Notification.Action.Builder(null,"断开",stop).build());
-        if(Build.VERSION.SDK_INT>=31)builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
-        return builder.build();
+                .addAction(new Notification.Action.Builder(null,"全部断开",stop).build());
+        if(Build.VERSION.SDK_INT>=31)builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);return builder.build();
     }
-    private void cancelConnection(){
-        stopNetworkMonitoring();closeAttempt();autoReconnect=false;retryAttempt=0;
-    }
-    private void closeAttempt(){
-        generation++;connected=false;
-        if(retryTask!=null){handler.removeCallbacks(retryTask);retryTask=null;}
-        if(stableTask!=null){handler.removeCallbacks(stableTask);stableTask=null;}
-        if(ssh!=null){ssh.close();ssh=null;}
-    }
-    private void startNetworkMonitoring(){
-        ConnectivityManager manager=getSystemService(ConnectivityManager.class);
-        activeNetwork=manager.getActiveNetwork();
-        networkCallback=new ConnectivityManager.NetworkCallback(){
-            private boolean current(){return networkCallback==this&&!destroyed&&foreground&&autoReconnect;}
-            @Override public void onAvailable(Network network){
-                if(!current()||network.equals(activeNetwork))return;
-                activeNetwork=network;
-                closeAttempt();retryAttempt=0;startAttempt();
-            }
-            @Override public void onLost(Network network){
-                if(!current()||!network.equals(activeNetwork))return;
-                activeNetwork=null;closeAttempt();status="网络不可用，等待恢复";changed();
-            }
-        };
-        try{manager.registerDefaultNetworkCallback(networkCallback,handler);}
-        catch(SecurityException|IllegalArgumentException unavailable){
-            // Keep the existing keepalive/backoff path if a vendor rejects monitoring.
-            networkCallback=null;activeNetwork=null;
-        }
-    }
-    private void stopNetworkMonitoring(){
-        ConnectivityManager.NetworkCallback callback=networkCallback;
-        networkCallback=null;activeNetwork=null;
-        if(callback!=null){
-            try{getSystemService(ConnectivityManager.class).unregisterNetworkCallback(callback);}
-            catch(IllegalArgumentException ignored){}
-        }
-    }
-    private void connect(){
-        cancelConnection();
-        File nextDirectory=new SshProfileStore(this).activeDirectory();
-        Properties config;
-        try{config=SshProfileStore.properties(nextDirectory);}
-        catch(IOException|IllegalArgumentException error){finish("配置无效");return;}
-        if(profileDirectory!=null&&(!profileDirectory.equals(nextDirectory)||!config.equals(profileConfig))&&terminal!=null){
-            if(observer!=null)observer.detach();terminal.close();terminal=null;
-        }
-        profileDirectory=nextDirectory;profileConfig=config;profileIdentity=resumeState.identity();
-        profileName=config.getProperty("name","本机");autoReconnect="tmux".equals(config.getProperty("sessionMode"));
-        if(terminal==null)terminal=new TerminalSession(40,20);
-        // Deliberately held only for a user-started, notified session; released on every terminal stop.
-        if(!wakeLock.isHeld())wakeLock.acquire();
-        if(autoReconnect)startNetworkMonitoring();
-        changed();startAttempt();
-    }
-    private void startAttempt(){
-        if(destroyed||!foreground)return;
-        retryTask=null;
-        if(networkCallback!=null&&activeNetwork==null){status="网络不可用，等待恢复";changed();return;}
-        final int attempt=++generation;
-        final boolean[] firstOutput={true};
-        ssh=new SshTransport(this,profileDirectory,terminal.getColumns(),terminal.getRows(),new SshTransport.Listener(){
-            private boolean current(){return !destroyed&&attempt==generation;}
-            @Override public void onState(String value,boolean ready){
-                if(!current())return;
-                connected=ready;status=value;changed();
-                if(ready){resumeState.remember(profileIdentity);stableTask=()->{if(current()&&connected)retryAttempt=0;};handler.postDelayed(stableTask,10000);}
-            }
-            @Override public void onClosed(String value,boolean retryable){
-                if(!current())return;
-                ssh=null;connected=false;
-                if(stableTask!=null){handler.removeCallbacks(stableTask);stableTask=null;}
-                if(autoReconnect&&retryable){
-                    long delay=Math.min(15000,1000L<<Math.min(retryAttempt++,4));
-                    status="已断开，"+(delay/1000)+" 秒后重连";changed();
-                    retryTask=()->{if(current()&&autoReconnect)startAttempt();};handler.postDelayed(retryTask,delay);
-                }else finish(value);
-            }
-            @Override public void onOutput(byte[] bytes){
-                if(!current())return;
-                if(firstOutput[0]){
-                    firstOutput[0]=false;
-                    terminal.write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007".getBytes(StandardCharsets.UTF_8));
-                }
-                byte[] replies=terminal.write(bytes);
-                if(replies.length>0&&ssh!=null)ssh.send(replies);
-            }
-        });
-        ssh.connect();
-    }
-    void send(byte[] bytes){if(connected&&ssh!=null)ssh.send(bytes);}
-    void resize(int columns,int rows){if(ssh!=null)ssh.resize(columns,rows);}
-    void disconnect(){finish("已断开");}
-    private void finish(String value){finish(value,true);}
-    private void finish(String value,boolean clearResume){
-        if(clearResume)resumeState.clear();
-        cancelConnection();status=value;
-        foreground=false;
-        if(wakeLock.isHeld())wakeLock.release();
-        stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();changed();
-    }
-    void clearSession(){
-        disconnect();
-        if(observer!=null)observer.detach();
-        if(terminal!=null){terminal.close();terminal=null;}
-    }
+    void send(byte[] bytes){if(selected!=null&&selected.remote())selected.connection.send(bytes);}
+    void resize(int columns,int rows){if(selected!=null&&selected.remote())selected.connection.resize(columns,rows);}
+    void disconnect(){if(selected!=null&&selected.remote())selected.connection.disconnect();new SshResumeState(this).clear();}
+    private void disconnectAll(){for(Tab tab:tabs)if(tab.remote())tab.connection.disconnect();new SshResumeState(this).clear();}
+    void clearSession(){if(selected!=null)close(selected.id);}
     @Override public void onDestroy(){
-        destroyed=true;cancelConnection();
-        if(wakeLock.isHeld())wakeLock.release();
-        if(observer!=null){observer.detach();observer=null;}
-        if(terminal!=null){terminal.close();terminal=null;}
-        super.onDestroy();
+        destroyed=true;if(observer!=null){observer.detach();observer=null;}
+        for(Tab tab:tabs){if(tab.remote())tab.connection.destroy(false);else if(tab.local!=null)tab.local.close();if(tab.preview!=null)tab.preview.recycle();}
+        if(wakeLock.isHeld())wakeLock.release();super.onDestroy();
     }
 }

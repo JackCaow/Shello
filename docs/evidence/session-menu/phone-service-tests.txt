@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.SshSessionServiceTest:.
+
+Time: 0.92
+
+OK (1 test)

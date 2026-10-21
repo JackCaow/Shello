@@ -164,10 +164,10 @@ PermitTunnel no
             subprocess.run(adb + ['shell', 'run-as', package, 'mkdir', '-p', 'cache/ssh-flow'], check=True)
             for name in ('test.properties', 'client_key', 'client_key_encrypted'):
                 subprocess.run(adb + ['shell', f"run-as {package} sh -c 'cat > cache/ssh-flow/{name}'"], input=(root / name).read_bytes(), check=True)
-            classes = ','.join(package + '.' + name for name in ('SshProfileTest', 'SshConnectionFlowTest', 'SshResumeStateTest'))
+            classes = ','.join(package + '.' + name for name in ('SshProfileTest', 'SshConnectionFlowTest', 'SshResumeStateTest', 'SessionOverviewTest'))
             result = subprocess.run(adb + ['shell', 'am', 'instrument', '-w', '-e', 'class', classes, package + '.test/androidx.test.runner.AndroidJUnitRunner'], capture_output=True, text=True, timeout=180)
             print(result.stdout)
-            if result.returncode or 'FAILURES' in result.stdout or 'OK (7 tests)' not in result.stdout:
+            if result.returncode or 'FAILURES' in result.stdout or 'OK (8 tests)' not in result.stdout:
                 raise RuntimeError('Connection flow tests failed')
             if args.hold_seconds:
                 print('Manual fixture ready; reads are available in app cache/ssh-flow. Holding for',args.hold_seconds,'seconds',flush=True)

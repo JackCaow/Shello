@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "9a4765e",
+  "tests": {
+    "api27": 8,
+    "api35": 8,
+    "physical_api36": 8,
+    "physical_service_recreation": 1
+  },
+  "sample_lint": {
+    "errors": 0,
+    "warnings": 27
+  },
+  "scope": "Sample session UI and ownership only; no library/Maven changes. Reorder tested with touch injection and directional controls. Historical Doze/vendor-power matrices were not rerun.",
+  "sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "fd8bb052b78a7aa73781eebfba1806bb7492bbe60dfed8f667857b06a80a603f",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "c05233edb51d16f95100f4f503e2081edffe53941add76cac261467d44c1c790",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "14dcee2afb0fef99450e33c50d031fac5c5f77bdb0fe7dbc60954467d079c697"
+  }
+}

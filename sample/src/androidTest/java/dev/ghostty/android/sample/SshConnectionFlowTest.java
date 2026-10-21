@@ -86,14 +86,14 @@ public class SshConnectionFlowTest {
             click("最小化会话");click("连接 SSH SSH Flow Edited");
             await(()->service()!=null&&service().connected()&&"SSH Flow Edited".equals(service().profileName()),15000);
             String secondId=store.list().stream().filter(e->e.name.equals("SSH Flow Second")).findFirst().get().id;
-            store.delete(secondId);
+            inst.runOnMainSync(()->service().close(secondId));store.delete(secondId);
             click("最小化会话");longClick("连接 SSH SSH Flow Edited");click("删除连接 SSH Flow Edited");
             await(()->{Dialog dialog=(Dialog)value(current,"connectionDeleteDialog");return dialog!=null&&dialog.isShowing();},5000);
             inst.runOnMainSync(()->((AlertDialog)value(current,"connectionDeleteDialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick());
             await(()->store.list().size()==before.size(),5000);
-            await(()->!service().connected(),5000);
+            await(()->service().find(editedId)==null,5000);
         }finally{
-            inst.runOnMainSync(()->{if(current instanceof MainActivity&&service()!=null)service().disconnect();if(current!=null)current.finish();});
+            inst.runOnMainSync(()->{if(current instanceof MainActivity&&service()!=null){for(SshSessionService.Tab tab:service().tabs())if(!before.contains(tab.id)&&!tab.id.equals("fixture")&&!tab.id.equals("local"))service().close(tab.id);}if(current!=null)current.finish();});
             app.unregisterActivityLifecycleCallbacks(callback);
             for(SshProfileStore.Entry e:store.list())if(!before.contains(e.id))store.delete(e.id);
             if(original!=null)store.activate(original);else context.getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();

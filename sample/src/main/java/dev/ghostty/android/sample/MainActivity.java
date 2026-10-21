@@ -35,7 +35,7 @@ public final class MainActivity extends Activity {
             sshService.observe(serviceObserver);
             if(connectOnBind||sshService.shouldResume()){
                 boolean explicitConnect=connectOnBind;connectOnBind=false;
-                if(explicitConnect||sshService.terminal()==null)connectSsh(explicitConnect);
+                connectSsh(explicitConnect);
             }
         }
         public void onServiceDisconnected(ComponentName name){
@@ -44,7 +44,9 @@ public final class MainActivity extends Activity {
             subtitle.setText("本机 · 服务已停止");
         }
     };
-    private TextView protocolBadge, homeBadge, homeTitle;
+    private TextView protocolBadge;
+    private SessionOverview overview;
+    private SshSessionService.Tab shownTab;
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
     private TerminalInputView directInput;
@@ -55,8 +57,6 @@ public final class MainActivity extends Activity {
     private android.app.AlertDialog connectionDeleteDialog,infoDialog;
     private FrameLayout stage, viewport;
     private ScrollView home;
-    private ImageView sessionPreview;
-    private android.graphics.Bitmap previewBitmap;
     private TextView subtitle, ctrlButton, padButton, lockButton, sendButton;
     private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
     private boolean padPositioned;
@@ -113,7 +113,7 @@ public final class MainActivity extends Activity {
         if(legacyFixture)getSharedPreferences("ssh_profiles",0).edit().remove("active").commit();
         connectOnBind=pendingProfile!=null||legacyFixture;
         if(state==null&&!connectOnBind&&!new SshProfileStore(this).list().isEmpty())minimize();
-        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);}
+        if(state!=null){draft.setText(state.getString("draft",""));setDraftMode(state.getBoolean("draftMode"),false);if(state.getBoolean("minimized"))minimize();}
     }
 
     private void buildHeader() {
@@ -292,22 +292,13 @@ public final class MainActivity extends Activity {
         top.addView(add,new LinearLayout.LayoutParams(dp(44),dp(44)));
         TextView settings=icon("settings","会话工具",()->tools(top));settings.setBackgroundColor(Color.TRANSPARENT);
         top.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(44)));content.addView(top,new LinearLayout.LayoutParams(-1,dp(60)));
-        TextView heading=label("会话",13,MUTED);heading.setPadding(0,dp(8),0,dp(12));content.addView(heading);
-        LinearLayout cards=row();cards.setGravity(Gravity.TOP);content.addView(cards);
-        LinearLayout card=column();card.setContentDescription("恢复当前终端会话");card.setOnClickListener(v->resumeSession());
-        int width=(getResources().getDisplayMetrics().widthPixels-dp(44))/2;
-        cards.addView(card,new LinearLayout.LayoutParams(width,-2));
-        FrameLayout thumbnail=new FrameLayout(this);thumbnail.setBackground(round(SURFACE,14));thumbnail.setClipToOutline(true);
-        card.addView(thumbnail,new LinearLayout.LayoutParams(-1,width));
-        sessionPreview=new ImageView(this);sessionPreview.setScaleType(ImageView.ScaleType.FIT_START);
-        sessionPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        thumbnail.addView(sessionPreview,new FrameLayout.LayoutParams(-1,-1));
-        LinearLayout caption=row();caption.setPadding(dp(8),dp(6),dp(8),dp(6));caption.setBackgroundColor(0xcc1e1e1e);
-        homeTitle=label("本地终端",12,TEXT);caption.addView(homeTitle,new LinearLayout.LayoutParams(0,-2,1));
-        TextView badge=label("LOCAL",10,0xff75b6ff);homeBadge=badge;badge.setBackground(round(0xff173247,9));badge.setPadding(dp(4),dp(2),dp(4),dp(2));caption.addView(badge);
-        thumbnail.addView(caption,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
-        TextView name=label("Ghostty",15,TEXT);name.setPadding(0,dp(6),0,0);card.addView(name);
-        TextView prompt=label("›_ local",13,GREEN);prompt.setTypeface(Typeface.MONOSPACE);card.addView(prompt);
+        overview=new SessionOverview(this,stage,home,new SessionOverview.Actions(){
+            public void open(String id){openTab(id);}
+            public void close(String id){closeTab(id);}
+            public void closeAll(){closeAllTabs();}
+            public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
+        });
+        content.addView(overview.view());
         TextView savedTitle=label("已保存的连接",15,MUTED);savedTitle.setPadding(0,dp(24),0,dp(12));content.addView(savedTitle);
         savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
         stage.addView(home,new FrameLayout.LayoutParams(-1,-1));home.setVisibility(View.GONE);
@@ -336,10 +327,7 @@ public final class MainActivity extends Activity {
     private void deleteConnection(SshProfileStore.Entry entry){
         SshProfileStore store=new SshProfileStore(this);
         connectionDeleteDialog=SampleUi.confirm(this,"删除连接？","删除 "+entry.name+" 的本机连接配置和登录凭据。",null,"取消","删除",true,null,()->{
-                    try{if(entry.id.equals(store.activeId())){
-                            returnOffline();sshMode=false;sshConnected=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");
-                            sessionPreview.setImageDrawable(null);new SshResumeState(this).clear();
-                        }
+                    try{if(sshService!=null)sshService.close(entry.id);
                         store.delete(entry.id);refreshSavedConnections();}catch(Exception error){toast("删除失败，请重试");}
                 });
     }
@@ -347,19 +335,38 @@ public final class MainActivity extends Activity {
         super.onActivityResult(request,result,data);
         if(request==73&&result==RESULT_OK&&data!=null){pendingProfile=data.getStringExtra("profile");if(pendingProfile!=null)connectSsh();}
     }
-    private void minimize() {
-        if(terminal.getWidth()>0&&terminal.getHeight()>0){
-            sessionPreview.setImageDrawable(null);
-            if(previewBitmap!=null)previewBitmap.recycle();
-            previewBitmap=android.graphics.Bitmap.createBitmap(640,320,android.graphics.Bitmap.Config.ARGB_8888);
-            android.graphics.Canvas canvas=new android.graphics.Canvas(previewBitmap);
-            float scale=640f/terminal.getWidth();canvas.scale(scale,scale);terminal.draw(canvas);
-            sessionPreview.setImageBitmap(previewBitmap);
+    private void rememberTab(){
+        if(shownTab==null)return;
+        shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;
+        if(terminal.getWidth()>0&&terminal.getHeight()>0&&terminal.getVisibility()==View.VISIBLE&&session!=null){
+            android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(480,480,android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas=new android.graphics.Canvas(bitmap);canvas.drawColor(SURFACE);
+            float scale=480f/terminal.getWidth();canvas.scale(scale,scale);terminal.draw(canvas);
+            // Existing ImageViews can still reference the previous preview until the next layout.
+            shownTab.preview=bitmap;
         }
-        hideKeyboard();setCtrl(false);minimized=true;sheet.setVisibility(View.INVISIBLE);home.setVisibility(View.VISIBLE);
+    }
+    private void minimize() {
+        rememberTab();hideKeyboard();setCtrl(false);minimized=true;sheet.setVisibility(View.INVISIBLE);home.setVisibility(View.VISIBLE);
+        if(overview!=null&&sshService!=null)overview.refresh(sshService.tabs());
+    }
+    private void openTab(String id){
+        if(sshService==null)return;rememberTab();sshService.select(id);
+        SshSessionService.Tab tab=sshService.selected();
+        if(tab!=null&&tab.remote()&&!tab.connection.foreground){pendingProfile="fixture".equals(id)?null:id;connectSsh();}
+        else resumeSession();
+    }
+    private void closeTab(String id){
+        if(sshService==null)return;
+        if(shownTab!=null&&shownTab.id.equals(id)){shownTab=null;draft.setText("");}
+        sshService.close(id);minimize();
+    }
+    private void closeAllTabs(){
+        if(sshService==null)return;shownTab=null;draft.setText("");sshService.closeAll();minimize();
     }
     private void resumeSession(){minimized=false;home.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
     @Override public void onBackPressed() {
+        if(overview!=null&&overview.back())return;
         if(minimized){super.onBackPressed();return;}
         if(pad.getVisibility()==View.VISIBLE){togglePad();return;}
         if(!terminal.getSelectedText().isEmpty()){terminal.clearSelection();return;}
@@ -409,10 +416,10 @@ public final class MainActivity extends Activity {
         java.util.List<SampleUi.Action> actions=new java.util.ArrayList<>();
         for(int i=0;i<titles.length;i++){
             final int id=i;boolean enabled=true;
-            if(i>=1&&i<=3)enabled=!sshMode;
-            if(i==4)enabled=checkpoint!=null&&!sshMode;
+            if(i>=1&&i<=3)enabled=!sshMode&&session!=null;
+            if(i==4)enabled=checkpoint!=null&&!sshMode&&session!=null;
             if(i==6)enabled=sshService!=null&&sshService.active();
-            if(i==7)enabled=sshMode;
+            if(i==7)enabled=sshMode||session==null;
             actions.add(new SampleUi.Action(titles[i],symbols[i],enabled,i==6,()->runTool(id)));
         }
         showMenu(anchor,actions);
@@ -431,12 +438,12 @@ public final class MainActivity extends Activity {
                                 android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 android.net.Uri.parse("package:"+getPackageName()))));break;
                 case 6:disconnectSsh();break;
-                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");homeTitle.setText("本地终端");demo();break;
+                case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");demo();break;
                 case 0:terminal.scrollToBottom();break;
                 case 1:demo();break;
                 case 2:for(int i=1;i<=180;i++)write(String.format(java.util.Locale.ROOT,"L%03d 中文 · 👨‍👩‍👧‍👦 · scrollback\r\n",i));break;
                 case 3:checkpoint=session.checkpoint();toast("已保存本地快照");break;
-                case 4:TerminalSession restored=TerminalSession.restore(checkpoint);terminal.setSession(null);session.close();session=restored;terminal.setSession(session);toast("已恢复本地快照");break;
+                case 4:TerminalSession restored=TerminalSession.restore(checkpoint);terminal.setSession(null);session.close();session=restored;if(shownTab!=null&&!shownTab.remote())shownTab.local=restored;terminal.setSession(session);toast("已恢复本地快照");break;
                 default:break;
             }
     }
@@ -454,30 +461,34 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onStop(){
         if(connectionMenu!=null)connectionMenu.dismiss();
+        if(overview!=null)overview.dismiss();rememberTab();
         if(sshService!=null)sshService.removeObserver(serviceObserver);
         detachServiceView();sshService=null;sshConnected=false;
         if(bound){unbindService(serviceConnection);bound=false;}
         super.onStop();
     }
     @Override protected void onSaveInstanceState(Bundle state){
-        state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
+        state.putBoolean("minimized",minimized);state.putString("pendingProfile",pendingProfile);state.putString("draft",draft.getText().toString());state.putBoolean("draftMode",draftMode);
         super.onSaveInstanceState(state);
     }
     private void updateSshView(){
         if(destroyed||sshService==null)return;
+        SshSessionService.Tab next=sshService.selected();
         TerminalSession remote=sshService.terminal();
-        if(remote!=null){
-            sshMode=true;
-            if(session!=remote){
-                terminal.setSession(null);
-                if(session!=null&&!serviceSession)session.close();
-                session=remote;serviceSession=true;terminal.setSession(session);
-            }
-            protocolBadge.setText("SSH");homeBadge.setText("SSH");homeTitle.setText(sshService.profileName());
+        if(next!=shownTab){
+            if(shownTab!=null){shownTab.draft=draft.getText().toString();shownTab.draftMode=draftMode;}
+            shownTab=next;draft.setText(next==null?"":next.draft);setDraftMode(next!=null&&next.draftMode,false);
         }
-        sshConnected=sshService.connected();
-        if(sshMode||!sshService.status().equals("已断开"))subtitle.setText(sshService.profileName()+" · "+sshService.status()
-                +(sshService.active()&&!notificationsVisible()?" · 通知已关闭":""));
+        if(session!=remote){
+            terminal.setSession(null);if(session!=null&&!serviceSession)session.close();
+            session=remote;serviceSession=remote!=null;terminal.setSession(session);
+        }
+        sshMode=next!=null&&next.remote();sshConnected=sshService.connected();
+        protocolBadge.setText(sshMode?"SSH":"LOCAL");
+        subtitle.setText(sshMode?sshService.profileName()+" · "+sshService.status()
+                +(sshService.active()&&!notificationsVisible()?" · 通知已关闭":""):"本地终端");
+        if(overview!=null)overview.refresh(sshService.tabs());
+        if(next==null&&!minimized)minimize();
     }
     private void detachServiceView(){
         if(serviceSession){terminal.setSession(null);session=null;serviceSession=false;}
@@ -496,14 +507,13 @@ public final class MainActivity extends Activity {
         if(requestNotification&&Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},41);
         // Permission denial does not prevent an SSH foreground service; automatic recovery never re-prompts.
-        String rejected=SshSessionService.requestConnect(this,pendingProfile);
+        String rejected=SshSessionService.requestConnect(this,pendingProfile,!requestNotification);
         if(rejected==null){pendingProfile=null;resumeSession();}
         if(rejected!=null){subtitle.setText("本机 · 系统暂不允许启动会话");toast("请回到应用后重新连接 SSH");}
     }
     private void disconnectSsh(){if(sshService!=null)sshService.disconnect();}
     private void returnOffline(){
-        if(sshService!=null){sshService.removeObserver(serviceObserver);detachServiceView();sshService.clearSession();sshService.observe(serviceObserver);}
-        if(session==null){session=new TerminalSession(40,20);terminal.setSession(session);}
+        if(sshService!=null){rememberTab();sshService.openLocal();resumeSession();}
     }
     private void sendInput(byte[] bytes) {
         String text=new String(bytes,StandardCharsets.UTF_8);
@@ -537,7 +547,7 @@ public final class MainActivity extends Activity {
             imeVisible=insets.isVisible(WindowInsets.Type.ime());return insets;
         });
     }
-    private void write(String text){session.write(text.getBytes(StandardCharsets.UTF_8));}
+    private void write(String text){if(session!=null)session.write(text.getBytes(StandardCharsets.UTF_8));}
     private void toast(String text){Toast.makeText(this,text,Toast.LENGTH_SHORT).show();}
     private int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
@@ -572,7 +582,7 @@ public final class MainActivity extends Activity {
         destroyed=true;
         directInput.setTerminalView(null);terminal.setListener(null);terminal.setSession(null);
         if(session!=null&&!serviceSession)session.close();
-        sessionPreview.setImageDrawable(null);if(previewBitmap!=null)previewBitmap.recycle();
+        if(overview!=null)overview.dismiss();
         super.onDestroy();
     }
 }
