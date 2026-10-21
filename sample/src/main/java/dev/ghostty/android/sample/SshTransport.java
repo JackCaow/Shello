@@ -76,10 +76,19 @@ final class SshTransport implements AutoCloseable {
                     finally { outputSlots.release(); }
                 });
             }
-            // A normal remote exit/detach must not restart a shell or fight another client.
-            retryable = shell.getExitStatus() < 0 && !ssh.isConnected();
+            // EOF can arrive before exit-status. Give a normal detach/exit time to finish.
+            long exitDeadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(2);
+            while(!closed.get()&&!shell.isClosed()&&ssh.isConnected()&&shell.getExitStatus()<0
+                    &&shell.getExitSignal()==null&&System.nanoTime()<exitDeadline)Thread.sleep(10);
+            // JSch closes channel streams BEFORE clearing Session.isConnected on transport loss.
+            // That flag can still be true here: do not mistake the race for a deliberate remote exit.
+            retryable = shell.getExitStatus()<0&&shell.getExitSignal()==null;
+            if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport EOF: exit="+shell.getExitStatus()
+                    +" sessionConnected="+ssh.isConnected()+" channelClosed="+shell.isClosed()+" retry="+retryable);
         } catch (Exception error) {
             retryable = profileLoaded && isNetworkFailure(error);
+            if(BuildConfig.DEBUG)android.util.Log.i("GhosttySsh","Transport failure: "+error.getClass().getSimpleName()
+                    +" cause="+(error.getCause()==null?"none":error.getCause().getClass().getSimpleName())+" retry="+retryable);
             // No credentials, hostnames, or raw server errors in the terminal/logcat.
             end = "连接失败：" + error.getClass().getSimpleName();
         } finally {

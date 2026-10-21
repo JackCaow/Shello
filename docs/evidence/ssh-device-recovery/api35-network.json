@@ -1,0 +1,7 @@
+{
+  "no_network_wait": true,
+  "restored_without_reconnect_tap": true,
+  "recovery_ui_poll_seconds": 6.12,
+  "normal_remote_detach_cancels_resume": true,
+  "explicit_disconnect_survives_network_return": true
+}

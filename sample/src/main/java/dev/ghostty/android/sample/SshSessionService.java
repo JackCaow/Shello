@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.*;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import dev.ghostty.android.TerminalSession;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +27,8 @@ public final class SshSessionService extends Service {
     private SshResumeState resumeState;
     private String profileIdentity;
     private PowerManager.WakeLock wakeLock;
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private Network activeNetwork;
     private Runnable retryTask,stableTask;
     private boolean connected,autoReconnect,foreground,destroyed;
     private int generation,retryAttempt;
@@ -72,6 +76,10 @@ public final class SshSessionService extends Service {
     String status(){return status;}
     void observe(Observer value){
         if(observer!=null&&observer!=value)observer.detach();
+        // A vendor may suspend retries while locked. Do not make a visible user wait for backoff.
+        if(value!=null&&foreground&&autoReconnect&&retryTask!=null){
+            closeAttempt();retryAttempt=0;startAttempt();
+        }
         observer=value;if(observer!=null)observer.changed();refreshNotification();
     }
     void removeObserver(Observer value){if(observer==value)observer=null;}
@@ -95,10 +103,42 @@ public final class SshSessionService extends Service {
         return builder.build();
     }
     private void cancelConnection(){
-        generation++;connected=false;autoReconnect=false;retryAttempt=0;
+        stopNetworkMonitoring();closeAttempt();autoReconnect=false;retryAttempt=0;
+    }
+    private void closeAttempt(){
+        generation++;connected=false;
         if(retryTask!=null){handler.removeCallbacks(retryTask);retryTask=null;}
         if(stableTask!=null){handler.removeCallbacks(stableTask);stableTask=null;}
         if(ssh!=null){ssh.close();ssh=null;}
+    }
+    private void startNetworkMonitoring(){
+        ConnectivityManager manager=getSystemService(ConnectivityManager.class);
+        activeNetwork=manager.getActiveNetwork();
+        networkCallback=new ConnectivityManager.NetworkCallback(){
+            private boolean current(){return networkCallback==this&&!destroyed&&foreground&&autoReconnect;}
+            @Override public void onAvailable(Network network){
+                if(!current()||network.equals(activeNetwork))return;
+                activeNetwork=network;
+                closeAttempt();retryAttempt=0;startAttempt();
+            }
+            @Override public void onLost(Network network){
+                if(!current()||!network.equals(activeNetwork))return;
+                activeNetwork=null;closeAttempt();status="网络不可用，等待恢复";changed();
+            }
+        };
+        try{manager.registerDefaultNetworkCallback(networkCallback,handler);}
+        catch(SecurityException|IllegalArgumentException unavailable){
+            // Keep the existing keepalive/backoff path if a vendor rejects monitoring.
+            networkCallback=null;activeNetwork=null;
+        }
+    }
+    private void stopNetworkMonitoring(){
+        ConnectivityManager.NetworkCallback callback=networkCallback;
+        networkCallback=null;activeNetwork=null;
+        if(callback!=null){
+            try{getSystemService(ConnectivityManager.class).unregisterNetworkCallback(callback);}
+            catch(IllegalArgumentException ignored){}
+        }
     }
     private void connect(){
         cancelConnection();
@@ -110,11 +150,13 @@ public final class SshSessionService extends Service {
         if(terminal==null)terminal=new TerminalSession(40,20);
         // Deliberately held only for a user-started, notified session; released on every terminal stop.
         if(!wakeLock.isHeld())wakeLock.acquire();
+        if(autoReconnect)startNetworkMonitoring();
         changed();startAttempt();
     }
     private void startAttempt(){
         if(destroyed||!foreground)return;
         retryTask=null;
+        if(networkCallback!=null&&activeNetwork==null){status="网络不可用，等待恢复";changed();return;}
         final int attempt=++generation;
         final boolean[] firstOutput={true};
         ssh=new SshTransport(new File(getFilesDir(),"ssh"),terminal.getColumns(),terminal.getRows(),new SshTransport.Listener(){

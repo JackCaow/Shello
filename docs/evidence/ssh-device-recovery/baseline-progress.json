@@ -1,0 +1,205 @@
+{
+  "before": {
+    "app_pid": "29097",
+    "clients": "99396",
+    "shell_pid": "59117"
+  },
+  "samples": [
+    {
+      "elapsed": 0.2,
+      "app_pid": "29097",
+      "clients": "99396",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": true
+    },
+    {
+      "elapsed": 30.4,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 60.5,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 90.7,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 120.8,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 150.9,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 181.0,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 211.2,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 241.3,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 271.5,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 301.7,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 331.9,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 362.1,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 392.3,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 422.5,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 452.7,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 482.9,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 513.1,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 543.3,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 573.6,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 603.7,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 634.0,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 664.2,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    },
+    {
+      "elapsed": 694.4,
+      "app_pid": "29097",
+      "clients": "",
+      "wakefulness": "Dozing",
+      "foreground": true,
+      "activity_bound": false
+    }
+  ],
+  "requested_lock_seconds": 720,
+  "secure_keyguard_requires_manual_unlock": true,
+  "baseline_commit": "7a319e0",
+  "automatic_restore_verified": false
+}

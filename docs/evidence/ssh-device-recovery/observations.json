@@ -1,0 +1,47 @@
+{
+  "manufacturer": "Xiaomi",
+  "model": "25019PNF3C",
+  "android": "16",
+  "api": 36,
+  "firmware": "OS3.0.314.0.WOACNXM",
+  "battery_policy": "Smart background restriction (recommended)",
+  "policy_changed": false,
+  "doze_whitelisted": false,
+  "notifications_granted": true,
+  "usb_used_for_observation": true,
+  "ssh_over_direct_wifi": true,
+  "adb_reverse_used": false,
+  "baseline": {
+    "requested_lock_seconds": 720,
+    "simulated_battery_unplug": true,
+    "activity_unbound": true,
+    "process_survived": true,
+    "ssh_disconnected": true,
+    "wake_lock_disabled": true,
+    "wakefulness": "Dozing (lock-screen AOD)",
+    "deep_doze_claimed": false,
+    "recovery_accepted": false,
+    "reason": "Secure lock required manual authentication; later UI observation was offline. Cause not captured; early helper lacked a target-package/connected-state guard. No recovery success claimed."
+  },
+  "short_diagnostic": {
+    "lock_seconds": 40,
+    "transport_eof_retry": true,
+    "connected_ui_observed_after_manual_unlock": true,
+    "final_eof_fix_not_yet_installed": true
+  },
+  "final_device": {
+    "background_settings_entry_verified": true,
+    "claude_code": "2.1.296",
+    "claude_started_in_separate_tmux_window": true,
+    "long_lock_vim_acceptance_complete": false,
+    "reason": "Phone handed back for requested interactive Claude Code use before final long-lock/Vim matrix."
+  },
+  "peer_mac": {
+    "os": "macOS 15.3.1",
+    "architecture": "arm64",
+    "tmux": "3.6a",
+    "ssh_verified": true,
+    "used_for_api27_api35_regressions": true,
+    "physical_phone_long_lock_vim_verified": false
+  }
+}

@@ -1,5 +1,20 @@
 # Validation
 
+## Physical Xiaomi / direct LAN checkpoint
+
+2026-10-21: Xiaomi `25019PNF3C`, Android 16 / API 36, HyperOS `OS3.0.314.0.WOACNXM`, **Smart background restriction (recommended)**, no Doze whitelist. Notification permission was granted. [Observations](evidence/ssh-device-recovery/observations.json), [reproduction and limits](DEVICE_RECOVERY.md).
+
+- SSH connected directly from the phone's Wi-Fi address to the Mac's LAN listener, with **no adb reverse**. USB remained connected for observation. A second macOS 15.3.1 ARM64 machine with tmux 3.6a was also reached over SSH and used for emulator regressions.
+- A **12-minute lock interval** on the baseline build kept the app process and foreground service alive with no Activity binding, but the SSH client disappeared and HyperOS marked the wake lock `DISABLED`. The lock display reported `Dozing`; this is not proof of deep device idle. Battery unplug was simulated. [Samples](evidence/ssh-device-recovery/baseline-progress.json).
+- **That long-run recovery is not accepted:** secure authentication needed manual unlock; a subsequent observation was an offline terminal, and its cause was not captured. The early ad-hoc helper lacked the target-package/connected-state guard now included in the reusable script. A later 40-second diagnostic lock did produce retryable EOF and a connected UI after unlock, but it is not a substitute for the full matrix.
+- Code review identified a separate deterministic teardown race: JSch closes channel streams before clearing `Session.isConnected`. EOF without a remote exit result now retries; EOF arriving ahead of normal exit-status gets a bounded wait. A regression closes a real SSH channel while its Session still reports connected and verifies retryability. Normal remote tmux detach still stops the service and cancels reopen intent. See [upstream teardown ordering](https://github.com/mwiede/jsch/blob/jsch-2.28.8/src/main/java/com/jcraft/jsch/Session.java) and the transport regression test.
+- The service now reacts to default-network changes and accelerates a pending retry on visible return. API 35 verified no-network waiting, automatic recovery (**6.12 s including UI polling**), normal remote detach cancellation, and explicit Disconnect surviving a network change. [Results](evidence/ssh-device-recovery/api35-network.json).
+- **后台运行设置** was opened on the phone: the explanation and this app's OEM settings page worked, with the original smart policy unchanged. [Result](evidence/ssh-device-recovery/settings.json). This is a user control, not an automatic exemption.
+- Final **API 27 and API 35: 5 instrumentation passes / 1 intentional plain-shell skip each**. On API 36 before the test-harness fix: 4 passes / 1 skip / 1 Activity launch idle-timeout. The harness now waits for Activity lifecycle callbacks instead of global UI idle; that harness change was rerun on the emulators, **not yet on the phone**. Debug/release/test builds and release lint passed (0 errors / 18 warnings). [Hashes and exact scope](evidence/ssh-device-recovery/build.json).
+
+The phone was handed back for interactive **Claude Code 2.1.296 over LAN SSH in a separate tmux window**. Final-build long-lock shell/vim, physical network-switch recovery and OEM process-kill recovery remain **incomplete**. No seamless cellular access to LAN-only hosts, unattended overnight survival, energy result, business integration or Maven release is claimed.
+
+
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
 

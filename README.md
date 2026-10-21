@@ -4,6 +4,8 @@ Experimental Android terminal library: **libghostty-vt + native Canvas rendering
 
 [Source repository](https://github.com/JackCaow/ghostty-android) · [中文说明](README.zh-CN.md) · [API contract](docs/API.md) · [Validation](docs/VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
+[Direct LAN testing and OEM battery-policy limitations](docs/DEVICE_RECOVERY.md)
+
 ## Scope
 
 - `TerminalSession`: ordered VT byte stream, key encoding, query replies, scrollback, and opaque in-memory checkpoints.

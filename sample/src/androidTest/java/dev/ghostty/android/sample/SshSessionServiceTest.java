@@ -44,9 +44,11 @@ public class SshSessionServiceTest {
         boolean binding=false;
         app.registerActivityLifecycleCallbacks(lifecycle);
         try{
-            first=instrumentation.startActivitySync(new Intent(context,MainActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("connectLocalSsh",true));
-            assertSame(first,resumed.poll(5,TimeUnit.SECONDS));
+            // A live terminal may keep drawing on high-refresh OEM devices. Wait for its lifecycle,
+            // not startActivitySync's global UI-idle condition, which can time out despite a visible Activity.
+            instrumentation.runOnMainSync(()->context.startActivity(new Intent(context,MainActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("connectLocalSsh",true)));
+            first=resumed.poll(10,TimeUnit.SECONDS);assertNotNull("Activity did not resume",first);
             binding=app.bindService(new Intent(context,SshSessionService.class),connection,Context.BIND_AUTO_CREATE);
             assertTrue(binding);assertTrue(bound.await(5,TimeUnit.SECONDS));
             AtomicReference<TerminalSession> terminal=new AtomicReference<>();
@@ -61,7 +63,6 @@ public class SshSessionServiceTest {
             instrumentation.runOnMainSync(original::recreate);
             second=resumed.poll(5,TimeUnit.SECONDS);
             assertNotNull(second);assertNotSame(first,second);
-            instrumentation.waitForIdleSync();
             instrumentation.runOnMainSync(()->{
                 assertTrue(original.isDestroyed());
                 assertTrue(owner.get().active());assertTrue(owner.get().connected());

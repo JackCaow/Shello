@@ -49,13 +49,13 @@ def provision(mode, port):
     adb_shell('am', 'force-stop', package)
     adb_shell('am', 'start', '-n', package + '/.MainActivity', '--ez', 'connectLocalSsh', 'true')
 
-def fixture_listener():
-    pid_file = root / 'sshd.pid'
+def fixture_listener(prefix=''):
+    pid_file = root / (prefix + 'sshd.pid')
     if not pid_file.exists():
         return None
     pid = int(pid_file.read_text())
     result = subprocess.run(['ps', '-p', str(pid), '-o', 'command='], capture_output=True, text=True)
-    return pid if str(root / 'sshd_config') in result.stdout else None
+    return pid if str(root / (prefix + 'sshd_config')) in result.stdout else None
 
 def tmux_command(*command, check=True):
     binary = shutil.which('tmux')
@@ -73,13 +73,13 @@ if args.action == 'connect':
     raise SystemExit
 
 if args.action == 'drop':
-    listener = fixture_listener()
-    if listener is None:
+    listeners = {pid for pid in (fixture_listener(), fixture_listener('lan-')) if pid is not None}
+    if not listeners:
         raise SystemExit('No matching fixture SSH listener')
     # Abruptly terminate only this listener's connection handlers, not tmux or its panes.
     processes = subprocess.check_output(['ps', '-axo', 'pid=,ppid=,comm='], text=True)
     records = [line.strip().split(None, 2) for line in processes.splitlines()]
-    descendants = {listener}
+    descendants = listeners.copy()
     targets = []
     while True:
         found = [(int(pid), command) for pid, parent, command in records
@@ -113,11 +113,10 @@ if args.action == 'status':
 
 def stop():
     # Validate the PID belongs to this fixture before signalling it.
-    pid_file = root / 'sshd.pid'
-    if pid_file.exists():
-        pid = int(pid_file.read_text())
-        result = subprocess.run(['ps', '-p', str(pid), '-o', 'command='], capture_output=True, text=True)
-        if str(root / 'sshd_config') in result.stdout:
+    for prefix in ('', 'lan-'):
+        pid_file = root / (prefix + 'sshd.pid')
+        pid = fixture_listener(prefix)
+        if pid is not None:
             os.kill(pid, signal.SIGTERM)
         pid_file.unlink(missing_ok=True)
     if not args.host_only:

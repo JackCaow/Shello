@@ -350,11 +350,20 @@ public final class MainActivity extends Activity {
         menu.getMenu().add(0,6,6,"断开 SSH").setEnabled(sshService!=null&&sshService.active());
         menu.getMenu().add(0,7,7,"返回离线演示").setEnabled(sshMode);
         menu.getMenu().add(0,8,8,"通知设置");
+        menu.getMenu().add(0,9,9,"后台运行设置");
         menu.setOnMenuItemClickListener(item->{
             switch(item.getItemId()){
                 case 5:connectSsh();break;
                 case 8:startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));break;
+                case 9:new android.app.AlertDialog.Builder(this).setTitle("后台会话与省电限制")
+                        .setMessage("系统省电策略可能暂停联网或关闭应用，前台服务不能保证一直在线。\n\n"
+                                +"需要持续后台连接时，可在应用信息中查看省电策略。设置名称因手机而异；允许后台运行也不保证连接不会中断。\n\n"
+                                +"SSH 断开后，远端仍在运行的 tmux 会话会在网络恢复或重新打开应用后重新附着。")
+                        .setNegativeButton("关闭",null)
+                        .setPositiveButton("打开应用信息",(dialog,which)->startActivity(new Intent(
+                                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                android.net.Uri.parse("package:"+getPackageName())))).show();break;
                 case 6:disconnectSsh();break;
                 case 7:returnOffline();sshMode=false;subtitle.setText("本地终端");protocolBadge.setText("LOCAL");homeBadge.setText("LOCAL");demo();break;
                 case 0:terminal.scrollToBottom();break;

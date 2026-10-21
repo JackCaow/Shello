@@ -87,5 +87,25 @@ public class SshTransportTest {
         assertFalse(SshTransport.isNetworkFailure(new com.jcraft.jsch.JSchException("Auth fail")));
         assertFalse(SshTransport.isNetworkFailure(new IllegalArgumentException("bad port")));
     }
+    @Test public void channelLossBeforeSessionFlagChangesRemainsRetryable() throws Exception {
+        assumeTrue(new File(profile(),"connection.properties").isFile());
+        java.util.Properties config=new java.util.Properties();
+        try(InputStream in=new FileInputStream(new File(profile(),"connection.properties"))){config.load(in);}
+        assumeTrue("Do not terminate a non-persistent test shell", "tmux".equals(config.getProperty("sessionMode")));
+        Probe probe=new Probe();SshTransport ssh=new SshTransport(profile(),80,24,probe);
+        try{
+            ssh.connect();assertTrue(probe.connected.await(15,TimeUnit.SECONDS));
+            java.lang.reflect.Field channelField=SshTransport.class.getDeclaredField("channel");channelField.setAccessible(true);
+            java.lang.reflect.Field sessionField=SshTransport.class.getDeclaredField("connection");sessionField.setAccessible(true);
+            com.jcraft.jsch.ChannelShell channel=(com.jcraft.jsch.ChannelShell)channelField.get(ssh);
+            com.jcraft.jsch.Session session=(com.jcraft.jsch.Session)sessionField.get(ssh);
+            assertTrue(session.isConnected());assertEquals(-1,channel.getExitStatus());
+            // Reproduce JSch's teardown ordering: close the channel's pipe while Session still says connected.
+            // The tmux server/shell survives this deliberately interrupted client.
+            channel.disconnect();
+            assertTrue(probe.ended.await(10,TimeUnit.SECONDS));
+            assertTrue("Unknown channel loss must not clear tmux resume intent",probe.retryable);
+        }finally{ssh.close();}
+    }
     private static void send(SshTransport ssh,String text) { ssh.send(text.getBytes(StandardCharsets.UTF_8)); }
 }

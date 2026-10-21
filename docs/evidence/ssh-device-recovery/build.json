@@ -1,0 +1,27 @@
+{
+  "artifacts": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "d5888aec3c8695d0b2164ff3d4d0c3323d0ba0ecbd665850d39461fea5085928",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "6a5ae617ffc461cb29e29d23b26f16cf80a56957312ded23a5ef36af445b1df2",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "d0b458c794b88d6b2351e4d453b25dc5f994dda4b0d9766cecac6b7e75d6107a"
+  },
+  "lint": {
+    "Warning": 18
+  },
+  "instrumentation": {
+    "27": {
+      "passed": 5,
+      "skipped": 1
+    },
+    "35": {
+      "passed": 5,
+      "skipped": 1
+    },
+    "36_before_lifecycle_harness_fix": {
+      "passed": 4,
+      "skipped": 1,
+      "failed": 1,
+      "limitation": "startActivitySync UI-idle timeout on a visible physical-device Activity; lifecycle-based harness fix rerun on API 27/35 only"
+    }
+  },
+  "installed_phone_debug_matches_final_build": true
+}
