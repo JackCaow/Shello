@@ -146,17 +146,30 @@ public final class MainActivity extends Activity {
         padButton=icon("pad","方向键浮板",this::togglePad);addTool(padButton);
         addTool(icon("panel","会话工具",()->tools(toolbar)));
         addTool(icon("paste","粘贴到草稿",this::paste));
-        TextView history=icon("history","输入历史",this::history);
-        ((ControlLabel)history).setIcon(new ToolbarIcon("history",dp(13),MUTED));
-        history.setBackgroundColor(Color.TRANSPARENT);toolbar.addView(history,new LinearLayout.LayoutParams(dp(16),dp(44)));
-        TextView chat=icon("chat","编辑文本",()->setDraftMode(true,true));addTool(chat);chat.setBackgroundColor(Color.TRANSPARENT);
-        TextView keyboard=icon("keyboard","显示或隐藏键盘",this::toggleKeyboard);addTool(keyboard);keyboard.setBackgroundColor(Color.TRANSPARENT);
+        addTool(icon("history","输入历史",this::history));
+        addTool(icon("chat","编辑文本",()->setDraftMode(true,true)));
+        addTool(icon("keyboard","显示或隐藏键盘",this::toggleKeyboard));
     }
     private void addTool(View view) {
         view.setMinimumWidth(dp(40));
-        view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),new android.graphics.drawable.InsetDrawable(round(KEY,20),dp(3),dp(4),dp(3),dp(4)),null));
+        view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),toolCircle(KEY),toolCircle(Color.WHITE)));
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(44),1);
         toolbar.addView(view,p);
+    }
+    /** Equal circular bases even when the toolbar distributes fractional button widths. */
+    private android.graphics.drawable.Drawable toolCircle(int color) {
+        return new android.graphics.drawable.Drawable(){
+            final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            {paint.setColor(color);}
+            @Override public void draw(android.graphics.Canvas canvas){
+                android.graphics.Rect b=getBounds();
+                float radius=Math.max(0,Math.min(b.width(),b.height())/2f-dp(3));
+                canvas.drawCircle(b.exactCenterX(),b.exactCenterY(),radius,paint);
+            }
+            @Override public void setAlpha(int alpha){paint.setAlpha(alpha);invalidateSelf();}
+            @Override public void setColorFilter(android.graphics.ColorFilter filter){paint.setColorFilter(filter);invalidateSelf();}
+            @Override public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}
+        };
     }
     private void buildComposer() {
         composer=column();composer.setPadding(dp(12),dp(8),dp(12),dp(8));
