@@ -14,6 +14,7 @@ public class InputControlsTest {
     @Test public void independentLayoutsPersistAndCtrlCannotBeLost(){
         config.save("layout_toolbar",List.of("key_TAB","pad"));config.save("layout_composer",List.of("history","key_ESCAPE"));config.save("layout_zen",List.of("key_ENTER","keyboard"));
         InputPreferences fresh=new InputPreferences(context);assertEquals(List.of("key_TAB","pad","ctrl"),fresh.list("layout_toolbar"));assertEquals(List.of("history","key_ESCAPE"),fresh.list("layout_composer"));assertEquals(List.of("key_ENTER","keyboard"),fresh.list("layout_zen"));
+        assertEquals(List.of("key_TAB","pad","ctrl","chat","keyboard"),fresh.toolbar());assertEquals(List.of("key_TAB","pad","ctrl"),fresh.list("layout_toolbar"));
         config.reset("layout_composer");assertTrue(config.list("layout_composer").contains("shortcuts"));assertEquals(List.of("key_TAB","pad","ctrl"),config.list("layout_toolbar"));
     }
     @Test public void customEditingFavoriteAndRemovalAcrossLayouts(){

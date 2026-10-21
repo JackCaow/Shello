@@ -67,7 +67,7 @@ public final class MainActivity extends LocalizedActivity {
     private TerminalView terminal;
     private TerminalInputView directInput;
     private EditText draft;
-    private LinearLayout root, sheet, composer, toolbar, pad, selectionBar, savedConnections;
+    private LinearLayout root, sheet, composer, pad, selectionBar, savedConnections;
     private String pendingProfile,restoredDraftTab,restoredDraft;
     private boolean restoredDraftMode;
     private int restoredDraftSelectionStart=-1,restoredDraftSelectionEnd=-1;
@@ -87,6 +87,8 @@ public final class MainActivity extends LocalizedActivity {
     private final java.util.ArrayList<String> draftHistory=new java.util.ArrayList<>();
     private boolean padPositioned;
     private HorizontalScrollView toolScroll;
+    private InputToolbar toolbarContainer;
+    private LinearLayout toolbar;
     private LinearLayout composerActions,draftPanel;
     private TextView addTextButton,attachmentStatus;
     private String attachmentTab;
@@ -123,7 +125,7 @@ public final class MainActivity extends LocalizedActivity {
         directInput=new TerminalInputView(this); directInput.setTerminalView(terminal);
         directInput.setAlpha(0); directInput.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         sheet.addView(directInput,new LinearLayout.LayoutParams(1,1));
-        inputControls=new TerminalControls(this,terminal,directInput,sheet,toolbar,configuredComposer,viewport,new TerminalControls.Host(){
+        inputControls=new TerminalControls(this,terminal,directInput,sheet,toolbarContainer,configuredComposer,viewport,new TerminalControls.Host(){
             public void action(String id){controlAction(id);}
             public void composer(boolean open){setDraftMode(open,true);}
             public void session(int index,boolean relative){switchSession(index,relative);}
@@ -152,8 +154,8 @@ public final class MainActivity extends LocalizedActivity {
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
         sheet.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
             int toolWidth=Math.min(dp(600),Math.max(0,r-l-dp(16)));
-            LinearLayout.LayoutParams tools=(LinearLayout.LayoutParams)toolScroll.getLayoutParams();
-            if(tools.width!=toolWidth){tools.width=toolWidth;tools.gravity=Gravity.CENTER_HORIZONTAL;toolScroll.setLayoutParams(tools);}
+            LinearLayout.LayoutParams tools=(LinearLayout.LayoutParams)toolbarContainer.getLayoutParams();
+            if(tools.width!=toolWidth){tools.width=toolWidth;tools.gravity=Gravity.CENTER_HORIZONTAL;toolbarContainer.setLayoutParams(tools);}
             int composerWidth=Math.min(dp(800),Math.max(0,r-l-dp(16)));
             LinearLayout.LayoutParams cp=(LinearLayout.LayoutParams)composer.getLayoutParams();
             if(cp.width!=composerWidth){cp.width=composerWidth;cp.gravity=Gravity.CENTER_HORIZONTAL;composer.setLayoutParams(cp);}
@@ -202,14 +204,10 @@ public final class MainActivity extends LocalizedActivity {
     }
 
     private void buildToolbar() {
-        HorizontalScrollView scroll=new InputToolScroll(this);toolScroll=scroll;
-        scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);
-        toolbar=row();toolbar.setPadding(dp(5),dp(4),dp(5),dp(4));
-        scroll.setBackground(round(Color.BLACK,32));scroll.setClipToOutline(true);
-        scroll.addView(toolbar,new HorizontalScrollView.LayoutParams(-1,dp(52)));
+        toolbarContainer=new InputToolbar(this);toolScroll=toolbarContainer.scroll;toolbar=toolbarContainer.scrollingButtons;
         LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(52));
-        outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(scroll,outer);
-        scroll.setTag("toolbar");
+        outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(toolbarContainer,outer);
+        toolbarContainer.setTag("toolbar");
     }
     private void buildComposer() {
         composer=column();composer.setPadding(dp(12),dp(8),dp(12),dp(8));
@@ -538,7 +536,7 @@ public final class MainActivity extends LocalizedActivity {
     }
     private void setDraftMode(boolean enabled,boolean keyboard) {
         if(inputControls!=null)inputControls.clearModifiers();draftMode=enabled;
-        ((View)toolbar.getParent()).setVisibility(enabled?View.GONE:View.VISIBLE);
+        toolbarContainer.setVisibility(enabled?View.GONE:View.VISIBLE);
         composer.setVisibility(enabled?View.VISIBLE:View.GONE);
         pad.setVisibility(View.GONE);
         if(inputControls!=null){inputControls.mode(enabled);inputControls.setActive("pad",false);}

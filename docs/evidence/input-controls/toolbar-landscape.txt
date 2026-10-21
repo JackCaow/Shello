@@ -1,0 +1,6 @@
+dev.ghostty.android.sample.InputRuntimeTest:.
+dev.ghostty.android.sample.SettingsActivityTest:.
+
+Time: 38.268
+
+OK (2 tests)

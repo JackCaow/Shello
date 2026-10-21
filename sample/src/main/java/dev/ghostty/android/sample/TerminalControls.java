@@ -11,7 +11,7 @@ import java.util.*;
 /** Host actions stay in MainActivity; all configurable inputs share this dispatcher. */
 final class TerminalControls implements InputManager.InputDeviceListener {
     interface Host {void action(String id);void composer(boolean open);void session(int index,boolean relative);boolean active();boolean keyboardVisible();}
-    private final MainActivity activity;private final TerminalView terminal;private final TerminalInputView input;private final LinearLayout toolbar,sheet,composerButtons;
+    private final MainActivity activity;private final TerminalView terminal;private final TerminalInputView input;private final LinearLayout toolbar,sheet,composerButtons;private final InputToolbar toolbarContainer;
     private final FrameLayout viewport;private final Host host;
     private final InputManager inputManager;
     private final SharedPreferences inputPreferences,appearancePreferences;
@@ -20,8 +20,8 @@ final class TerminalControls implements InputManager.InputDeviceListener {
     private final View.OnLayoutChangeListener viewportChanged=(v,l,t,r,b,ol,ot,or,ob)->resizeRing();private boolean draft,lockedCtrl,lockedPanel;
     private int modifiers;private LinearLayout panel,groupBar,keys;private String group="Claude";private ZenRing ring;
     private final List<ControlGestures> gestures=new ArrayList<>();
-    TerminalControls(MainActivity activity,TerminalView terminal,TerminalInputView input,LinearLayout sheet,LinearLayout toolbar,LinearLayout composerButtons,FrameLayout viewport,Host host){
-        this.activity=activity;this.terminal=terminal;this.input=input;this.sheet=sheet;this.toolbar=toolbar;this.composerButtons=composerButtons;this.viewport=viewport;this.host=host;
+    TerminalControls(MainActivity activity,TerminalView terminal,TerminalInputView input,LinearLayout sheet,InputToolbar toolbarContainer,LinearLayout composerButtons,FrameLayout viewport,Host host){
+        this.activity=activity;this.terminal=terminal;this.input=input;this.sheet=sheet;this.toolbarContainer=toolbarContainer;this.toolbar=toolbarContainer.scrollingButtons;this.composerButtons=composerButtons;this.viewport=viewport;this.host=host;
         inputPreferences=activity.getSharedPreferences(InputPreferences.FILE,0);appearancePreferences=activity.getSharedPreferences("appearance",0);inputPreferences.registerOnSharedPreferenceChangeListener(preferencesChanged);appearancePreferences.registerOnSharedPreferenceChangeListener(preferencesChanged);
         inputManager=activity.getSystemService(InputManager.class);inputManager.registerInputDeviceListener(this,null);hardwareAvailable=physicalKeyboard();viewport.addOnLayoutChangeListener(viewportChanged);terminal.setGestureListener(this::gesture);refresh();
     }
@@ -37,16 +37,14 @@ final class TerminalControls implements InputManager.InputDeviceListener {
         else {b.setOnLongClickListener(v->{if(id.startsWith("preset_")||id.startsWith("custom_"))activity.startActivity(new Intent(activity,ShortcutEditorActivity.class).putExtra("id",id).putExtra("list",list));return true;});}
         return b;
     }
-    private void renderToolbar(){toolbar.removeAllViews();List<String> ids=config().flag("zen_mode",false)?List.of("zen","keyboard"):config().list("layout_toolbar");for(String id:ids){InputButton b=button(id,"layout_toolbar");LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(44),1);p.setMargins(dp(2),0,dp(2),0);toolbar.addView(b,p);}toolbar.setMinimumWidth(dp(ids.size()*38+10));
-        if(toolbar.getParent() instanceof InputToolScroll scroll)scroll.setSwipeListener(up->mapped(up?"toolbar_up":"toolbar_down"));
-    }
+    private void renderToolbar(){List<View> buttons=new ArrayList<>();boolean zen=config().flag("zen_mode",false);List<String> ids=zen?List.of("zen","keyboard"):config().toolbar();for(String id:ids)buttons.add(button(id,"layout_toolbar"));toolbarContainer.setButtons(buttons,zen?0:2);toolbarContainer.setSwipeListener(up->mapped(up?"toolbar_up":"toolbar_down"));}
     private void renderComposer(){composerButtons.removeAllViews();for(String id:config().list("layout_composer"))composerButtons.addView(button(id,"layout_composer"),new LinearLayout.LayoutParams(dp(42),dp(40)));}
-    void setActive(String id,boolean active){for(LinearLayout row:List.of(toolbar,composerButtons))for(int i=0;i<row.getChildCount();i++){View button=row.getChildAt(i);if(id.equals(button.getTag()))button.setActivated(active);}}
+    void setActive(String id,boolean active){for(LinearLayout row:List.of(toolbar,toolbarContainer.pinnedButtons,composerButtons))for(int i=0;i<row.getChildCount();i++){View button=row.getChildAt(i);if(id.equals(button.getTag()))button.setActivated(active);}}
     void mode(boolean enabled){draft=enabled;clearModifiers();visibility();}
-    private void visibility(){boolean hide=config().flag("hardware_hide",true)&&hardwareAvailable;((View)toolbar.getParent()).setVisibility(draft||hide?View.GONE:View.VISIBLE);}
+    private void visibility(){boolean hide=config().flag("hardware_hide",true)&&hardwareAvailable;toolbarContainer.setVisibility(draft||hide?View.GONE:View.VISIBLE);}
     private boolean physicalKeyboard(){for(int id:InputDevice.getDeviceIds()){InputDevice d=InputDevice.getDevice(id);if(d!=null&&!d.isVirtual()&&d.getKeyboardType()==InputDevice.KEYBOARD_TYPE_ALPHABETIC)return true;}return false;}
     void clearModifiers(){modifiers=0;lockedCtrl=false;updateModifiers();}
-    private void updateModifiers(){input.setModifiers(modifiers,()->{modifiers=lockedCtrl?TerminalSession.CTRL:0;updateModifiers();});mark(toolbar);mark(composerButtons);}
+    private void updateModifiers(){input.setModifiers(modifiers,()->{modifiers=lockedCtrl?TerminalSession.CTRL:0;updateModifiers();});mark(toolbar);mark(toolbarContainer.pinnedButtons);mark(composerButtons);}
     private void mark(LinearLayout container){for(int i=0;i<container.getChildCount();i++){View v=container.getChildAt(i);Object id=v.getTag();int bit=Objects.equals(id,"ctrl")?2:Objects.equals(id,"alt")?4:Objects.equals(id,"shift")?1:Objects.equals(id,"super")?8:0;if(bit!=0)v.setActivated((modifiers&bit)!=0);}}
     void key(TerminalSession.Key key){terminal.sendKey(key,modifiers);modifiers=lockedCtrl?2:0;updateModifiers();}
     void perform(String id){
@@ -90,7 +88,7 @@ final class TerminalControls implements InputManager.InputDeviceListener {
     }
     void togglePanel(){if(panel!=null&&panel.getVisibility()==View.VISIBLE)panel.setVisibility(View.GONE);else showPanel();}
     private void showPanel(){ensurePanel();renderPanel();panel.setVisibility(View.VISIBLE);}
-    private void ensurePanel(){if(panel!=null)return;panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(8),dp(4),dp(8),dp(4));panel.setBackground(SampleUi.surface(activity,0xff101214,16));sheet.addView(panel,sheet.indexOfChild((View)toolbar.getParent()),new LinearLayout.LayoutParams(-1,-2));}
+    private void ensurePanel(){if(panel!=null)return;panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(8),dp(4),dp(8),dp(4));panel.setBackground(SampleUi.surface(activity,0xff101214,16));sheet.addView(panel,sheet.indexOfChild(toolbarContainer),new LinearLayout.LayoutParams(-1,-2));}
     private void renderPanel(){
         panel.removeAllViews();InputPreferences c=config();List<String> groups=c.list("groups");boolean upload=c.flag("shortcut_upload",true);if(!groups.contains(group)&&!(upload&&group.equals("Upload")))group=upload?"Upload":groups.isEmpty()?"":groups.get(0);
         LinearLayout head=new LinearLayout(activity);HorizontalScrollView tabs=new HorizontalScrollView(activity);tabs.setHorizontalScrollBarEnabled(false);groupBar=new LinearLayout(activity);List<String> all=new ArrayList<>();if(upload)all.add("Upload");all.addAll(groups);

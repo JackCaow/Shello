@@ -23,6 +23,8 @@ final class InputPreferences {
         try{JSONArray array=new JSONArray(raw);List<String> result=new ArrayList<>();for(int i=0;i<array.length();i++){String id=array.getString(i);if(!result.contains(id)&&(key.equals("groups")?InputActions.GROUPS.containsKey(id):action(id)!=null))result.add(id);}return result;}
         catch(JSONException e){return defaults(key);}
     }
+    List<String> editable(String key){List<String> ids=list(key);if(key.equals("layout_toolbar"))ids.removeAll(List.of("chat","keyboard"));return ids;}
+    List<String> toolbar(){List<String> ids=editable("layout_toolbar");ids.add("chat");ids.add("keyboard");return ids;}
     void save(String key,List<String> ids){LinkedHashSet<String> unique=new LinkedHashSet<>(ids);if(key.equals("layout_toolbar"))unique.add("ctrl");prefs.edit().putString(key,new JSONArray(unique).toString()).apply();}
     void reset(String key){prefs.edit().remove(key).apply();}
     InputActions.Action action(String id){

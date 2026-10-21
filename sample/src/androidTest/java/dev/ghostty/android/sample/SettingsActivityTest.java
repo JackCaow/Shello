@@ -110,6 +110,8 @@ public class SettingsActivityTest {
         }}finally{finish();}
     }
     private void dragSetting(String from,String to){
+        inst.runOnMainSync(()->{View a=find(current.root,from),b=find(current.root,to);assertNotNull(from,a);assertNotNull(to,b);android.graphics.Rect bounds=new android.graphics.Rect(0,0,a.getWidth(),a.getHeight()),other=new android.graphics.Rect(0,0,b.getWidth(),b.getHeight());current.body.offsetDescendantRectToMyCoords(a,bounds);current.body.offsetDescendantRectToMyCoords(b,other);bounds.union(other);current.scroll.requestChildRectangleOnScreen(current.body,bounds,true);});
+        inst.waitForIdleSync();android.os.SystemClock.sleep(100);
         int[] start=new int[2],end=new int[2];inst.runOnMainSync(()->{View a=find(current.root,from),b=find(current.root,to);assertNotNull(from,a);assertNotNull(to,b);a.getLocationOnScreen(start);b.getLocationOnScreen(end);start[0]+=a.getWidth()/2;start[1]+=a.getHeight()/2;end[0]+=b.getWidth()/2;end[1]+=b.getHeight()/2;});
         long down=android.os.SystemClock.uptimeMillis();MotionEvent event=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,start[0],start[1],0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);assertTrue(inst.getUiAutomation().injectInputEvent(event,true));event.recycle();android.os.SystemClock.sleep(100);
         for(int i=1;i<=8;i++){long time=android.os.SystemClock.uptimeMillis();event=MotionEvent.obtain(down,time,MotionEvent.ACTION_MOVE,start[0]+(end[0]-start[0])*i/8f,start[1]+(end[1]-start[1])*i/8f,0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);assertTrue(inst.getUiAutomation().injectInputEvent(event,true));event.recycle();android.os.SystemClock.sleep(30);}
