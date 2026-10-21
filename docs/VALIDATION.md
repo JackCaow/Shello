@@ -1,5 +1,17 @@
 # Validation
 
+## Terminal background color correction
+
+2026-10-21: reproduced missing TUI background bands over a real phone SSH + tmux session. Printed spaces had color, but the rest of a row erased with `CSI K` reverted to the default background. The JNI bridge read only `style.bg_color` and ignored Ghostty’s compact RGB/palette background-only cells. Both render and diagnostic frames now resolve those cell representations using the current palette.
+
+Also initialized the engine’s default foreground/background to its existing white-on-black defaults: the pinned renderer requires both defaults to apply an independent OSC 10 or OSC 11 override. Independent changes and OSC 110/111 resets now work without requiring the PTY to set both colors.
+
+- Six color regressions cover Canvas background pixels, printed spaces versus erased cells, line/screen erase, indexed palette updates, ANSI/bright/indexed/RGB values, inverse/screen reverse, independent default-color overrides/resets, scrollback and checkpoint restoration. [Before-fix failures](evidence/colors/before-api27.txt). Checkpoints restore the live viewport; the test explicitly scrolls back to inspect restored history.
+- Full library suite: **21 passed on API 27**, **21 passed on API 35**. Physical Xiaomi API 36: **16 passed** (color, cursor and public API tests). The phone’s separate `InteractionActivity` launch timed out; those five real-window interaction tests passed on the emulators, not on this phone run. [API 27](evidence/colors/api27.txt), [API 35](evidence/colors/api35.txt), [phone](evidence/colors/phone-api36.txt).
+- Physical SSH + tmux visual check: [before](evidence/colors/phone-before.png), [after](evidence/colors/phone-after.png), [repro color card](evidence/colors/color-card.py). The same row changed from four colored spaces to a complete continuous band. This fixture’s tmux may quantize RGB output to its client palette; exact RGB values were checked directly through VT/Canvas instrumentation.
+- API 27 JNI bridge recompiled against the unchanged pinned libghostty-vt archive; AAR, debug sample, R8 release sample and test APK builds passed. Terminal release lint: **0 errors / 5 warnings**. The final debug sample was installed on the phone. No Maven publication.
+
+
 ## Saved SSH connection editing
 
 2026-10-21: added the observed Moshi interaction **long-press saved connection → 编辑 / 删除 menu → 编辑连接 form**, with a green top checkmark and a bottom save-and-connect action. This supersedes the earlier creation-only limitation below. Existing encrypted credentials can be retained without retyping; errors and discarded edits preserve the saved profile. Successful verification atomically updates the same profile ID and reconnects.

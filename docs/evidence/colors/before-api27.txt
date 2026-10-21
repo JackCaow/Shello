@@ -1,0 +1,160 @@
+dev.ghostty.android.TerminalColorTest:..
+Error in erasedRgbBackgroundMatchesPrintedSpaces(dev.ghostty.android.TerminalColorTest):
+java.lang.AssertionError: java.lang.AssertionError: cell background at 3,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.erasedRgbBackgroundMatchesPrintedSpaces(TerminalColorTest.java:39)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 3,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$erasedRgbBackgroundMatchesPrintedSpaces$1(TerminalColorTest.java:41)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$94jl-lwclq-slgkvX3EGd3nwOP0(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+
+Error in erasedPaletteBackgroundTracksPaletteChangesAndReset(dev.ghostty.android.TerminalColorTest):
+java.lang.AssertionError: java.lang.AssertionError: cell background at 1,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.erasedPaletteBackgroundTracksPaletteChangesAndReset(TerminalColorTest.java:45)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 1,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$erasedPaletteBackgroundTracksPaletteChangesAndReset$2(TerminalColorTest.java:47)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$i8oa60u0Fb3T39PCrUgPucxS4GE(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+
+Error in backgroundSurvivesCheckpointAndScrollback(dev.ghostty.android.TerminalColorTest):
+java.lang.AssertionError: java.lang.AssertionError: cell background at 0,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.backgroundSurvivesCheckpointAndScrollback(TerminalColorTest.java:68)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 0,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$backgroundSurvivesCheckpointAndScrollback$5(TerminalColorTest.java:70)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$7rWvA4g3iTvde8_PqsR0kCSbXdM(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+
+
+Time: 0.08
+There were 3 failures:
+1) erasedRgbBackgroundMatchesPrintedSpaces(dev.ghostty.android.TerminalColorTest)
+java.lang.AssertionError: java.lang.AssertionError: cell background at 3,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.erasedRgbBackgroundMatchesPrintedSpaces(TerminalColorTest.java:39)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 3,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$erasedRgbBackgroundMatchesPrintedSpaces$1(TerminalColorTest.java:41)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$94jl-lwclq-slgkvX3EGd3nwOP0(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+2) erasedPaletteBackgroundTracksPaletteChangesAndReset(dev.ghostty.android.TerminalColorTest)
+java.lang.AssertionError: java.lang.AssertionError: cell background at 1,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.erasedPaletteBackgroundTracksPaletteChangesAndReset(TerminalColorTest.java:45)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 1,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$erasedPaletteBackgroundTracksPaletteChangesAndReset$2(TerminalColorTest.java:47)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$i8oa60u0Fb3T39PCrUgPucxS4GE(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+3) backgroundSurvivesCheckpointAndScrollback(dev.ghostty.android.TerminalColorTest)
+java.lang.AssertionError: java.lang.AssertionError: cell background at 0,0 expected:<1193046> but was:<0>
+	at dev.ghostty.android.TerminalColorTest.check(TerminalColorTest.java:23)
+	at dev.ghostty.android.TerminalColorTest.backgroundSurvivesCheckpointAndScrollback(TerminalColorTest.java:68)
+	... 31 trimmed
+Caused by: java.lang.AssertionError: cell background at 0,0 expected:<1193046> but was:<0>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at dev.ghostty.android.TerminalColorTest.background(TerminalColorTest.java:33)
+	at dev.ghostty.android.TerminalColorTest.lambda$backgroundSurvivesCheckpointAndScrollback$5(TerminalColorTest.java:70)
+	at dev.ghostty.android.TerminalColorTest.$r8$lambda$7rWvA4g3iTvde8_PqsR0kCSbXdM(Unknown Source:0)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+	at dev.ghostty.android.TerminalColorTest.lambda$check$0(TerminalColorTest.java:20)
+	at dev.ghostty.android.TerminalColorTest$$ExternalSyntheticLambda5.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:457)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2093)
+	at android.os.Handler.handleCallback(Handler.java:790)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:164)
+	at android.app.ActivityThread.main(ActivityThread.java:6494)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:438)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:807)
+
+FAILURES!!!
+Tests run: 5,  Failures: 3

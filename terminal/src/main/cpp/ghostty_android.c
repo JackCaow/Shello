@@ -75,6 +75,11 @@ JNIEXPORT jlong JNICALL FN(create)(JNIEnv *env, jclass cls, jint cols, jint rows
     GhosttyTerminal t = NULL;
     check(env, ghostty_terminal_new(NULL, &t, cols, rows));
     if (!t) return 0;
+    // RenderState requires both defaults, even when the PTY overrides only one.
+    // Match its initial white-on-black appearance; OSC 10/11 remain independent.
+    GhosttyColorRgb foreground = {.r=255,.g=255,.b=255}, background = {0};
+    check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND, &foreground));
+    check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND, &background));
     size_t limit = 65536;
     check(env, ghostty_terminal_set(t, GHOSTTY_TERMINAL_OPT_CONTINUATION_MAX_BYTES, &limit));
     size_t bytes = 4 * 1024 * 1024;
@@ -111,6 +116,24 @@ static int color(GhosttyStyleColor c, const GhosttyRenderStateColors *colors, in
     if (c.tag == GHOSTTY_STYLE_COLOR_PALETTE) return rgb(colors->palette[c.value.palette]);
     return fallback;
 }
+// Erase/fill operations can store background-only cells without a style entry.
+// Resolve that compact representation before applying SGR inverse, just as for
+// text cells. Palette entries must use the current palette (including OSC 4).
+static int background(GhosttyCell cell, const GhosttyStyle *style, const GhosttyRenderStateColors *colors) {
+    GhosttyCellContentTag tag;
+    ghostty_cell_get(cell, GHOSTTY_CELL_DATA_CONTENT_TAG, &tag);
+    if (tag == GHOSTTY_CELL_CONTENT_BG_COLOR_RGB) {
+        GhosttyColorRgb value;
+        ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_RGB, &value);
+        return rgb(value);
+    }
+    if (tag == GHOSTTY_CELL_CONTENT_BG_COLOR_PALETTE) {
+        GhosttyColorPaletteIndex index;
+        ghostty_cell_get(cell, GHOSTTY_CELL_DATA_COLOR_PALETTE, &index);
+        return rgb(colors->palette[index]);
+    }
+    return color(style->bg_color, colors, rgb(colors->background));
+}
 JNIEXPORT jstring JNICALL FN(frame)(JNIEnv *env, jclass cls, jlong h) {
     GhosttyTerminal t=term(h);
     ghostty_render_state_update(lab(h)->render,t);
@@ -142,7 +165,7 @@ JNIEXPORT jstring JNICALL FN(frame)(JNIEnv *env, jclass cls, jlong h) {
             GhosttyStyle style=GHOSTTY_INIT_SIZED(GhosttyStyle); ghostty_grid_ref_style(&ref,&style);
             fputs("[\"",out);
             if(r==GHOSTTY_SUCCESS) for(size_t i=0;i<n;i++) json_cp(out,cps[i]);
-            int fg=color(style.fg_color,&colors,rgb(colors.foreground)),bg=color(style.bg_color,&colors,rgb(colors.background));
+            int fg=color(style.fg_color,&colors,rgb(colors.foreground)),bg=background(cell,&style,&colors);
             if(style.inverse){int swap=fg;fg=bg;bg=swap;}
             int flags=(style.bold?1:0)|(style.italic?2:0)|(style.faint?4:0)|(style.invisible?8:0)|(style.strikethrough?16:0)|(style.overline?32:0)|(style.blink?64:0);
             fprintf(out,"\",%d,%d,%d,%d,%d,%d]",fg,bg,(int)wide,flags,style.underline,color(style.underline_color,&colors,fg));
@@ -226,7 +249,7 @@ JNIEXPORT jbyteArray JNICALL FN(render)(JNIEnv *env,jclass cls,jlong h) {
         GhosttyCell cell;GhosttyCellWide wide;ghostty_grid_ref_cell(&ref,&cell);ghostty_cell_get(cell,GHOSTTY_CELL_DATA_WIDE,&wide);
         GhosttyStyle style=GHOSTTY_INIT_SIZED(GhosttyStyle);ghostty_grid_ref_style(&ref,&style);
         uint32_t cps[128];size_t n=0;r=ghostty_grid_ref_graphemes(&ref,cps,128,&n);if(r!=GHOSTTY_SUCCESS)n=0;
-        int fg=color(style.fg_color,&colors,rgb(colors.foreground)),bg=color(style.bg_color,&colors,rgb(colors.background));if(style.inverse){int swap=fg;fg=bg;bg=swap;}
+        int fg=color(style.fg_color,&colors,rgb(colors.foreground)),bg=background(cell,&style,&colors);if(style.inverse){int swap=fg;fg=bg;bg=swap;}
         data[at++]=fg;data[at++]=bg;data[at++]=wide;data[at++]=(style.bold?1:0)|(style.italic?2:0)|(style.faint?4:0)|(style.invisible?8:0)|(style.strikethrough?16:0)|(style.overline?32:0)|(style.blink?64:0);
         data[at++]=style.underline;data[at++]=color(style.underline_color,&colors,fg);data[at++]=n;
         for(size_t i=0;i<n;i++)data[at++]=cps[i];
