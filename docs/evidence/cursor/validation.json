@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-21",
+  "physical_device": "Xiaomi 25019PNF3C / API 36",
+  "api27_tests_passed": 14,
+  "physical_cursor_tests_passed": 4,
+  "build": {
+    "debug_sample": "passed",
+    "release_sample_r8": "passed",
+    "release_aar": "passed",
+    "test_apk": "passed",
+    "terminal_lint_errors": 0,
+    "terminal_lint_warnings": 5,
+    "sample_lint_errors": 0,
+    "sample_lint_warnings": 21
+  },
+  "physical_preview": {
+    "block_bar_underline": "visually checked",
+    "chinese_under_block": "readable",
+    "blink_states_observed": [
+      true,
+      false
+    ],
+    "recording_seconds": 5.481067,
+    "sampling_note": "Screenshot receipt times include capture latency; not a frame timing benchmark"
+  },
+  "debug_apk_sha256": "d4925e80a7763c803d189d9ef85e4850c8d76958740308ff28960222dd303abf",
+  "scope": "Android renderer only; VT cursor position and remote style remain authoritative; no Maven publication",
+  "installed_apk_hash_matches": true
+}

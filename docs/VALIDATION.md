@@ -1,5 +1,14 @@
 # Validation
 
+## Cursor appearance and blink
+
+2026-10-21: optimized the Android renderer with an opaque block cursor and contrasting redraw of the covered glyph, two-column coverage for wide characters, crisp bar/underline/outline geometry, and per-view blink timing. Input/movement/focus restores a 750 ms visible hold before 500 ms off/on intervals. Remote steady/hidden cursor modes remain authoritative; inactive windows show a non-blinking outline.
+
+- **API 27: 14 tests passed**, including all previous API/Unicode/IME/selection regressions and four new cursor tests. [Output](evidence/cursor/api27-tests.txt).
+- **Physical Android 16 / API 36: four cursor tests passed**, covering pixel opacity/text contrast, Chinese wide cells and trailing columns, remote bar/underline/visibility, inactive outline, timing reset and scrollback cursor suppression. [Output](evidence/cursor/phone-tests.txt).
+- A test-only preview on the phone displayed block/bar/underline cursors over Chinese text, and screenshot sampling confirmed visible/hidden cycles. A local 5.48-second recording was captured. This is a visual acceptance check, not an exact measurement of Moshi’s timing or a new SSH/vim performance benchmark.
+- Debug sample, R8 release sample, release AAR and test APK built successfully; terminal/sample release lint reported 0 errors (5/21 warnings). The updated debug sample was installed on the phone. [Build and device record](evidence/cursor/validation.json). No Maven publication or business-flow changes.
+
 ## Local SSH discovery
 
 2026-10-21: validated the sample discovery UI on Xiaomi 25019PNF3C / Android 16 (API 36), against the two Mac computers on the phone’s Wi-Fi LAN. [Behavior and reproduction](LAN_SSH_DISCOVERY.md), [results](evidence/lan-ssh-discovery/validation.json).

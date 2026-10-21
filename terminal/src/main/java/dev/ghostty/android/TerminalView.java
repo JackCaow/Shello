@@ -45,7 +45,7 @@ public final class TerminalView extends FrameLayout {
         // Attach first so a rejected owner/thread cannot discard the existing view binding.
         if(value!=null)value.attach(this::outputChanged);
         if(session!=null)session.detach();
-        session=value;touch.clear();frame=null;canvas.cells=new Renderer.Cell[0][];
+        session=value;touch.clear();frame=null;canvas.cells=new Renderer.Cell[0][];canvas.resetCursorBlink();
         ui.removeCallbacks(drawTask);removeCallbacks(drawTask);frameScheduled=false;
         if(value!=null){cols=value.getColumns();rows=value.getRows();resizeToView();refreshFrame();}
         canvas.invalidate();
@@ -67,7 +67,7 @@ public final class TerminalView extends FrameLayout {
     private void sendKey(int index) { sendKey(TerminalSession.Key.values()[index]); }
     private void emitInput(byte[] bytes) {
         if(session==null||listener==null)return;
-        scrollToBottom();listener.onInput(bytes);
+        canvas.resetCursorBlink();scrollToBottom();listener.onInput(bytes);
     }
     private void outputChanged(boolean clearSelection) { if(clearSelection)touch.clear();drawFrame(); }
     private void drawFrame() { if(!frameScheduled){frameScheduled=true;postOnAnimation(drawTask);} }
@@ -94,6 +94,27 @@ public final class TerminalView extends FrameLayout {
     private static void checkUi(){if(Looper.myLooper()!=Looper.getMainLooper())throw new IllegalStateException("TerminalView requires the UI thread");}
     class Renderer extends View {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        final Paint cursorPaint=new Paint();
+        final CursorBlink cursorBlink=new CursorBlink();
+        boolean blinkingText;
+        final Runnable blinkTask=()->{
+            if(blinkingText)invalidate();else{
+                RectF bounds=cursorBounds();invalidate((int)Math.floor(bounds.left),(int)Math.floor(bounds.top),
+                        (int)Math.ceil(bounds.right),(int)Math.ceil(bounds.bottom));
+            }
+        };
+        void resetCursorBlink(){cursorBlink.reset(SystemClock.uptimeMillis());removeCallbacks(blinkTask);invalidate();}
+        boolean animationActive(){return session!=null&&frame!=null&&isAttachedToWindow()&&isShown()&&getWindowVisibility()==VISIBLE&&hasWindowFocus();}
+        @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);resetCursorBlink();}
+        @Override protected void onVisibilityChanged(View changed,int visibility){
+            super.onVisibilityChanged(changed,visibility);
+            if(cursorBlink!=null)resetCursorBlink();
+        }
+        @Override protected void onWindowVisibilityChanged(int visibility){
+            super.onWindowVisibilityChanged(visibility);if(cursorBlink!=null)resetCursorBlink();
+        }
+        @Override protected void onDetachedFromWindow(){removeCallbacks(blinkTask);super.onDetachedFromWindow();}
+        @Override protected void onAttachedToWindow(){super.onAttachedToWindow();resetCursorBlink();}
         final Typeface[] faces={Typeface.MONOSPACE,Typeface.create(Typeface.MONOSPACE,Typeface.BOLD),Typeface.create(Typeface.MONOSPACE,Typeface.ITALIC),Typeface.create(Typeface.MONOSPACE,Typeface.BOLD_ITALIC)};
         float cellW,cellH; Cell[][] cells=new Cell[0][];
         final class Cell {
@@ -114,7 +135,12 @@ public final class TerminalView extends FrameLayout {
                 for(int i=0;i<count;i++)codepoints[i]=buffer.get();
                 if(count==0)v.text="";else if(count==1&&codepoints[0]<128){int cp=codepoints[0];if(ascii[cp]==null)ascii[cp]=Character.toString((char)cp);v.text=ascii[cp];}else v.text=new String(codepoints,0,count);
             }
-            for(Cell[] line:cells)shapeRow(line);
+            blinkingText=false;
+            for(Cell[] line:cells){shapeRow(line);for(Cell cell:line)blinkingText|=(cell.flags&64)!=0;}
+            if(frame==null||frame.optInt("x")!=next.optInt("x")||frame.optInt("y")!=next.optInt("y")
+                    ||frame.optInt("cursorShape")!=next.optInt("cursorShape")
+                    ||frame.optBoolean("cursorVisible")!=next.optBoolean("cursorVisible")
+                    ||frame.optBoolean("cursorBlink")!=next.optBoolean("cursorBlink"))resetCursorBlink();
             frame=next;invalidate();
         }
         boolean sameStyle(Cell a,Cell b){return a.fg==b.fg&&a.bg==b.bg&&a.flags==b.flags&&a.underline==b.underline&&a.underlineColor==b.underlineColor;}
@@ -143,46 +169,84 @@ public final class TerminalView extends FrameLayout {
                 int end=x+1;while(end<cells[y].length&&cells[y][end].bg==cells[y][x].bg)end++;
                 paint.setColor(0xff000000|cells[y][x].bg);c.drawRect(x*cellW,y*cellH,end*cellW,(y+1)*cellH,paint);x=end;
             }
-            boolean blink=(SystemClock.uptimeMillis()/500)%2==0,needsBlink=false;
+            long now=SystemClock.uptimeMillis();
+            boolean active=animationActive(),blink=!active||(now/500)%2==0;
             for(int y=0;y<cells.length;y++)for(int x=0;x<cells[y].length;x++){
                 Cell v=cells[y][x];if(v.wide>=2||v.skip||v.text.isEmpty())continue;
                 float left=x*cellW,top=y*cellH,width=v.displaySpan*cellW;
                 String text=v.displayText;
                 if(v.wide==0&&text.length()==1&&text.charAt(0)<128){int end=x+1;StringBuilder run=new StringBuilder(text);while(end<cells[y].length&&sameRun(v,cells[y][end]))run.append(cells[y][end++].text);width=(end-x)*cellW;text=run.toString();x=end-1;}
-                needsBlink|=(v.flags&64)!=0;
                 if((v.flags&8)!=0||((v.flags&64)!=0&&!blink))continue;
-                paint.setTypeface(faces[v.flags&3]);paint.setColor(0xff000000|v.fg);paint.setAlpha((v.flags&4)!=0?130:255);
-                // Clip to the cell span; each grapheme is passed intact to Android's text shaper.
-                c.save();c.clipRect(left,top,left+width,top+cellH);
-                float baseline=top+(cellH-paint.getFontSpacing())/2-paint.ascent();
-                // Preserve protocol columns even when font fallback has a wider pixel advance.
-                float advance=paint.measureText(text);c.save();if(advance>width)c.scale(width/advance,1,left,baseline);
-                c.drawText(text,left,baseline,paint);c.restore();
-                paint.setStrokeWidth(dp(1));
-                if((v.flags&16)!=0)c.drawLine(left,top+cellH*.52f,left+width,top+cellH*.52f,paint);
-                if((v.flags&32)!=0)c.drawLine(left,top+dp(1),left+width,top+dp(1),paint);
-                paint.setColor(0xff000000|v.underlineColor);
-                float bottom=top+cellH-dp(2);
-                if(v.underline==1||v.underline==2)c.drawLine(left,bottom,left+width,bottom,paint);
-                if(v.underline==2)c.drawLine(left,bottom-dp(3),left+width,bottom-dp(3),paint);
-                if(v.underline==3){Path path=new Path();path.moveTo(left,bottom);for(float dx=0;dx<width;dx+=dp(2))path.lineTo(left+dx,bottom+((int)(dx/dp(2))%2==0?-dp(1):dp(1)));paint.setStyle(Paint.Style.STROKE);c.drawPath(path,paint);paint.setStyle(Paint.Style.FILL);}
-                if(v.underline==4||v.underline==5){float dash=v.underline==4?dp(1):dp(4);for(float dx=0;dx<width;dx+=dash+dp(2))c.drawLine(left+dx,bottom,Math.min(left+width,left+dx+dash),bottom,paint);}
-                paint.setAlpha(255);c.restore();
+                drawGlyph(c,v,text,left,top,width,null);
             }
-            if(frame!=null&&frame.optBoolean("cursorVisible")){
-                needsBlink|=frame.optBoolean("cursorBlink");
-                if(!frame.optBoolean("cursorBlink")||blink){
-                    float x=frame.optInt("x")*cellW,y=frame.optInt("y")*cellH;
-                    paint.setColor(0xff000000|frame.optInt("cursorColor",0xdce3ee));int shape=frame.optInt("cursorShape",1);
-                    if(shape==0)c.drawRect(x,y,x+dp(2),y+cellH,paint);
-                    else if(shape==2)c.drawRect(x,y+cellH-dp(2),x+cellW,y+cellH,paint);
-                    else{paint.setAlpha(shape==3?255:110);paint.setStyle(shape==3?Paint.Style.STROKE:Paint.Style.FILL);c.drawRect(x,y,x+cellW,y+cellH,paint);paint.setStyle(Paint.Style.FILL);paint.setAlpha(255);}
+            drawCursor(c,now,hasWindowFocus(),blink);
+            removeCallbacks(blinkTask);
+            if(active){
+                long delay=Long.MAX_VALUE;
+                if(frame!=null&&frame.optBoolean("cursorVisible")&&frame.optBoolean("cursorBlink"))delay=cursorBlink.nextChange(now);
+                if(blinkingText)delay=Math.min(delay,500-now%500);
+                if(delay!=Long.MAX_VALUE)postDelayed(blinkTask,delay);
+            }
+        }
+        private void drawGlyph(Canvas c,Cell v,String text,float left,float top,float width,Integer overrideColor){
+            paint.setTypeface(faces[v.flags&3]);paint.setColor(0xff000000|(overrideColor==null?v.fg:overrideColor));paint.setAlpha(overrideColor==null&&(v.flags&4)!=0?130:255);
+            // Clip to the cell span; each grapheme is passed intact to Android's text shaper.
+            c.save();c.clipRect(left,top,left+width,top+cellH);
+            float baseline=top+(cellH-paint.getFontSpacing())/2-paint.ascent();
+            // Preserve protocol columns even when font fallback has a wider pixel advance.
+            float advance=paint.measureText(text);c.save();if(advance>width)c.scale(width/advance,1,left,baseline);
+            c.drawText(text,left,baseline,paint);c.restore();
+            paint.setStrokeWidth(dp(1));
+            if((v.flags&16)!=0)c.drawLine(left,top+cellH*.52f,left+width,top+cellH*.52f,paint);
+            if((v.flags&32)!=0)c.drawLine(left,top+dp(1),left+width,top+dp(1),paint);
+            paint.setColor(0xff000000|(overrideColor==null?v.underlineColor:overrideColor));
+            float bottom=top+cellH-dp(2);
+            if(v.underline==1||v.underline==2)c.drawLine(left,bottom,left+width,bottom,paint);
+            if(v.underline==2)c.drawLine(left,bottom-dp(3),left+width,bottom-dp(3),paint);
+            if(v.underline==3){Path path=new Path();path.moveTo(left,bottom);for(float dx=0;dx<width;dx+=dp(2))path.lineTo(left+dx,bottom+((int)(dx/dp(2))%2==0?-dp(1):dp(1)));paint.setStyle(Paint.Style.STROKE);c.drawPath(path,paint);paint.setStyle(Paint.Style.FILL);}
+            if(v.underline==4||v.underline==5){float dash=v.underline==4?dp(1):dp(4);for(float dx=0;dx<width;dx+=dash+dp(2))c.drawLine(left+dx,bottom,Math.min(left+width,left+dx+dash),bottom,paint);}
+            paint.setAlpha(255);c.restore();
+        }
+        RectF cursorBounds(){
+            if(frame==null||!frame.optBoolean("cursorVisible"))return new RectF();
+            int x=frame.optInt("x"),y=frame.optInt("y");
+            if(y<0||y>=cells.length||x<0||x>=cells[y].length)return new RectF();
+            // Wide-cell continuation belongs to its leading cell. Legacy ZWJ graphemes
+            // keep their VT columns; do not stretch the cursor over the whole visual cluster.
+            if(cells[y][x].wide==2&&x>0)x--;
+            int width=cells[y][x].wide==1?2:1;
+            return new RectF(Math.round(x*cellW),Math.round(y*cellH),
+                    Math.round(Math.min(cells[y].length,x+width)*cellW),Math.round((y+1)*cellH));
+        }
+        void drawCursor(Canvas c,long now,boolean focused,boolean textBlink){
+            RectF bounds=cursorBounds();if(bounds.isEmpty())return;
+            if(focused&&frame.optBoolean("cursorBlink")&&!cursorBlink.visible(now))return;
+            int shape=focused?frame.optInt("cursorShape",1):3;
+            int color=0xff000000|frame.optInt("cursorColor",0xdce3ee);
+            cursorPaint.setColor(color);cursorPaint.setStyle(Paint.Style.FILL);
+            float stroke=Math.max(1,dp(1));
+            if(shape==0)c.drawRect(bounds.left,bounds.top,Math.min(bounds.right,bounds.left+dp(2)),bounds.bottom,cursorPaint);
+            else if(shape==2)c.drawRect(bounds.left,Math.max(bounds.top,bounds.bottom-dp(2)),bounds.right,bounds.bottom,cursorPaint);
+            else if(shape==3){
+                cursorPaint.setStrokeWidth(stroke);cursorPaint.setStyle(Paint.Style.STROKE);
+                RectF outline=new RectF(bounds);outline.inset(stroke/2,stroke/2);c.drawRect(outline,cursorPaint);
+                cursorPaint.setStyle(Paint.Style.FILL);
+            }else{
+                c.drawRect(bounds,cursorPaint);
+                int y=frame.optInt("y"),owner=frame.optInt("x");
+                while(owner>0&&(cells[y][owner].skip||cells[y][owner].wide==2))owner--;
+                Cell v=cells[y][owner];
+                if(!v.text.isEmpty()&&(v.flags&8)==0&&((v.flags&64)==0||textBlink)){
+                    int foreground=0xff000000|v.bg;
+                    double a=Color.luminance(color)+.05,b=Color.luminance(foreground)+.05;
+                    if(Math.max(a,b)/Math.min(a,b)<4.5)foreground=a>.229?Color.BLACK:Color.WHITE;
+                    c.save();c.clipRect(bounds);
+                    drawGlyph(c,v,v.displayText,owner*cellW,y*cellH,v.displaySpan*cellW,foreground);c.restore();
                 }
             }
-            if(needsBlink&&isAttachedToWindow()&&getVisibility()==VISIBLE)postInvalidateDelayed(500);
-
         }
     }
+
     class TouchLayer extends View {
         final GestureDetector detector;
         boolean selecting=false,handleDrag=false;int start,end,dragHandle=1;float previousY,pointerX,pointerY;
