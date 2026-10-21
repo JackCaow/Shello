@@ -26,7 +26,7 @@ Pair on an SSH-enabled Mac/Linux host with Python 3.9+, OpenSSL and tmux:
 curl -fsSL https://raw.githubusercontent.com/$GH_REPO/$RELEASE_TAG/companion/pair.sh | bash
 \`\`\`
 
-Then select **+ → 扫码轻松配对** in Shello. Release APKs use the same signing certificate as v0.1.0-alpha02. Earlier debug-signed installations cannot be overwritten; uninstalling them removes saved connection data.
+Then select **+ → Pair with QR code** in Shello. Release APKs use the same signing certificate as v0.1.0-alpha02. Earlier debug-signed installations cannot be overwritten; uninstalling them removes saved connection data.
 
 No Maven packages are published. See the source commit history for changes.
 EOF_NOTES
