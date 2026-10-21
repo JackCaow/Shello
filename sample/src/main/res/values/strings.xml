@@ -324,7 +324,7 @@
     <string name="input_mode" formatted="false">"Input mode"</string>
     <string name="start_with_a_text_draft" formatted="false">"Start with a text draft"</string>
     <string name="edit_before_sending_when_a_terminal_opens" formatted="false">"Edit before sending when a terminal opens"</string>
-    <string name="multiline_input_is_supported_respond_to_agent_questions_and_appro" formatted="false">"Multiline input is supported. Respond to agent questions and approvals individually in the inbox."</string>
+    <string name="multiline_input_is_supported_respond_to_agent_questions_and_appro" formatted="false">"Supports multiline input.\nRespond to agent questions and approvals in the inbox."</string>
     <string name="send" formatted="false">"Send"</string>
     <string name="tap_send" formatted="false">"Tap Send"</string>
     <string name="send_text_and_press_enter" formatted="false">"Send text and press Enter"</string>

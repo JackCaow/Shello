@@ -324,7 +324,7 @@
     <string name="input_mode" formatted="false">"输入方式"</string>
     <string name="start_with_a_text_draft" formatted="false">"默认使用文本草稿"</string>
     <string name="edit_before_sending_when_a_terminal_opens" formatted="false">"打开终端时，先编辑再发送"</string>
-    <string name="multiline_input_is_supported_respond_to_agent_questions_and_appro" formatted="false">"支持多行输入。Agent 的提问与审批在收件箱中逐条回应。"</string>
+    <string name="multiline_input_is_supported_respond_to_agent_questions_and_appro" formatted="false">"支持多行输入。\n智能体提问与审批可在收件箱中逐条处理。"</string>
     <string name="send" formatted="false">"发送"</string>
     <string name="tap_send" formatted="false">"点按发送"</string>
     <string name="send_text_and_press_enter" formatted="false">"发送文本并回车"</string>

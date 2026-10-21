@@ -8,21 +8,24 @@ import java.util.function.Consumer;
 
 /** A separate trailing pair stays reachable while the remaining controls scroll. */
 final class InputToolbar extends LinearLayout {
+    static final int HEIGHT_DP=64;
     final InputToolScroll scroll;
     final LinearLayout scrollingButtons,pinnedButtons;
     private float downX,downY;
     private boolean vertical;
     private Consumer<Boolean> swipe;
+    private final View divider;
 
     InputToolbar(Context context){
         super(context);setOrientation(HORIZONTAL);setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        setPadding(dp(5),dp(4),dp(5),dp(4));setBackground(SampleUi.surface(context,0xff000000,32));setClipToOutline(true);
-        scroll=new InputToolScroll(context);scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);
+        setMinimumHeight(dp(HEIGHT_DP));setPadding(dp(8),dp(8),dp(8),dp(8));setBackground(SampleUi.surface(context,0xff000000,32));setClipToOutline(true);
+        scroll=new InputToolScroll(context);scroll.setHorizontalScrollBarEnabled(false);scroll.setFillViewport(true);scroll.setHorizontalFadingEdgeEnabled(true);scroll.setFadingEdgeLength(dp(12));scroll.setOverScrollMode(OVER_SCROLL_NEVER);
         scrollingButtons=new LinearLayout(context);scrollingButtons.setGravity(Gravity.CENTER_VERTICAL);
         scroll.addView(scrollingButtons,new HorizontalScrollView.LayoutParams(-2,-1));
-        addView(scroll,new LinearLayout.LayoutParams(0,dp(44),1));
+        addView(scroll,new LinearLayout.LayoutParams(0,dp(48),1));
+        divider=new View(context);divider.setBackgroundColor(0xff282b2d);LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(dp(1),dp(18));line.setMargins(dp(8),0,dp(8),0);addView(divider,line);
         pinnedButtons=new LinearLayout(context);pinnedButtons.setGravity(Gravity.CENTER_VERTICAL);
-        addView(pinnedButtons,new LinearLayout.LayoutParams(-2,dp(44)));
+        addView(pinnedButtons,new LinearLayout.LayoutParams(-2,dp(48)));
     }
     private int dp(int n){return SampleUi.dp(getContext(),n);}
     void setButtons(List<? extends View> buttons){setButtons(buttons,2);}
@@ -30,10 +33,12 @@ final class InputToolbar extends LinearLayout {
         scrollingButtons.removeAllViews();pinnedButtons.removeAllViews();
         int split=Math.max(0,buttons.size()-pinnedCount);
         pinnedButtons.setVisibility(pinnedCount==0?GONE:VISIBLE);
+        divider.setVisibility(pinnedCount>0&&split>0?VISIBLE:GONE);
         scroll.setVisibility(split==0?GONE:VISIBLE);
         for(int i=0;i<buttons.size();i++){
-            LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(dp(44),dp(44),i<split?1:0);
-            params.setMargins(dp(2),0,dp(2),0);
+            View view=buttons.get(i);int width=dp(i<split?52:48);
+            if(view instanceof InputButton button){button.toolbarStyle(i>=split);if(i<split)width=button.toolbarWidth();}
+            LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(width,dp(48),i<split?1:0);
             (i<split?scrollingButtons:pinnedButtons).addView(buttons.get(i),params);
         }
         scroll.scrollTo(0,0);

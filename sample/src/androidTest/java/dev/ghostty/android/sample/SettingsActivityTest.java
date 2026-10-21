@@ -83,6 +83,7 @@ public class SettingsActivityTest {
     @Test public void toolbarLayoutAndThemePersistAcrossPages(){
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object theme=prefs.getAll().get("theme");InputPreferences controls=new InputPreferences(context);Object layout=controls.prefs.getAll().get("layout_toolbar");
         try{
+            prefs.edit().putString("theme","shello").commit();
             open("");click(AppLanguage.tr(R.string.toolbar));page(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);click(AppLanguage.tr(R.string.input_remove)+AppLanguage.tr(R.string.input_paste));assertFalse(controls.list("layout_toolbar").contains("paste"));
             back(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);assertFalse(controls.list("layout_toolbar").contains("paste"));back(ToolbarSettingsActivity.class);back(SettingsActivity.class);
             click(AppLanguage.tr(R.string.theme));page(ThemeSettingsActivity.class);click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));

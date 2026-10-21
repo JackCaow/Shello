@@ -47,8 +47,8 @@ public abstract class SettingsPageActivity extends ScreenActivity {
 
     @Override TextView copy(String value){
         group=null;
-        TextView text=label(value,14,SampleUi.MUTED);
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(10);
+        TextView text=label(value,14,SampleUi.MUTED);text.setLineSpacing(dp(4),1.05f);text.setPadding(dp(4),0,dp(4),0);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(12);p.bottomMargin=dp(16);
         body.addView(text,p);return text;
     }
 

@@ -205,8 +205,8 @@ public final class MainActivity extends LocalizedActivity {
 
     private void buildToolbar() {
         toolbarContainer=new InputToolbar(this);toolScroll=toolbarContainer.scroll;toolbar=toolbarContainer.scrollingButtons;
-        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(52));
-        outer.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(toolbarContainer,outer);
+        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,dp(InputToolbar.HEIGHT_DP));
+        outer.setMargins(dp(8),dp(10),dp(8),dp(12));sheet.addView(toolbarContainer,outer);
         toolbarContainer.setTag("toolbar");
     }
     private void buildComposer() {

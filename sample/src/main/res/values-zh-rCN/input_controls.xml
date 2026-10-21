@@ -155,5 +155,5 @@
 <string name="input_hide_window_picker">隐藏窗口选择器</string>
 <string name="input_custom_text">自定义文本</string>
 <string name="input_favorites">收藏</string>
-    <string name="input_toolbar_pinned_hint">文本输入和键盘按钮固定在右侧，其余按钮可左右滑动。</string>
+    <string name="input_toolbar_pinned_hint">文本输入和键盘固定在右侧。\n其余按钮可左右滑动。</string>
 </resources>

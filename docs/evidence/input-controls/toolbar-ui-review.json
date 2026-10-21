@@ -1,0 +1,27 @@
+{
+  "base": "197c638",
+  "scope": "Toolbar density and related settings typography review",
+  "changes": [
+    "Shared 64dp toolbar height, 48dp tap targets and 8dp vertical content insets",
+    "Adaptive text-button widths and constant readable toolbar text size; long names ellipsize instead of shrinking",
+    "Smaller visual backgrounds and icons; pinned actions have no normal background fill",
+    "Pinned/scrolling divider and fading scroll edges",
+    "Consistent paragraph spacing and line height across settings",
+    "Shorter toolbar preview with instructions for the selected mode only",
+    "Shortcut preview uses the shared toolbar height and spaced button rows",
+    "Draft instructions use deliberate short lines instead of an orphaned final character"
+  ],
+  "verification": {
+    "physical_device_api36_app_tests": 29,
+    "emulator_api27_app_tests": 29,
+    "emulator_api35_landscape_tests": 3,
+    "jdk17_release_build_and_lint": "passed",
+    "pre_existing_files_checked": 28,
+    "pre_existing_files_changed": 0,
+    "screenshots": "Reviewed on the physical device and locally; personal screenshots are not committed"
+  },
+  "notes": [
+    "The theme transition fixture now sets an explicit starting theme and restores the saved selection. Its earlier assumption failed on a device already using light mode.",
+    "This UI follow-up does not complete the outstanding real external-keyboard acceptance. No tag, release or Maven publication."
+  ]
+}

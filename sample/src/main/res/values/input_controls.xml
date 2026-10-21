@@ -155,5 +155,5 @@
 <string name="input_hide_window_picker">Hide window picker</string>
 <string name="input_custom_text">Custom text</string>
 <string name="input_favorites">Favorites</string>
-    <string name="input_toolbar_pinned_hint">Text input and keyboard stay pinned on the right. Swipe the other buttons horizontally.</string>
+    <string name="input_toolbar_pinned_hint">Text input and keyboard stay pinned on the right.\nSwipe the other buttons horizontally.</string>
 </resources>
