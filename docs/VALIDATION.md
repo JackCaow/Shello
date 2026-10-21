@@ -1,5 +1,9 @@
 # Validation
 
+## Shello project rename
+
+2026-10-21: renamed the application label, Gradle root project, UI branding, repository links and icon exports to Shello. The application ID, API packages, pairing scheme and connection storage identifiers are unchanged. Debug APK, R8 release APK, release AAR and release lint builds passed. Python sources parse and the icon exporter produces `build/Shello-icons.zip`. A replacement install succeeded on the Xiaomi API 36 phone; all 71 existing preference files matched their pre-install SHA-256 hashes before relaunch, and the home screen displayed “发现 Shello” with saved connections retained. APK metadata reports the label `Shello`. This branding check did not repeat the SSH/TUI regression matrix. No Maven package was published.
+
 ## Session thumbnail menu and independent open tabs
 
 2026-10-21: inspected Moshi’s **重新排序 / 关闭 / 全部关闭** session menu, then implemented a sharp selected thumbnail over a blurred home screen, grouped destructive actions and a reorder mode. Background blur uses a small separable bitmap blur on API 27+, without a newer-API requirement. Open tabs are separate from saved connection profiles. Each profile has at most one open SSH tab, with independent transport, VT and reconnect state owned by the foreground service. Tab IDs/order are persisted; previews and drafts remain in memory.
@@ -114,7 +118,7 @@ Discovery lives only in the sample, cancels on leaving its Activity, and does no
 The phone was handed back for interactive **Claude Code 2.1.296 over LAN SSH in a separate tmux window**. Final-build long-lock shell/vim, physical network-switch recovery and OEM process-kill recovery remain **incomplete**. No seamless cellular access to LAN-only hosts, unattended overnight survival, energy result, business integration or Maven release is claimed.
 
 
-The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
+The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/Shello/actions) for remote build results. No Maven package release has occurred.
 
 
 ## Android 15 notification permission and foreground-service restrictions
@@ -233,7 +237,7 @@ Tested on 2026-10-20 using Android Emulator 35.6.11 on macOS ARM64, Pixel 2 prof
 - Actual taps in [Trime 3.3.12](https://github.com/osfans/trime/releases/tag/v3.3.12), using its bundled `luna_pinyin` scheme, keep `zhongwen` uncommitted, send “中文” once on candidate selection, then cancel `ceshi` without sending it or deleting committed content. [Composing](evidence/api27-emulator/composing.png), [committed](evidence/api27-emulator/committed.png), [cancelled](evidence/api27-emulator/cancelled.png). The IME is installed only in the test emulator; no IME binary/dependency is bundled in this library.
 - The sample grid changes **49×27 ↔ 49×11** as the keyboard hides/shows; the input stays visible using `adjustResize`. [Legacy/cluster render](evidence/api27-emulator/unicode.png).
 - Release AAR, sample debug/R8 release, instrumentation APK and independent R8 MavenLocal consumer build. The consumer runs on API 27 and displays [AAR smoke OK](evidence/api27-emulator/consumer.png). Library/sample lint remain at 0 errors (6/14 warnings). No remote Maven publication occurs.
-- Hosted CI checks native/AAR/sample/test APK builds, lint and separate R8 AAR consumer compilation. Runtime instrumentation remains a local emulator check: Android Emulator 37.2.12 on the hosted `macos-14` ARM runner failed before tests with `HVF error: HV_UNSUPPORTED`, both with [default acceleration](https://github.com/JackCaow/ghostty-android/actions/runs/39444104562) and with [`-accel off`](https://github.com/JackCaow/ghostty-android/actions/runs/39445213832). That flag did not prevent HVF initialization on the hosted runner, so the unsupported emulator CI step was removed. The 9/9 result above comes from the local API 27 emulator; Pinyin candidate taps were performed manually with Trime.
+- Hosted CI checks native/AAR/sample/test APK builds, lint and separate R8 AAR consumer compilation. Runtime instrumentation remains a local emulator check: Android Emulator 37.2.12 on the hosted `macos-14` ARM runner failed before tests with `HVF error: HV_UNSUPPORTED`, both with [default acceleration](https://github.com/JackCaow/Shello/actions/runs/39444104562) and with [`-accel off`](https://github.com/JackCaow/Shello/actions/runs/39445213832). That flag did not prevent HVF initialization on the hosted runner, so the unsupported emulator CI step was removed. The 9/9 result above comes from the local API 27 emulator; Pinyin candidate taps were performed manually with Trime.
 
 To reproduce on an ARM64 Mac with the build prerequisites installed:
 

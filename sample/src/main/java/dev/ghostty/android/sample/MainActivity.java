@@ -305,7 +305,7 @@ public final class MainActivity extends Activity {
         LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,"连接");connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connectionHeaderParams.topMargin=dp(16);content.addView(connectionHeading,connectionHeaderParams);
         savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
         guideShown=getSharedPreferences("appearance",0).getBoolean("guide",true);if(guideShown){
-            LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,"发现 Ghostty");guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+            LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,"发现 Shello");guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
             android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
             LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(16);content.addView(guideHeader,hp);
             String[] names={"扫码配对","远端会话","收件箱与审批","终端主题","快捷键","文本选择"};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
@@ -567,7 +567,7 @@ public final class MainActivity extends Activity {
     }
     private void demo() {
         write("\033c\033]10;#d4d4d4\007\033]11;#1e1e1e\007\033]12;#00d86c\007"
-                +"\033[1;32mGhostty Android\033[0m\r\n\r\n"
+                +"\033[1;32mShello\033[0m\r\n\r\n"
                 +"本地交互演示\r\n输入仅在此回显，不执行命令。\r\n\r\n"
                 +"\033[32m›\033[0m 中文输入 · 滚动 · 长按选择\r\n\r\n"
                 +"\033[?2027h👨‍👩‍👧‍👦  👍🏽  🇨🇳  1️⃣  👩‍❤️‍👩\r\n"

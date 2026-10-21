@@ -16,7 +16,7 @@ final class PairingClient {
         final String host,pin,token;final int port;final long expires;
         Ticket(String text){
             if(text.length()>4096)throw new IllegalArgumentException("Invalid QR");Uri uri=Uri.parse(text);
-            if(!"ghostty-pair".equals(uri.getScheme())||!"v1".equals(uri.getHost()))throw new IllegalArgumentException("Not a Ghostty pairing QR");
+            if(!"ghostty-pair".equals(uri.getScheme())||!"v1".equals(uri.getHost()))throw new IllegalArgumentException("Not a Shello pairing QR");
             host=uri.getQueryParameter("host");pin=uri.getQueryParameter("pin");token=uri.getQueryParameter("token");port=Integer.parseInt(uri.getQueryParameter("port"));expires=Long.parseLong(uri.getQueryParameter("expires"));
             if(host==null||!host.matches("[0-9]{1,3}(\\.[0-9]{1,3}){3}")||pin==null||!pin.matches("[0-9a-f]{64}")||token==null||!token.matches("[A-Za-z0-9_-]{32,128}")||port<1||port>65535)throw new IllegalArgumentException("Invalid pairing QR");
             String[] octets=host.split("\\.");int a=Integer.parseInt(octets[0]),b=Integer.parseInt(octets[1]);for(String part:octets)if(Integer.parseInt(part)>255)throw new IllegalArgumentException("Invalid address");

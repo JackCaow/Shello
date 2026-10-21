@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-time local HTTPS pairing for Ghostty Android. Requires Python 3, openssl,
+"""One-time local HTTPS pairing for Shello. Requires Python 3, openssl,
 and qrcode (`python3 -m pip install 'qrcode==8.2'`). SSH must already be enabled.
 Only the phone's PUBLIC key is added to authorized_keys. No private SSH key leaves
 its device. The self-signed HTTPS certificate is pinned by the scanned QR code.
@@ -122,7 +122,7 @@ def serve(args):
     with tempfile.TemporaryDirectory(prefix='ghostty-pair-') as temp:
         folder = Path(temp)
         key, cert = folder / 'key.pem', folder / 'cert.pem'
-        subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:3072', '-nodes', '-keyout', str(key), '-out', str(cert), '-days', '1', '-subj', '/CN=Ghostty Android Pair'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:3072', '-nodes', '-keyout', str(key), '-out', str(cert), '-days', '1', '-subj', '/CN=Shello Pair'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert.read_text())).hexdigest()
         server = ThreadingHTTPServer((args.bind or args.host, args.port), Handler)
         server.daemon_threads = True
@@ -138,7 +138,7 @@ def serve(args):
         qr = qrcode.QRCode(border=2)
         qr.add_data(uri)
         qr.make(fit=True)
-        print('Scan in Ghostty Android → + → 扫码轻松配对. Expires in', args.ttl, 'seconds.', flush=True)
+        print('Scan in Shello → + → 扫码轻松配对. Expires in', args.ttl, 'seconds.', flush=True)
         qr.print_ascii(invert=True)
         print('Only scan this QR on your own phone. Ctrl-C closes pairing.', flush=True)
         worker = threading.Thread(target=server.serve_forever, daemon=True)

@@ -24,7 +24,7 @@ afterEvaluate {
             from(components["release"])
             artifactId = "terminal"
             pom {
-                name = "Ghostty Android (unofficial)"
+                name = "Shello"
                 description = "Experimental Android native terminal view using libghostty-vt"
                 licenses { license { name = "MIT License"; url = "https://opensource.org/license/mit" } }
             }

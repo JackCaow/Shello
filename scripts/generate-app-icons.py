@@ -45,15 +45,15 @@ def main():
     for size in SIZES:
         png(opaque, size, OUTPUT / f"png/icon-{size}.png")
     shutil.copy2(ASSETS / "foreground-1024.png", OUTPUT / "foreground-1024.png")
-    opaque.save(OUTPUT / "ghostty-android.ico", format="ICO",
+    opaque.save(OUTPUT / "Shello.ico", format="ICO",
                 sizes=[(n, n) for n in (16, 24, 32, 48, 64, 128, 256)])
-    iconset = OUTPUT / "ghostty-android.iconset"
+    iconset = OUTPUT / "Shello.iconset"
     for size in (16, 32, 128, 256, 512):
         png(opaque, size, iconset / f"icon_{size}x{size}.png")
         png(opaque, size * 2, iconset / f"icon_{size}x{size}@2x.png")
     if shutil.which("iconutil"):
         subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o",
-                        str(OUTPUT / "ghostty-android.icns")], check=True)
+                        str(OUTPUT / "Shello.icns")], check=True)
     for density, (legacy, adaptive) in DENSITIES.items():
         for name, source, size in (("ic_launcher", opaque, legacy),
                                    ("ic_launcher_foreground", foreground, adaptive)):
@@ -81,13 +81,13 @@ def main():
         for name in ("ic_launcher", "ic_launcher_round"):
             resource(Path(f"mipmap-anydpi-v{version}/{name}.xml"), xml)
     shutil.copy2(ASSETS / "README.md", OUTPUT / "README.md")
-    archive = OUTPUT.parent / "ghostty-android-icons.zip"
+    archive = OUTPUT.parent / "Shello-icons.zip"
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         for path in sorted(OUTPUT.rglob("*")):
             if path.is_file():
                 bundle.write(path, path.relative_to(OUTPUT))
     print(f"Exported {len(SIZES)} PNG sizes, ICO, iconset, Android resources" +
-          (", ICNS" if (OUTPUT / "ghostty-android.icns").exists() else ""))
+          (", ICNS" if (OUTPUT / "Shello.icns").exists() else ""))
     print(archive)
 
 

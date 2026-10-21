@@ -1,6 +1,8 @@
-# ghostty-android
+# Shello
 
-实验性的 Android 原生终端库：Ghostty VT 内核、Canvas 绘制、触摸选择和中文 IME 输入。非 Ghostty 官方项目；源码仓库为 [JackCaow/ghostty-android](https://github.com/JackCaow/ghostty-android)，尚未发布 Maven 包。
+Shello 原名 `ghostty-android`。为兼容覆盖升级，保留 Android 应用 ID、Java API 包名、配对协议和已有连接存储。底层终端内核仍为 Ghostty，Shello 是独立项目。
+
+实验性的 Android 原生终端库：Ghostty VT 内核、Canvas 绘制、触摸选择和中文 IME 输入。非 Ghostty 官方项目；源码仓库为 [JackCaow/Shello](https://github.com/JackCaow/Shello)，尚未发布 Maven 包。
 
 - `TerminalSession`：输出字节流、按键编码、查询应答、历史和内存快照。
 - `TerminalView`：原生显示、长按选择、双手柄、边缘自动滚动。

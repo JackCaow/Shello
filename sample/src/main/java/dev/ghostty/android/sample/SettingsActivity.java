@@ -117,7 +117,7 @@ public final class SettingsActivity extends ScreenActivity {
         navigation("字体与大小",prefs.getInt("fontSize",14)+" sp","font","font");navigation("高级",null,"sliders","advanced");
         section("代理");navigation("Hook",null,"hook","hook");navigation("通知",null,"bell","notifications");navigation("文本草稿",null,"chat","chat");
         section("输入");navigation("工具栏",null,"toolbox","toolbar");navigation("快捷键",null,"keyboard","shortcuts");navigation("手势",null,"pad","gestures");
-        section("关于");item("Ghostty Android","开源 Android 终端库 · API 27+","server",()->startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/JackCaow/ghostty-android"))));
+        section("关于");item("Shello","开源 Android 终端库 · API 27+","server",()->startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/JackCaow/Shello"))));
     }
     private void notifications(){
         heading.setText("通知");
@@ -153,7 +153,7 @@ public final class SettingsActivity extends ScreenActivity {
             LinearLayout row=settingRow(name,null,"palette",check,()->{prefs.edit().putString("theme",name).apply();show("theme");});row.setSelected(selected.equals(name));row.setContentDescription(name+(selected.equals(name)?"，已选中":""));
         }
         copy("设置终端的默认前景和背景色。程序主动指定的颜色保持有效。");
-        section("预览");TextView preview=label("$ echo 'Ghostty Android'\nGhostty Android\n❯ 中文 · Aa Bb 0123",14,selected.equals("浅色")?0xff202124:0xffd4d4d4);preview.setTypeface(Typeface.MONOSPACE);preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,selected.equals("浅色")?0xfff5f5f5:selected.equals("黑色")?Color.BLACK:0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));
+        section("预览");TextView preview=label("$ echo 'Shello'\nShello\n❯ 中文 · Aa Bb 0123",14,selected.equals("浅色")?0xff202124:0xffd4d4d4);preview.setTypeface(Typeface.MONOSPACE);preview.setPadding(dp(16),dp(20),dp(16),dp(20));preview.setMinHeight(dp(140));preview.setBackground(SampleUi.surface(this,selected.equals("浅色")?0xfff5f5f5:selected.equals("黑色")?Color.BLACK:0xff1e1e1e,12));body.addView(preview,new LinearLayout.LayoutParams(-1,-2));
     }
     private void advanced(){
         heading.setText("高级");section("首页");

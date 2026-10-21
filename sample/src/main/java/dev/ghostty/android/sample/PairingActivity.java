@@ -13,11 +13,11 @@ import java.util.*;
 public final class PairingActivity extends ScreenActivity {
     private DecoratedBarcodeView scanner;private boolean busy,active;private TextView status;
     private SshConnectionSetup verify;private SshProfileStore.Draft paired;
-    static final String COMMAND="python3 -m venv ~/.local/share/ghostty-pair\n~/.local/share/ghostty-pair/bin/pip install 'qrcode==8.2'\ncurl -fL https://raw.githubusercontent.com/JackCaow/ghostty-android/main/companion/pair.py -o ~/.local/share/ghostty-pair/pair.py\n~/.local/share/ghostty-pair/bin/python ~/.local/share/ghostty-pair/pair.py";
+    static final String COMMAND="python3 -m venv ~/.local/share/ghostty-pair\n~/.local/share/ghostty-pair/bin/pip install 'qrcode==8.2'\ncurl -fL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.py -o ~/.local/share/ghostty-pair/pair.py\n~/.local/share/ghostty-pair/bin/python ~/.local/share/ghostty-pair/pair.py";
     @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText("Easy Pair");
         scanner=new DecoratedBarcodeView(this);scanner.setStatusText("");scanner.getBarcodeView().setDecoderFactory(new DefaultDecoderFactory(Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE)));
         body.addView(scanner,new LinearLayout.LayoutParams(-1,dp(340)));status=copy("在电脑上运行下面的命令，然后扫描二维码。");
-        item("macOS / Linux · 复制命令",null,"paste",()->clipboard("Ghostty 配对命令",COMMAND));TextView code=copy(COMMAND);code.setTypeface(android.graphics.Typeface.MONOSPACE);code.setTextSize(12);code.setTextIsSelectable(true);
+        item("macOS / Linux · 复制命令",null,"paste",()->clipboard("Shello 配对命令",COMMAND));TextView code=copy(COMMAND);code.setTypeface(android.graphics.Typeface.MONOSPACE);code.setTextSize(12);code.setTextIsSelectable(true);
         item("会发生什么",null,"qr",()->SampleUi.confirm(this,"扫码配对","电脑需要先开启 SSH 并安装 tmux。手机生成私钥并保存在本机加密存储；电脑只安装公钥。二维码固定 HTTPS 证书和一次性令牌，3 分钟后失效。",null,"关闭","知道了",false,null,null));
         item("从图片扫描","可选择电脑上保存的二维码图片","qr",()->{Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(pick,95);});
         scanner.decodeContinuous(new BarcodeCallback(){public void barcodeResult(BarcodeResult result){scanned(result.getText());}});
@@ -25,7 +25,7 @@ public final class PairingActivity extends ScreenActivity {
     @Override protected void onResume(){super.onResume();active=true;if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED){if(!busy)scanner.resume();}else requestPermissions(new String[]{Manifest.permission.CAMERA},94);}
     @Override protected void onPause(){active=false;scanner.pause();super.onPause();}
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){super.onRequestPermissionsResult(code,permissions,results);if(code==94&&results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED&&active&&!busy)scanner.resume();else if(code==94)status.setText("相机权限未开启；可从图片扫描，或在系统设置中允许相机权限。");}
-    void scanned(String text){if(busy||isFinishing())return;PairingClient.Ticket ticket;try{ticket=new PairingClient.Ticket(text);}catch(Exception invalid){status.setText("这不是有效的 Ghostty 配对码，或二维码已过期。");return;}
+    void scanned(String text){if(busy||isFinishing())return;PairingClient.Ticket ticket;try{ticket=new PairingClient.Ticket(text);}catch(Exception invalid){status.setText("这不是有效的 Shello 配对码，或二维码已过期。");return;}
         busy=true;scanner.pause();SampleUi.confirm(this,"配对这台电脑？",ticket.host+"\n确认这是你电脑上刚生成的二维码。",null,"取消","配对",false,()->reset("已取消"),()->start(ticket));
     }
     private void start(PairingClient.Ticket ticket){status.setText("正在安全配对…");new Thread(()->{try{SshProfileStore.Draft draft=PairingClient.pair(ticket);runOnUiThread(()->{if(isDestroyed())return;paired=draft;verify();});}catch(Exception e){runOnUiThread(()->reset("配对失败，请检查网络、二维码有效期与电脑时间。"));}},"ssh-pair").start();}

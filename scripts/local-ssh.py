@@ -159,7 +159,7 @@ known_hosts = f'[127.0.0.1]:{args.port} {public[0]} {public[1]}\n'
 (root / 'known_hosts').write_text(known_hosts)
 work = root / 'workspace'
 work.mkdir(exist_ok=True)
-(work / 'unicode.txt').write_text('Ghostty Android / real SSH PTY\n' + ''.join(
+(work / 'unicode.txt').write_text('Shello / real SSH PTY\n' + ''.join(
     f'{i:03d} 中文输入 · 👨‍👩‍👧‍👦 · 👍🏽 · 🇨🇳 · 1️⃣ · é\n' for i in range(1, 241)))
 (work / 'unicode-no-flag.txt').write_text((work / 'unicode.txt').read_text().replace('🇨🇳', 'CN'))
 (work / 'ascii.txt').write_text(''.join(f'ASCII_{i:03d}\n' for i in range(1, 241)))

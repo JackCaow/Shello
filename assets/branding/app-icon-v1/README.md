@@ -1,4 +1,4 @@
-# Ghostty Android app icon — v1
+# Shello app icon — v1
 
 Original imagegen-generated artwork for this project: a mint-green ghost with a
 terminal `>_` face on a dark background. This is project artwork, not the official
@@ -21,7 +21,7 @@ python3 scripts/generate-app-icons.py
 ```
 
 This updates the sample Android launcher resources and creates
-`build/ghostty-android-icons.zip`. The ZIP contains:
+`build/Shello-icons.zip`. The ZIP contains:
 
 - Opaque PNGs: 16, 20, 24, 29, 32, 40, 48, 58, 60, 64, 72, 76, 80, 87, 96,
   120, 128, 144, 152, 167, 180, 192, 256, 512 and 1024 pixels.

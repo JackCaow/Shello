@@ -16,7 +16,7 @@ python3 -m venv ~/.local/share/ghostty-pair-venv
 ~/.local/share/ghostty-pair-venv/bin/python companion/pair.py
 ```
 
-Open Add → Scan to pair on Android. The QR pins an ephemeral HTTPS certificate and a short-lived one-use token. The phone generates its RSA key locally and sends only the public key. The helper appends it to `authorized_keys`, returns SSH host keys, and the phone verifies SSH and tmux before saving the encrypted profile. Camera scanning and scanning from a selected image are supported. QR/token files must never be committed or shared. This is Ghostty Android's own protocol, not compatible with Moshi QR codes.
+Open Add → Scan to pair on Android. The QR pins an ephemeral HTTPS certificate and a short-lived one-use token. The phone generates its RSA key locally and sends only the public key. The helper appends it to `authorized_keys`, returns SSH host keys, and the phone verifies SSH and tmux before saving the encrypted profile. Camera scanning and scanning from a selected image are supported. QR/token files must never be committed or shared. This is Shello's own protocol, not compatible with Moshi QR codes.
 
 ## Hook and settings
 

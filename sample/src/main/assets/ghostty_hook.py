@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ghostty Android / Claude Code bridge. Private spool, accessed only over SSH.
+"""Shello / Claude Code bridge. Private spool, accessed only over SSH.
 
 No listening port, account, push relay, or automatic permission grants. Install
 explicitly with `install`; `uninstall` removes only this script's hook handlers.
@@ -80,11 +80,11 @@ def decision(event, response):
                 raise ValueError('answer every question')
             result['updatedInput'] = dict(event['tool_input'], answers={q['question']: answers[q['question']] for q in questions})
         else:
-            result['permissionDecisionReason'] = 'Declined on Ghostty Android'
+            result['permissionDecisionReason'] = 'Declined on Shello'
     elif hook == 'PermissionRequest':
         result['decision'] = {'behavior': behavior}
         if behavior == 'deny':
-            result['decision']['message'] = 'Declined on Ghostty Android'
+            result['decision']['message'] = 'Declined on Shello'
     else:
         raise ValueError('event does not accept decisions')
     return {'hookSpecificOutput': result}

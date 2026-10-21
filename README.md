@@ -1,8 +1,10 @@
-# ghostty-android
+# Shello
+
+Shello was previously named `ghostty-android`. The Android application ID, Java API packages, pairing protocol and existing connection storage remain unchanged for upgrade compatibility. The terminal engine is still Ghostty; Shello is an independent project.
 
 Experimental Android terminal library: **libghostty-vt + native Canvas rendering + touch selection + IME input**. Unofficial; not affiliated with the Ghostty project. No published release or Maven Central coordinates yet.
 
-[Source repository](https://github.com/JackCaow/ghostty-android) · [中文说明](README.zh-CN.md) · [API contract](docs/API.md) · [Validation](docs/VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Source repository](https://github.com/JackCaow/Shello) · [中文说明](README.zh-CN.md) · [API contract](docs/API.md) · [Validation](docs/VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 [Direct LAN testing and OEM battery-policy limitations](docs/DEVICE_RECOVERY.md)
 
@@ -101,7 +103,7 @@ Twenty-one instrumentation tests cover the public stream/lifecycle/IME contract,
 
 ## License
 
-MIT, with retained source copyright and third-party notices. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Source is hosted at [JackCaow/ghostty-android](https://github.com/JackCaow/ghostty-android). No Maven package has been remotely published; CI uses Maven Local only to test the packaged AAR.
+MIT, with retained source copyright and third-party notices. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Source is hosted at [JackCaow/Shello](https://github.com/JackCaow/Shello). No Maven package has been remotely published; CI uses Maven Local only to test the packaged AAR.
 
 ### Home and agent sessions
 
