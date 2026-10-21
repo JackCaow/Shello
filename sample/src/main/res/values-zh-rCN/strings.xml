@@ -415,4 +415,14 @@
     <string name="move_later_259_name">"向后移动 %1$s"</string>
     <string name="session_actions_for_name">"会话操作 %1$s"</string>
     <string name="selected_session_name">"选中会话 %1$s"</string>
+    <string name="available_ssh_servers">SSH 服务器</string>
+    <string name="tailscale_discovering">Tailscale · 正通过已信任的 SSH 连接发现设备…</string>
+    <string name="tailscale_pair_first">Tailscale · 先扫码配对一台电脑或保存 SSH 连接，即可发现设备。</string>
+    <string name="tailscale_connect_first">Tailscale · 连接 Tailscale 应用后可发现其中的设备。</string>
+    <string name="tailscale_scan_complete">Tailscale · 发现完成，仅显示可连接的 SSH 服务器。</string>
+    <string name="tailscale_source_unavailable">Tailscale · 无法读取设备列表。请检查已保存的 SSH 连接和电脑上的 Tailscale，或扫码配对。</string>
+    <string name="tailscale_scan_timeout">Tailscale · 发现超时，请检查网络后重试。</string>
+    <string name="pair_network_auto">自动</string>
+    <string name="pair_network_lan">局域网</string>
+    <string name="pair_network_hint">自动模式优先使用电脑已连接的 Tailscale。两端需连接同一网络，并允许 SSH 和临时配对端口；也可选择局域网，通过 Wi-Fi 配对。</string>
 </resources>

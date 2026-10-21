@@ -78,6 +78,14 @@ Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall.
 
 The phone generates and stores its private key; only the public key goes to the computer. Existing `authorized_keys` entries are retained. The QR code contains a temporary token—do not share it publicly. After pairing, **Ctrl+C** closes the temporary service; the installed SSH public key remains. [Protocol and options](docs/HOME_AND_AGENTS.md#pairing)
 
+### Tailscale (main branch)
+
+The current source supports Tailscale discovery and QR pairing; the published alpha06 APK still supports LAN pairing only. Build/install the updated app for this feature, or keep alpha06 on its matching launcher tag / `--network lan`.
+
+With Tailscale connected on both devices, the main-branch launcher automatically prefers the computer’s Tailscale IPv4 address. Select **Auto / LAN / Tailscale** on the pairing page, or pass `--network tailscale` / `--network lan` to the script. Network access rules must allow SSH and the temporary HTTPS pairing port.
+
+Discovery combines explicit VPN host routes with peer lists read through up to four saved, trusted SSH connections. It probes at most 128 known Tailscale addresses, never the whole address range. If the VPN exposes only broad routes and there is no saved connection yet, pair one computer first. [Details and validation](docs/TAILSCALE.md)
+
 ## Connect manually
 
 Choose **+ → 使用自己的 SSH**, enter the host, port and username, or select a host from LAN discovery. Use password or private-key authentication, verify the host fingerprint, then save the connection.

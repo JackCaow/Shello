@@ -19,8 +19,7 @@ final class PairingClient {
             if(!"ghostty-pair".equals(uri.getScheme())||!"v1".equals(uri.getHost()))throw new IllegalArgumentException("Not a Shello pairing QR");
             host=uri.getQueryParameter("host");pin=uri.getQueryParameter("pin");token=uri.getQueryParameter("token");port=Integer.parseInt(uri.getQueryParameter("port"));expires=Long.parseLong(uri.getQueryParameter("expires"));
             if(host==null||!host.matches("[0-9]{1,3}(\\.[0-9]{1,3}){3}")||pin==null||!pin.matches("[0-9a-f]{64}")||token==null||!token.matches("[A-Za-z0-9_-]{32,128}")||port<1||port>65535)throw new IllegalArgumentException("Invalid pairing QR");
-            String[] octets=host.split("\\.");int a=Integer.parseInt(octets[0]),b=Integer.parseInt(octets[1]);for(String part:octets)if(Integer.parseInt(part)>255)throw new IllegalArgumentException("Invalid address");
-            if(!(a==10||a==172&&b>=16&&b<=31||a==192&&b==168||a==127))throw new IllegalArgumentException("LAN pairing only");
+            if(!NetworkAddress.pairing(host))throw new IllegalArgumentException("LAN or Tailscale IPv4 pairing only");
             if(expires<System.currentTimeMillis()/1000-10||expires>System.currentTimeMillis()/1000+900)throw new IllegalArgumentException("QR expired; check clocks and regenerate");
         }
     }

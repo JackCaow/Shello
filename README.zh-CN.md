@@ -99,6 +99,14 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 
 手机生成并保存私钥，电脑只接收公钥；已有 `authorized_keys` 条目会保留。二维码携带临时令牌，不要公开分享。配对完成后可用 **Ctrl+C** 关闭临时服务，已安装的 SSH 公钥会保留。[配对协议与更多说明](docs/HOME_AND_AGENTS.md#pairing)
 
+### Tailscale（main 分支）
+
+当前源码已支持 Tailscale 自动发现和二维码配对；已发布的 alpha06 APK 仍仅支持局域网配对。此功能需安装更新后的构建；alpha06 请使用对应 tag 的脚本，或给新脚本传入 `--network lan`。
+
+两端连接 Tailscale 后，main 分支脚本默认优先选择电脑的 Tailscale IPv4 地址。配对页可选择 **自动 / 局域网 / Tailscale**，也可向脚本传入 `--network tailscale` 或 `--network lan`。访问规则需允许 SSH 与临时 HTTPS 配对端口。
+
+自动发现结合 VPN 中明确的设备路由，以及最多四条已保存、已信任 SSH 连接提供的节点列表，仅检测最多 128 个已知地址，不遍历整个网段。若 VPN 只提供聚合路由且尚无已保存连接，先扫码配对一台电脑即可。[实现与验证说明](docs/TAILSCALE.md)
+
 ## 手动连接 SSH
 
 不使用二维码也可以连接：

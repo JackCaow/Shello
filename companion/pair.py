@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import ssl
 import subprocess
@@ -62,17 +63,60 @@ def authorize(path, key, pairing_id):
             os.fsync(stream.fileno())
 
 
+TAILNET = ipaddress.ip_network('100.64.0.0/10')
+LAN = tuple(map(ipaddress.ip_network, ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8')))
+
+
+def validate_host(host):
+    address = ipaddress.ip_address(host)
+    if address.version != 4 or not any(address in network for network in (*LAN, TAILNET)):
+        raise ValueError('use a LAN or Tailscale IPv4 address')
+    return str(address)
+
+
+def tailscale_host():
+    candidates = [shutil.which('tailscale'), '/Applications/Tailscale.app/Contents/MacOS/Tailscale',
+                  '/opt/homebrew/bin/tailscale', '/usr/local/bin/tailscale', '/usr/bin/tailscale']
+    for binary in dict.fromkeys(candidates):
+        if not binary or not os.access(binary, os.X_OK):
+            continue
+        try:
+            result = subprocess.run([binary, 'status', '--json'], capture_output=True, timeout=5, check=True)
+            if len(result.stdout) > 1048576:
+                continue
+            data = json.loads(result.stdout)
+            if data.get('BackendState') != 'Running':
+                continue
+            for value in data.get('Self', {}).get('TailscaleIPs', []):
+                if ipaddress.ip_address(value) in TAILNET:
+                    return str(ipaddress.ip_address(value))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            continue
+    return None
+
+
+def select_host(host=None, network='auto'):
+    if host:
+        selected = validate_host(host)
+    else:
+        selected = tailscale_host() if network != 'lan' else None
+        if selected is None:
+            if network == 'tailscale':
+                raise ValueError('Tailscale is not connected or its CLI is unavailable; start Tailscale or pass --host with its IPv4 address')
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route:
+                route.connect(('192.0.2.1', 9))
+                selected = validate_host(route.getsockname()[0])
+    is_tailnet = ipaddress.ip_address(selected) in TAILNET
+    if network == 'tailscale' and not is_tailnet or network == 'lan' and is_tailnet:
+        raise ValueError('--host does not match --network')
+    return selected
+
+
 def serve(args):
     os.umask(0o077)
-    if not args.host:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route:
-            route.connect(('192.0.2.1', 9))
-            args.host = route.getsockname()[0]
-    address = ipaddress.ip_address(args.host)
-    if not (address.is_private or address.is_loopback) or address.is_unspecified or address.is_multicast:
-        raise ValueError('use a LAN IPv4 address')
-    if address.version != 4:
-        raise ValueError('use IPv4 for this pairing version')
+    args.host = select_host(args.host, args.network)
+    print('Pairing over ' + ('Tailscale' if ipaddress.ip_address(args.host) in TAILNET else 'LAN') +
+          ' at ' + args.host + '. Keep both devices connected to this network.', flush=True)
     with socket.create_connection((args.bind or args.host, args.ssh_port), timeout=3):
         pass
     keys = []
@@ -154,7 +198,9 @@ def serve(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--host', help='Computer LAN IPv4 address')
+    parser.add_argument('--host', help='Computer LAN or Tailscale IPv4 address')
+    parser.add_argument('--network', choices=('auto', 'lan', 'tailscale'), default='auto',
+                        help='auto prefers connected Tailscale, otherwise LAN (default: auto)')
     parser.add_argument('--ssh-port', type=int, default=22)
     parser.add_argument('--port', type=int, default=0, help='Temporary HTTPS port; default random')
     parser.add_argument('--user', default=getpass.getuser())

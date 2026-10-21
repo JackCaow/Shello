@@ -423,4 +423,14 @@
     <string name="move_later_259_name">"Move later: %1$s"</string>
     <string name="session_actions_for_name">"Session actions for %1$s"</string>
     <string name="selected_session_name">"Selected session %1$s"</string>
+    <string name="available_ssh_servers">SSH servers</string>
+    <string name="tailscale_discovering">Tailscale · discovering through trusted SSH connections…</string>
+    <string name="tailscale_pair_first">Tailscale · pair with a computer or save an SSH connection first to discover peers.</string>
+    <string name="tailscale_connect_first">Tailscale · connect the Tailscale app to discover your devices.</string>
+    <string name="tailscale_scan_complete">Tailscale · scan complete; only reachable SSH servers are shown.</string>
+    <string name="tailscale_source_unavailable">Tailscale · cannot read peers. Check a saved SSH connection and Tailscale on that computer, or scan a pairing QR.</string>
+    <string name="tailscale_scan_timeout">Tailscale · scan timed out; check the network and retry.</string>
+    <string name="pair_network_auto">Auto</string>
+    <string name="pair_network_lan">LAN</string>
+    <string name="pair_network_hint">Auto prefers Tailscale when connected on the computer. Keep both devices on the same tailnet; SSH and the temporary pairing port must be allowed. Choose LAN to pair over Wi-Fi.</string>
 </resources>

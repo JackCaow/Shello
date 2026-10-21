@@ -36,6 +36,10 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private LinearLayout list;
     private Dialog picker;
     private LanSshDiscovery scanner;
+    private TailscaleSshDiscovery tailScanner;
+    private final List<LanSshDiscovery.Host> lanHosts=new ArrayList<>(),tailHosts=new ArrayList<>();
+    private boolean lanRunning,tailRunning;
+    private String lanStatus="",tailStatus="";
     private ConnectivityManager cm;
     private ConnectivityManager.NetworkCallback networkCallback;
     private String networkIdentity,scanStatus="";
@@ -116,8 +120,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
             @Override public void onLost(Network network){scheduleNetworkCheck();}
             @Override public void onLinkPropertiesChanged(Network network,LinkProperties properties){scheduleNetworkCheck();}
         };
-        try{cm.registerNetworkCallback(new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN).build(),networkCallback,main);}
+        try{cm.registerNetworkCallback(new NetworkRequest.Builder().removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN).build(),networkCallback,main);}
         catch(RuntimeException ignored){networkCallback=null;}
         rescan(true);
     }
@@ -127,14 +130,24 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         if(!visible)return;
         LanSshDiscovery.Scope scope;
         try{scope=LanSshDiscovery.wifiScope(cm);}catch(SecurityException e){stopScan();hosts.clear();networkIdentity=null;render(false,tr(R.string.network_access_was_denied_check_permissions));return;}
-        String identity=scope==null?null:scope.identity();
+        String vpn=TailscaleSshDiscovery.vpnIdentity(cm);
+        String identity=(scope==null?"":scope.identity())+"|"+vpn;
         if(!force&&Objects.equals(identity,networkIdentity))return;
-        stopScan();networkIdentity=identity;hosts.clear();
-        if(scope==null){render(false,tr(R.string.connect_to_wi_fi_and_try_again_ipv4_lan_required));return;}
-        scanner=new LanSshDiscovery(this,scope,(results,running,message)->{
-            hosts.clear();hosts.addAll(results);render(running,message);
-        });
-        scanner.start();
+        stopScan();networkIdentity=identity;hosts.clear();lanHosts.clear();tailHosts.clear();
+        lanRunning=scope!=null;tailRunning=!vpn.isEmpty();
+        lanStatus=scope==null?tr(R.string.connect_to_wi_fi_and_try_again_ipv4_lan_required):tr(R.string.scanning);
+        tailStatus=tailRunning?tr(R.string.tailscale_discovering):tr(R.string.tailscale_connect_first);
+        renderCombined();
+        if(scope!=null){scanner=new LanSshDiscovery(this,scope,(results,running,message)->{
+            lanHosts.clear();lanHosts.addAll(results);lanRunning=running;lanStatus=message;renderCombined();
+        });scanner.start();}
+        if(tailRunning){tailScanner=new TailscaleSshDiscovery(this,(results,running,message)->{
+            tailHosts.clear();tailHosts.addAll(results);tailRunning=running;tailStatus=message;renderCombined();
+        });tailScanner.start();}
+    }
+    private void renderCombined(){
+        hosts.clear();hosts.addAll(lanHosts);hosts.addAll(tailHosts);
+        render(lanRunning||tailRunning,lanStatus+"\n"+tailStatus);
     }
     private void render(boolean running,String message){
         scanning=running;scanStatus=message;
@@ -150,7 +163,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         LinearLayout.LayoutParams gp=new LinearLayout.LayoutParams(dp(44),dp(4));gp.gravity=Gravity.CENTER_HORIZONTAL;gp.bottomMargin=dp(20);content.addView(grip,gp);
         content.setContentDescription(tr(R.string.local_ssh_server_list));
         LinearLayout heading=row();content.addView(heading);
-        heading.addView(text(tr(R.string.local_ssh_servers),22,TEXT),new LinearLayout.LayoutParams(0,-2,1));
+        heading.addView(text(tr(R.string.available_ssh_servers),22,TEXT),new LinearLayout.LayoutParams(0,-2,1));
         heading.addView(SampleUi.header(this,"close",tr(R.string.close_server_list),TEXT,()->picker.dismiss()),new LinearLayout.LayoutParams(dp(44),dp(44)));
         listingStatus=text("",12,MUTED);margin(content,listingStatus,8);
         ScrollView scroll=new ScrollView(this);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,0,1);sp.topMargin=dp(12);content.addView(scroll,sp);
@@ -175,14 +188,14 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
             ImageView icon=SampleUi.icon(this,"server",MUTED);icon.setPadding(0,0,dp(14),0);card.addView(icon,new LinearLayout.LayoutParams(dp(42),dp(48)));
             LinearLayout labels=column();card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
             TextView title=text(item.name,19,TEXT);title.setMaxLines(2);labels.addView(title);
-            TextView address=text(item.address+":22",15,MUTED);address.setTypeface(Typeface.MONOSPACE);labels.addView(address);
+            TextView address=text(item.address+":22"+(NetworkAddress.tailscale(item.address)?" · Tailscale":" · LAN"),15,MUTED);address.setTypeface(Typeface.MONOSPACE);labels.addView(address);
             ImageView arrow=SampleUi.icon(this,"right",MUTED);card.addView(arrow,new LinearLayout.LayoutParams(dp(24),dp(24)));
             card.setContentDescription(tr(R.string.selected_server,item.name,item.address));
             card.setFocusable(true);card.setOnClickListener(v->{name.setText(item.name);host.setText(item.address);port.setText("22");picker.dismiss();});
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(12);list.addView(card,p);
         }
     }
-    private void stopScan(){if(scanner!=null){scanner.close();scanner=null;}}
+    private void stopScan(){if(scanner!=null){scanner.close();scanner=null;}if(tailScanner!=null){tailScanner.close();tailScanner=null;}}
     @Override protected void onStop(){
         visible=false;main.removeCallbacksAndMessages(null);stopScan();
         if(busy){if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();setBusy(false);connectionStatus.setText(tr(R.string.verification_paused_connect_again_to_continue));}

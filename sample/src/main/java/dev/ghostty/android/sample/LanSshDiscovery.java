@@ -72,6 +72,7 @@ final class LanSshDiscovery implements AutoCloseable {
     private final ArrayDeque<NsdServiceInfo> resolveQueue=new ArrayDeque<>();
     private final Set<String> queuedNames=new HashSet<>();
     private final Scope scope;
+    private final boolean useVpnRoute;
     private final Listener listener;
     private final NsdManager nsd;
     private NsdManager.DiscoveryListener discovery;
@@ -80,6 +81,10 @@ final class LanSshDiscovery implements AutoCloseable {
     private long started;
     LanSshDiscovery(Context context,Scope scope,Listener listener) {
         this.scope=scope;this.listener=listener;
+        ConnectivityManager cm=(ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkCapabilities active=cm.getNetworkCapabilities(cm.getActiveNetwork());
+        // Respect a VPN that forbids bypass; keep targets restricted to the Wi-Fi subnet.
+        useVpnRoute=active!=null&&active.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
         nsd=(NsdManager)context.getSystemService(Context.NSD_SERVICE);
     }
     void start() {
@@ -88,9 +93,9 @@ final class LanSshDiscovery implements AutoCloseable {
         if(scope.addresses.isEmpty()){finish();return;}
         for(String address:scope.addresses)pool.execute(()->{
             boolean ssh=false;
-            try(Socket socket=scope.network.getSocketFactory().createSocket()) {
+            try(Socket socket=useVpnRoute?new Socket():scope.network.getSocketFactory().createSocket()) {
                 sockets.add(socket);
-                if(!closed){socket.connect(new InetSocketAddress(address,PORT),450);ssh=hasSshBanner(socket,700);}
+                if(!closed){socket.connect(new InetSocketAddress(address,PORT),useVpnRoute?900:450);ssh=hasSshBanner(socket,useVpnRoute?1500:700);}
                 sockets.remove(socket);
             }catch(IOException|SecurityException ignored){}
             // Also remove already-closed sockets on failed connections.
@@ -135,7 +140,7 @@ final class LanSshDiscovery implements AutoCloseable {
                 try(DatagramSocket socket=new DatagramSocket(null)){
                     dnsSockets.add(socket);
                     if(closed)return null;
-                    scope.network.bindSocket(socket);socket.connect(dns,53);socket.setSoTimeout(400);
+                    if(!useVpnRoute)scope.network.bindSocket(socket);socket.connect(dns,53);socket.setSoTimeout(400);
                     socket.send(new DatagramPacket(query,query.length));
                     byte[] answer=new byte[2048];DatagramPacket packet=new DatagramPacket(answer,answer.length);socket.receive(packet);
                     String name=PtrDns.answer(answer,packet.getLength(),id,query);if(name!=null)return name;
