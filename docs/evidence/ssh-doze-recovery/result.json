@@ -1,0 +1,61 @@
+{
+  "device": "API 27 ARM64 rooted emulator",
+  "shell_pid_before_after": 59117,
+  "vim_pid_before_after": 93792,
+  "shell_environment_cwd_preserved": true,
+  "vim_unsaved_saved_exactly": true,
+  "explicit_disconnect_cancels_resume": true,
+  "cases": [
+    {
+      "case": "shell-doze",
+      "deep_state": "IDLE",
+      "idle_seconds": 70,
+      "additional_fault": "port-scoped silent TCP DROP over adb reverse",
+      "app_pid": 12341,
+      "client_before": "90518",
+      "client_after": "93161",
+      "reopen_to_connected_seconds": 2.51
+    },
+    {
+      "case": "shell-killed",
+      "kill": "SIGKILL",
+      "old_app_pid": 12341,
+      "new_app_pid": 12995,
+      "client_before": "93161",
+      "client_after": "93505",
+      "ordinary_launcher": true,
+      "reopen_to_connected_seconds": 1.58
+    },
+    {
+      "case": "vim-doze",
+      "deep_state": "IDLE",
+      "idle_seconds": 70,
+      "additional_fault": "port-scoped silent TCP DROP over adb reverse",
+      "app_pid": 12995,
+      "client_before": "93505",
+      "client_after": "96470",
+      "reopen_to_connected_seconds": 3.41
+    },
+    {
+      "case": "vim-killed",
+      "kill": "SIGKILL",
+      "old_app_pid": 12995,
+      "new_app_pid": 13552,
+      "client_before": "96470",
+      "client_after": "96843",
+      "ordinary_launcher": true,
+      "reopen_to_connected_seconds": 2.66
+    },
+    {
+      "case": "vim-force-stopped",
+      "kill": "force-stop",
+      "old_app_pid": 13552,
+      "new_app_pid": 13643,
+      "client_before": "96843",
+      "client_after": "97141",
+      "ordinary_launcher": true,
+      "reopen_to_connected_seconds": 2.72
+    }
+  ],
+  "scope": "Forced deep Doze with extra TCP loss, SIGKILL and force-stop; no OEM or physical suspend acceptance"
+}

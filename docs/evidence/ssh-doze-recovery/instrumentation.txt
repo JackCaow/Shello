@@ -1,0 +1,8 @@
+
+dev.ghostty.android.sample.SshResumeStateTest:.
+dev.ghostty.android.sample.SshSessionServiceTest:.
+dev.ghostty.android.sample.SshTransportTest:..
+
+Time: 1.914
+
+OK (5 tests)

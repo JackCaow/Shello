@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
             if(destroyed||!bound)return;
             sshService=((SshSessionService.LocalBinder)binder).service();
             sshService.observe(serviceObserver);
-            if(connectOnBind){connectOnBind=false;if(sshService.terminal()==null)connectSsh();}
+            if(connectOnBind||sshService.shouldResume()){connectOnBind=false;if(sshService.terminal()==null)connectSsh();}
         }
         public void onServiceDisconnected(ComponentName name){
             if(destroyed||!bound)return;

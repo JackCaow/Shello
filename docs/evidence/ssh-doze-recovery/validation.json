@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-21",
+  "device": "emulator-5580 / API 27 ARM64",
+  "build": "assembleDebug, assembleRelease (R8), assembleDebugAndroidTest, lintRelease passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 18,
+    "note": "16 prior warnings plus two intentional synchronous SharedPreferences commits, so a sudden process kill cannot race the pending disk write"
+  },
+  "instrumentation": {
+    "passed": 4,
+    "skipped": 1,
+    "skip_reason": "Plain-shell destructive PTY exit test skipped for persistent tmux fixture"
+  },
+  "apk_sha256": {
+    "sample/build/outputs/apk/debug/sample-debug.apk": "885d519ad7534abb29988af65193415da58e9d04384e81b76aec0f4826a2a14a",
+    "sample/build/outputs/apk/release/sample-release-unsigned.apk": "b37237763212254fdf7c371422268b5ce85466d4e66790e42b16f4f8e601e83e",
+    "sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk": "fbe75e0b8a6b829c6bab2248afa31f632371364401647a0df790fe475dbe49d4"
+  },
+  "installed_debug_apk_sha256": "885d519ad7534abb29988af65193415da58e9d04384e81b76aec0f4826a2a14a",
+  "cleanup": {
+    "forced_idle": "false",
+    "stay_on_while_plugged_in": "7"
+  },
+  "scope": "Sample-only recovery; no business integration or Maven publication; Android 33+ notification/34+ specialUse runtime not revalidated"
+}

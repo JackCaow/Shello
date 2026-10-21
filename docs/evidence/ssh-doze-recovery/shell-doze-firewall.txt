@@ -1,0 +1,7 @@
+Chain OUTPUT (policy ACCEPT 8 packets, 2928 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+   24  3192 DROP       tcp  --  *      *       0.0.0.0/0            127.0.0.1            tcp dpt:22222
+10270 1434K oem_out    all  --  *      *       0.0.0.0/0            0.0.0.0/0
+10270 1434K fw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+10270 1434K st_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+10270 1434K bw_OUTPUT  all  --  *      *       0.0.0.0/0            0.0.0.0/0

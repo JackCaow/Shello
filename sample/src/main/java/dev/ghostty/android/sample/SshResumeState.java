@@ -1,0 +1,45 @@
+package dev.ghostty.android.sample;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
+
+/** Only remembers a successfully attached tmux profile; never stores terminal input or credentials. */
+final class SshResumeState {
+    private final File directory;
+    private final SharedPreferences preferences;
+    SshResumeState(Context context) {
+        this(new File(context.getFilesDir(), "ssh"), context.getSharedPreferences("ssh_resume", Context.MODE_PRIVATE));
+    }
+    SshResumeState(File directory, SharedPreferences preferences) {
+        this.directory=directory;this.preferences=preferences;
+    }
+    String identity() {
+        try {
+            Properties profile=new Properties();
+            try(InputStream in=new FileInputStream(new File(directory,"connection.properties"))){profile.load(in);}
+            if(!"tmux".equals(profile.getProperty("sessionMode")))return null;
+            MessageDigest digest=MessageDigest.getInstance("SHA-256");
+            for(String name:new String[]{"connection.properties","known_hosts","client_key"}) {
+                byte[] bytes=java.nio.file.Files.readAllBytes(new File(directory,name).toPath());
+                digest.update(java.nio.ByteBuffer.allocate(4).putInt(bytes.length).array());
+                digest.update(bytes);
+            }
+            return android.util.Base64.encodeToString(digest.digest(),android.util.Base64.NO_WRAP);
+        } catch(IOException|IllegalArgumentException|NoSuchAlgorithmException error){return null;}
+    }
+    void remember(String identity) {
+        // Synchronous small write: an immediate process kill must not lose the user's stop/restore intent.
+        if(identity==null)clear();else preferences.edit().putString("profile",identity).commit();
+    }
+    boolean pending() {
+        String saved=preferences.getString("profile",null);
+        if(saved==null)return false;
+        if(saved.equals(identity()))return true;
+        clear();return false;
+    }
+    void clear(){preferences.edit().remove("profile").commit();}
+}

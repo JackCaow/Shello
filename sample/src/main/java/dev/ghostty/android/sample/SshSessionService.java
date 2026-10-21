@@ -21,6 +21,8 @@ public final class SshSessionService extends Service {
     private Observer observer;
     private TerminalSession terminal;
     private SshTransport ssh;
+    private SshResumeState resumeState;
+    private String profileIdentity;
     private PowerManager.WakeLock wakeLock;
     private Runnable retryTask,stableTask;
     private boolean connected,autoReconnect,foreground,destroyed;
@@ -29,6 +31,7 @@ public final class SshSessionService extends Service {
 
     @Override public void onCreate(){
         super.onCreate();
+        resumeState=new SshResumeState(this);
         getSystemService(NotificationManager.class).createNotificationChannel(
                 new NotificationChannel(CHANNEL,"终端会话",NotificationManager.IMPORTANCE_LOW));
         wakeLock=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"ghostty:SSHSession");
@@ -49,6 +52,7 @@ public final class SshSessionService extends Service {
     TerminalSession terminal(){return terminal;}
     boolean connected(){return connected;}
     boolean active(){return foreground;}
+    boolean shouldResume(){return terminal==null&&!foreground&&resumeState.pending();}
     String status(){return status;}
     void observe(Observer value){
         if(observer!=null&&observer!=value)observer.detach();
@@ -77,6 +81,7 @@ public final class SshSessionService extends Service {
     }
     private void connect(){
         cancelConnection();
+        profileIdentity=resumeState.identity();
         Properties config=new Properties();
         try(InputStream in=new FileInputStream(new File(getFilesDir(),"ssh/connection.properties"))){
             config.load(in);autoReconnect="tmux".equals(config.getProperty("sessionMode"));
@@ -96,7 +101,7 @@ public final class SshSessionService extends Service {
             @Override public void onState(String value,boolean ready){
                 if(!current())return;
                 connected=ready;status=value;changed();
-                if(ready){stableTask=()->{if(current()&&connected)retryAttempt=0;};handler.postDelayed(stableTask,10000);}
+                if(ready){resumeState.remember(profileIdentity);stableTask=()->{if(current()&&connected)retryAttempt=0;};handler.postDelayed(stableTask,10000);}
             }
             @Override public void onClosed(String value,boolean retryable){
                 if(!current())return;
@@ -124,6 +129,7 @@ public final class SshSessionService extends Service {
     void resize(int columns,int rows){if(ssh!=null)ssh.resize(columns,rows);}
     void disconnect(){finish("已断开");}
     private void finish(String value){
+        resumeState.clear();
         cancelConnection();status=value;
         foreground=false;
         if(wakeLock.isHeld())wakeLock.release();

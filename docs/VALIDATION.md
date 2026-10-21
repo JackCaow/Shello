@@ -3,6 +3,19 @@
 The library is an extracted alpha, not a shipped package. Validation results below apply to this standalone source tree only. This page separates initial validation from later compatibility changes; it is not a statement of current CI status. See [GitHub Actions](https://github.com/JackCaow/ghostty-android/actions) for remote build results. No Maven package release has occurred.
 
 
+## Deep Doze and process-death recovery
+
+Validated on 2026-10-21 using the rooted Android 8.1 / API 27 ARM64 emulator and the existing Mac SSH + tmux fixture. Fixed the gap where ordinary launcher open after process death stayed in the offline demo. The sample now persists a successful tmux profile fingerprint and reattaches on visible Activity open; explicit stop and changed profile/trust/key files cancel recovery. [Reproduction](LOCAL_SSH.md#verify-deep-doze-and-process-death-recovery).
+
+- Shell and unsaved vim each stayed in confirmed **deep `IDLE` for 70 seconds**, without a Doze whitelist exemption. A simultaneous port-scoped silent TCP drop forced genuine SSH loss despite the ADB loopback path; counters recorded 24 dropped packets in each run. After network/idle restoration and normal launcher open, automatic reattachment was observed in **2.51 s / 3.41 s**. These include UI polling, not a latency guarantee. [Shell idle](evidence/ssh-doze-recovery/shell-doze-idle.txt), [vim idle](evidence/ssh-doze-recovery/vim-doze-idle.txt), [results](evidence/ssh-doze-recovery/result.json).
+- Shell and vim each survived Android app **SIGKILL**, and vim additionally survived **force-stop**. No app process remained before normal launcher open; app and SSH client PIDs changed on recovery, while remote shell PID **59117** and vim PID **93792** remained the same. Reopen-to-connected observations were **1.58 s, 2.66 s and 2.72 s**. No debug connection extra, provisioning or reconnect tap was used. [Restored vim after force-stop](evidence/ssh-doze-recovery/vim-force-stopped.png).
+- The shell's directory/exported variable remained unchanged. Vim's unsaved text survived every interruption and saved through the Android UI to the exact expected file. Notification **Disconnect** followed by force-stop and ordinary reopen left zero SSH clients and no foreground service. [Disconnected reopen](evidence/ssh-doze-recovery/explicit-stop-reopened.png).
+
+- **4 instrumentation tests passed / 1 skipped**: profile/key/trust mutation invalidates resume, plain SSH cannot resume, explicit stop clears intent, Activity recreation retains the service VT, and existing host-key/network classification checks pass. The destructive plain-shell test remains skipped for tmux. [Output](evidence/ssh-doze-recovery/instrumentation.txt).
+- Debug, R8 release, test APK and release lint passed: **0 errors / 18 warnings** (16 prior warnings and two intentional synchronous preference commits). Installed APK hash matches the final debug build. [Build and cleanup record](evidence/ssh-doze-recovery/validation.json).
+
+This confirms forced emulator Doze plus an injected network outage and process-death recovery on user reopen. It does not establish physical CPU suspend, OEM battery-killer behavior, host-reboot persistence or continuous connectivity during Doze. Local scrollback/selection/draft persistence is outside this change. No business flow or Maven publication was added.
+
 ## Background SSH session ownership
 
 Validated on 2026-10-21 in the Android 8.1 / API 27 ARM64 emulator. `SshSessionService` owns the live connection, retry timers, partial CPU wake lock and main-thread VT. The Activity only binds the view/input while started. [Behavior and boundaries](LOCAL_SSH.md#background-lifetime-and-notification).
@@ -14,7 +27,7 @@ Validated on 2026-10-21 in the Android 8.1 / API 27 ARM64 emulator. `SshSessionS
 - The notification **断开** action was tapped while the app was backgrounded. It removed the foreground service, released the wake lock and left zero SSH clients. [Notification](evidence/ssh-background/notification.png), [cleanup assertions](evidence/ssh-background/disconnect.json).
 - Debug, R8 release, test builds and release lint passed: **0 errors / 16 warnings**, including the deliberately service-scoped non-timeout wake lock. [Hashes and scope](evidence/ssh-background/validation.json).
 
-These are emulator tests of ordinary screen-off and Activity lifetime. Deep Doze, vendor battery restrictions, real phones, long-duration battery usage and newer Android foreground-service runtime rules are not certified. Force-stop/process death ends the service; the remote tmux process can survive independently. No business integration or Maven publication was added.
+These are emulator tests of ordinary screen-off and Activity lifetime. Deep Doze and process-death recovery were subsequently tested in the section above. Vendor battery restrictions, real phones, long-duration battery usage and newer Android foreground-service runtime rules are not certified. Force-stop/process death ends the service; the remote tmux process can survive independently. No business integration or Maven publication was added.
 
 ## Automatic SSH + tmux recovery
 

@@ -56,6 +56,7 @@ public class SshSessionServiceTest {
                 Thread.sleep(25);
             }
             assertNotNull("SSH did not connect",terminal.get());
+            assertTrue("Successful tmux attach must permit reopen recovery",new SshResumeState(context).pending());
             Activity original=first;
             instrumentation.runOnMainSync(original::recreate);
             second=resumed.poll(5,TimeUnit.SECONDS);
@@ -67,6 +68,7 @@ public class SshSessionServiceTest {
                 assertSame(terminal.get(),owner.get().terminal());
                 owner.get().disconnect();
                 assertFalse(owner.get().active());assertFalse(owner.get().connected());
+                assertFalse("Explicit stop must cancel process-death recovery",new SshResumeState(context).pending());
             });
         }finally{
             Activity last=second!=null?second:first;
