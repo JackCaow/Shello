@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shello / Claude Code bridge. Private spool, accessed only over SSH.
+"""Shello / Claude Code and Codex bridge. Private spool, accessed only over SSH.
 
 No listening port, account, push relay, or automatic permission grants. Install
 explicitly with `install`; `uninstall` removes only this script's hook handlers.
@@ -18,6 +18,7 @@ import uuid
 
 STATE = Path(os.environ.get('GHOSTTY_HOOK_STATE', str(Path.home() / '.local/state/ghostty-android')))
 SETTINGS = Path(os.environ.get('GHOSTTY_CLAUDE_SETTINGS', str(Path.home() / '.claude/settings.json')))
+CODEX_SETTINGS = Path(os.environ.get('GHOSTTY_CODEX_SETTINGS', str(Path(os.environ.get('CODEX_HOME', str(Path.home() / '.codex'))) / 'hooks.json')))
 LIMIT = 262144
 WAIT = 170
 
@@ -138,13 +139,17 @@ def poll():
     return {'version': 1, 'events': selected, 'now': time.time()}
 
 
-def hook(value):
+def hook(value, provider='claude'):
+    if provider not in ('claude', 'codex'):
+        raise ValueError('unsupported provider')
     kind = value.get('hook_event_name')
-    question = kind == 'PreToolUse' and value.get('tool_name') == 'AskUserQuestion'
-    if kind not in ('PermissionRequest', 'Notification', 'Stop', 'StopFailure') and not question:
+    question = provider == 'claude' and kind == 'PreToolUse' and value.get('tool_name') == 'AskUserQuestion'
+    supported = ('PermissionRequest', 'SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd') if provider == 'codex' else ('PermissionRequest', 'Notification', 'Stop', 'StopFailure')
+    if kind not in supported and not question:
         return {}
     event_id = str(uuid.uuid4())
-    event = {key: value[key] for key in ('hook_event_name', 'session_id', 'cwd', 'tool_name', 'tool_input', 'message', 'notification_type', 'last_assistant_message') if key in value}
+    event = {key: value[key] for key in ('hook_event_name', 'session_id', 'turn_id', 'cwd', 'model', 'tool_name', 'tool_input', 'message', 'notification_type', 'last_assistant_message') if key in value}
+    event['provider'] = provider
     pane = os.environ.get('TMUX_PANE', '')
     if pane.startswith('%') and pane[1:].isdigit():
         binary = shutil.which('tmux') or next((str(p) for p in (Path('/opt/homebrew/bin/tmux'), Path('/usr/local/bin/tmux')) if p.is_file()), None)
@@ -170,7 +175,7 @@ def hook(value):
                     fcntl.flock(lock, fcntl.LOCK_EX)
                     return read(response_path)
             time.sleep(.2)
-        return {}  # No phone decision: leave the normal Claude permission prompt intact.
+        return {}  # No phone decision: leave the agent's normal permission prompt intact.
     finally:
         with (STATE / '.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
@@ -180,19 +185,28 @@ def hook(value):
                 atomic(event_path, current)
 
 
-def configure(remove=False):
-    SETTINGS.parent.mkdir(parents=True, exist_ok=True)
-    command = shlex.quote(sys.executable) + ' ' + shlex.quote(str(Path(__file__).resolve())) + ' hook'
-    with (SETTINGS.parent / '.ghostty-settings.lock').open('a') as lock:
+def configure_file(settings, provider, remove):
+    # Removing an integration must not create an agent configuration directory.
+    if remove and not settings.exists():
+        return
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    command = shlex.quote(sys.executable) + ' ' + shlex.quote(str(Path(__file__).resolve())) + (' codex-hook' if provider == 'codex' else ' hook')
+    def owned(handler):
+        try:
+            parts = shlex.split(handler.get('command', ''))
+            return len(parts) == 3 and parts[1] == str(Path(__file__).resolve()) and parts[2] == ('codex-hook' if provider == 'codex' else 'hook')
+        except (ValueError, TypeError):
+            return False
+    with (settings.parent / '.ghostty-settings.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        current = read(SETTINGS) if SETTINGS.exists() else {}
+        current = read(settings) if settings.exists() else {}
         hooks = current.setdefault('hooks', {})
         if not isinstance(hooks, dict):
             raise ValueError('invalid existing hooks')
         for kind in list(hooks):
             cleaned = []
             for group in hooks[kind]:
-                handlers = [h for h in group.get('hooks', []) if h.get('command') != command]
+                handlers = [h for h in group.get('hooks', []) if not owned(h)]
                 if handlers:
                     cleaned.append(dict(group, hooks=handlers))
             if cleaned:
@@ -200,12 +214,32 @@ def configure(remove=False):
             else:
                 del hooks[kind]
         if not remove:
-            for kind in ('PermissionRequest', 'PreToolUse', 'Notification', 'Stop', 'StopFailure'):
-                hooks.setdefault(kind, []).append({'matcher': 'AskUserQuestion' if kind == 'PreToolUse' else '', 'hooks': [{'type': 'command', 'command': command, 'timeout': 180}]})
-        if SETTINGS.exists():
-            backup = SETTINGS.with_name('settings.ghostty-backup-' + str(time.time_ns()) + '.json')
-            atomic(backup, read(SETTINGS))
-        atomic(SETTINGS, current)
+            kinds = ('PermissionRequest', 'SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd') if provider == 'codex' else ('PermissionRequest', 'PreToolUse', 'Notification', 'Stop', 'StopFailure')
+            for kind in kinds:
+                timeout = 180 if kind in ('PermissionRequest', 'PreToolUse') else 3 if kind in ('Interrupt', 'SessionEnd') else 10
+                group = {'hooks': [{'type': 'command', 'command': command, 'timeout': timeout}]}
+                if provider == 'claude':
+                    group['matcher'] = 'AskUserQuestion' if kind == 'PreToolUse' else ''
+                hooks.setdefault(kind, []).append(group)
+        if settings.exists():
+            backup = settings.with_name(settings.stem + '.ghostty-backup-' + str(time.time_ns()) + '.json')
+            atomic(backup, read(settings))
+        atomic(settings, current)
+
+
+def configure(remove=False):
+    # Validate both sources before touching either. Do not rewrite config.toml,
+    # enable daemon flags or grant trust; Codex owns /hooks review and settings.
+    for settings in (SETTINGS, CODEX_SETTINGS):
+        if settings.exists():
+            current = read(settings)
+            if not isinstance(current, dict) or not isinstance(current.get('hooks', {}), dict):
+                raise ValueError('invalid existing hooks')
+            for groups in current.get('hooks', {}).values():
+                if not isinstance(groups, list) or any(not isinstance(g, dict) or not isinstance(g.get('hooks', []), list) or any(not isinstance(h, dict) for h in g.get('hooks', [])) for g in groups):
+                    raise ValueError('invalid hook groups')
+    configure_file(SETTINGS, 'claude', remove)
+    configure_file(CODEX_SETTINGS, 'codex', remove)
     return {'ok': True, 'installed': not remove}
 
 
@@ -383,14 +417,14 @@ def main():
             result = respond(incoming())
         elif mode in ('install', 'uninstall'):
             result = configure(mode == 'uninstall')
-        elif mode == 'hook':
-            result = hook(incoming())
+        elif mode in ('hook', 'codex-hook'):
+            result = hook(incoming(), 'codex' if mode == 'codex-hook' else 'claude')
         else:
             raise ValueError('unknown mode')
         print(json.dumps(result, ensure_ascii=False))
     except Exception:
         # Never write tool input, credentials, or transcript data into error logs.
-        if mode == 'hook':
+        if mode in ('hook', 'codex-hook'):
             print('{}')
         else:
             if mode in ('resume', 'agent-run'):

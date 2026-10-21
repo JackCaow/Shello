@@ -19,15 +19,16 @@ class HookTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         hook.STATE = Path(self.temp.name) / 'events'
         hook.SETTINGS = Path(self.temp.name) / 'settings.json'
+        hook.CODEX_SETTINGS = Path(self.temp.name) / 'codex/hooks.json'
         hook.private_dir(hook.STATE)
         hook.WAIT = 2
 
     def tearDown(self):
         self.temp.cleanup()
 
-    def waiting(self, value):
+    def waiting(self, value, provider='claude'):
         self.result = []
-        thread = threading.Thread(target=lambda: self.result.append(hook.hook(value)))
+        thread = threading.Thread(target=lambda: self.result.append(hook.hook(value, provider)))
         thread.start()
         for _ in range(100):
             entries = hook.poll()['events']
@@ -88,6 +89,52 @@ class HookTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             hook.configure()
         self.assertEqual(hook.SETTINGS.read_text(), '{bad json')
+
+    def test_codex_lifecycle_and_provider_are_preserved_without_prompt_or_transcript(self):
+        for kind in ('SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd'):
+            self.assertEqual(hook.hook({'hook_event_name':kind, 'session_id':'session-1', 'turn_id':'turn-1', 'cwd':'/tmp/项目', 'model':'test-model', 'last_assistant_message':'完成', 'prompt':'PRIVATE', 'transcript_path':'PRIVATE'}, 'codex'), {})
+        events=hook.poll()['events'];self.assertEqual(len(events),5)
+        for event in events:
+            self.assertEqual(event['provider'],'codex');self.assertEqual(event['session_id'],'session-1')
+            self.assertEqual(event['turn_id'],'turn-1');self.assertEqual(event['status'],'info')
+            self.assertNotIn('PRIVATE',json.dumps(event))
+        # Claude-specific question updates are not Codex's input contract.
+        hook.hook({'hook_event_name':'PreToolUse','tool_name':'AskUserQuestion'},'codex')
+        self.assertEqual(len(hook.poll()['events']),5)
+
+    def test_codex_permission_allow_and_deny_do_not_update_input_or_permissions(self):
+        for behavior in ('allow','deny'):
+            thread,event=self.waiting({'hook_event_name':'PermissionRequest','tool_name':'apply_patch','tool_input':{'command':'test patch'},'turn_id':'t'},'codex')
+            self.assertEqual(event['provider'],'codex')
+            hook.respond({'id':event['id'],'behavior':behavior});thread.join()
+            response=self.result[0]['hookSpecificOutput']
+            self.assertEqual(response['hookEventName'],'PermissionRequest')
+            self.assertEqual(response['decision']['behavior'],behavior)
+            self.assertEqual(set(response),{'hookEventName','decision'})
+            for file in hook.STATE.glob('*.json'):file.unlink()
+
+    def test_codex_timeout_leaves_normal_approval_flow(self):
+        hook.WAIT=.15
+        thread,event=self.waiting({'hook_event_name':'PermissionRequest','tool_name':'Bash'},'codex')
+        thread.join();self.assertEqual(self.result,[{}])
+        self.assertEqual(hook.poll()['events'][0]['status'],'expired')
+        with self.assertRaises(ValueError):hook.respond({'id':event['id'],'behavior':'allow'})
+
+    def test_codex_install_preserves_moshi_and_uninstall_is_owned_only(self):
+        hook.CODEX_SETTINGS.parent.mkdir()
+        existing={'hooks':{'Stop':[{'hooks':[{'type':'command','command':'moshi-hook codex-hook'}]}]},'other':{'keep':True}}
+        hook.atomic(hook.CODEX_SETTINGS,existing)
+        config=hook.CODEX_SETTINGS.parent/'config.toml';config.write_text('# keep\n[features]\nhooks = false\n')
+        hook.configure();first=hook.read(hook.CODEX_SETTINGS);hook.configure()
+        self.assertEqual(first,hook.read(hook.CODEX_SETTINGS))
+        self.assertEqual(len(first['hooks']['Stop']),2)
+        self.assertEqual(config.read_text(),'# keep\n[features]\nhooks = false\n')
+        hook.configure(remove=True);self.assertEqual(hook.read(hook.CODEX_SETTINGS),existing)
+
+    def test_malformed_codex_configuration_does_not_partially_change_claude(self):
+        hook.CODEX_SETTINGS.parent.mkdir();hook.CODEX_SETTINGS.write_text('{bad')
+        with self.assertRaises(ValueError):hook.configure()
+        self.assertFalse(hook.SETTINGS.exists())
 
     def test_reject_traversal_and_unknown_decisions(self):
         with self.assertRaises(ValueError):

@@ -1,5 +1,15 @@
 # Validation
 
+## Codex events and physical-device approvals
+
+2026-10-21: the host helper now registers Codex lifecycle hooks alongside Claude Code. It merges `$CODEX_HOME/hooks.json`, keeps unrelated hooks and config/trust settings, and marks events with the provider. Codex PermissionRequest returns single-request allow/deny decisions; expiry leaves the normal terminal approval flow intact. Shello's inbox shows Codex lifecycle labels and the original approval command.
+
+- Xiaomi 15 Ultra / API 36: the current debug APK was installed with replacement. Real Codex CLI 0.163.0-alpha.10.2 ran in an isolated test project/config home with the Shello hooks reviewed through `/hooks`; no hook-trust bypass flag was used.
+- The physical inbox received a real `PermissionRequest` for the harmless `printf SHELLO_APPROVAL_PROBE` command. Tapping Deny returned `Declined on Shello`, and Codex stopped with `SHELLO_APPROVAL_DENIED`. A separate Allow once executed the command, returned `SHELLO_APPROVAL_ALLOWED`, and its same-turn Stop event synchronized back into the phone inbox.
+- Physical SSH protocol and inbox UI regressions passed: lifecycle/provider identity, approval allow/deny, duplicate-response rejection, config uninstall, and rendering of lifecycle labels and patch commands. Seventeen isolated Python tests passed, including expiry fallback, no prompt/transcript collection, idempotent configuration and preservation of other hooks. Debug/instrumentation builds and debug lint passed.
+- The phone's Tailscale path timed out during this run. Acceptance used real OpenSSH through USB port forwarding and a disposable profile with the existing pinned host public key; original profiles were preserved. This is not new wireless/Tailscale acceptance. Temporary profiles and remote fixtures were removed. Private screenshots/logs remain local under `build/codex-*`.
+- Existing hosts need Settings → Hook → Update after installing the app; Codex hooks require review in `/hooks` and a new agent session. Interactive Codex question replies, usage quotas and the session-aggregation board remain outside this change. No release tag or Maven publication.
+
 ## Claude Code color environment
 
 2026-10-21: the phone's Claude Code process inherited `NO_COLOR=1` from the host's long-lived tmux server. Its captured output contained no color sequences even though the tmux status line remained colored. Restarting the idle Claude process with an empty `NO_COLOR` restored its colored logo and mode indicator on the physical Xiaomi phone. New Shello shell and agent tmux sessions now set session-local `NO_COLOR=` and `COLORTERM=truecolor`; existing-session attachment does not rewrite the session environment or restart its shell. This does not migrate already-running processes or previously installed host helpers; the helper change takes effect when reinstalled through Hook setup.

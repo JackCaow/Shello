@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 final class AgentHub {
     static final String COMMAND="python3 \"$HOME/.local/state/ghostty-android/ghostty_hook.py\" ";
     static final String INSTALL="umask 077; mkdir -p \"$HOME/.local/state/ghostty-android\" && cat > \"$HOME/.local/state/ghostty-android/ghostty_hook.py.new\" && mv \"$HOME/.local/state/ghostty-android/ghostty_hook.py.new\" \"$HOME/.local/state/ghostty-android/ghostty_hook.py\" && "+COMMAND+"install";
-    static final class Event {final String profile,host;final JSONObject data;Event(String p,String h,JSONObject d){profile=p;host=h;data=d;}String id(){return profile+":"+data.optString("id");}boolean pending(){return "pending".equals(data.optString("status"));}}
+    static final class Event {final String profile,host;final JSONObject data;Event(String p,String h,JSONObject d){profile=p;host=h;data=d;}String agent(){return "codex".equals(data.optString("provider"))?"Codex":"Claude Code";}String id(){return profile+":"+data.optString("id");}boolean pending(){return "pending".equals(data.optString("status"));}}
     private static AgentHub instance;
     static synchronized AgentHub get(Context c){if(instance==null)instance=new AgentHub(c.getApplicationContext());return instance;}
     final Context context;final android.content.SharedPreferences preferences;
@@ -55,7 +55,7 @@ final class AgentHub {
     }
     private void notifyEvent(Event e){
         if(users>0)return;Intent open=new Intent(context,AgentActivity.class);PendingIntent intent=PendingIntent.getActivity(context,80,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        Notification n=new Notification.Builder(context,"agent_events").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(e.pending()?tr(R.string.an_agent_needs_your_response):tr(R.string.new_agent_event)).setContentText(e.host).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(intent).setAutoCancel(true).build();
+        Notification n=new Notification.Builder(context,"agent_events").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(e.agent()+" · "+(e.pending()?tr(R.string.an_agent_needs_your_response):tr(R.string.new_agent_event))).setContentText(e.host).setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(intent).setAutoCancel(true).build();
         try{context.getSystemService(NotificationManager.class).notify(e.id().hashCode(),n);}catch(SecurityException ignored){}
     }
     interface Done {void finish(boolean success,String message);}

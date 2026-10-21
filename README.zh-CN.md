@@ -40,7 +40,7 @@ Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原�
 - **持续会话**：借助 tmux 恢复远端 shell / Vim 会话，支持自动重连与后台连接服务。
 - **触屏终端**：中文 IME、文本选择、滚动、方向浮板和 Ctrl / Esc / Tab 快捷键。
 - **会话首页**：缩略图、长按排序与关闭；预览保存在本地，重启后可以恢复。
-- **远端智能体**：按项目查看 Claude Code / Codex 最近会话；Claude Code Hook 支持事件与审批收件箱。
+- **远端智能体**：按项目查看 Claude Code / Codex 最近会话；Claude Code / Codex Hook 支持事件与审批收件箱。
 - **界面语言**：英文与简体中文，支持跟随系统或在设置中单独切换。
 - **外观设置**：Shello / 黑色 / 浅色主题、字体大小与工具栏配置。
 
@@ -124,9 +124,9 @@ CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 
 
 - 在终端中按通常方式运行 `claude` 或 `codex`。
 - 在 **最近** 中按项目查找并恢复已有智能体会话。
-- Claude Code 的事件与审批收件箱需要在 **设置 → Hook** 安装对应辅助程序。
+- Claude Code / Codex 的事件与审批收件箱需要在 **设置 → Hook** 安装或更新辅助程序，然后新开智能体会话。Codex 还需在 `/hooks` 中审核并信任 Shello 的 Hook；若已禁用 Hook，需先在 Codex 中开启。
 
-Codex 历史恢复已支持，Codex 审批 Hook 尚未实现。具体行为与验证范围见[智能体会话说明](docs/HOME_AND_AGENTS.md)。
+Codex 支持历史恢复、审批及会话事件；交互式提问回复和账号用量额度暂未实现。具体行为与验证范围见[智能体会话说明](docs/HOME_AND_AGENTS.md)。
 
 ## 常见问题
 

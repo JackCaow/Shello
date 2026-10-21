@@ -89,7 +89,7 @@
     <string name="cannot_read_hook_check_the_connection_or_reinstall" formatted="false">"无法读取 Hook，检查连接或重新安装"</string>
     <string name="an_agent_needs_your_response" formatted="false">"Agent 需要你的回应"</string>
     <string name="new_agent_event" formatted="false">"收到 Agent 事件"</string>
-    <string name="hook_installed_start_a_new_claude_code_session_to_use_it" formatted="false">"Hook 已安装；新开 Claude Code 会话后生效"</string>
+    <string name="hook_installed_start_a_new_claude_code_session_to_use_it" formatted="false">"Hook 已安装。请新开智能体会话，并在 Codex /hooks 中审核 Shello 的 Hook。"</string>
     <string name="hook_uninstalled" formatted="false">"Hook 已卸载"</string>
     <string name="operation_failed_check_ssh_python_3_and_remote_directory_permissi" formatted="false">"操作失败，请检查 SSH、Python 3 和远端目录权限"</string>
     <string name="responded" formatted="false">"已回应"</string>
@@ -245,7 +245,7 @@
     <string name="invalid_configuration" formatted="false">"配置无效"</string>
     <string name="no_agent_events_yet" formatted="false">"暂无智能体事件"</string>
     <string name="approval_requests_questions_and_completed_tasks_will_appear_here" formatted="false">"当智能体请求审批、提问或完成任务时，会显示在这里。"</string>
-    <string name="install_claude_code_hook_on_your_ssh_host" formatted="false">"在 SSH 主机上安装 Claude Code Hook"</string>
+    <string name="install_claude_code_hook_on_your_ssh_host" formatted="false">"在 SSH 主机上安装 Claude Code 和 Codex Hook"</string>
     <string name="agent_question" formatted="false">"智能体提问"</string>
     <string name="task_completed" formatted="false">"任务完成"</string>
     <string name="task_failed" formatted="false">"任务出错"</string>
@@ -342,18 +342,18 @@
     <string name="send_the_clear_screen_shortcut" formatted="false">"发送清屏快捷键"</string>
     <string name="send_text_only" formatted="false">"只发送文本"</string>
     <string name="install" formatted="false">"安装"</string>
-    <string name="install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque" formatted="false">"在 SSH 主机上安装 Claude Code Hook，接收审批、提问与完成事件。"</string>
+    <string name="install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque" formatted="false">"通过 SSH 接收 Claude Code 审批、提问和完成通知，以及 Codex 审批和会话事件。"</string>
     <string name="ssh_hosts" formatted="false">"SSH 主机"</string>
     <string name="add_an_ssh_connection_first" formatted="false">"先添加 SSH 连接"</string>
     <string name="enabled" formatted="false">"已启用"</string>
     <string name="not_installed" formatted="false">"未安装"</string>
     <string name="uninstall_hook" formatted="false">"卸载 Hook？"</string>
     <string name="install_hook_387" formatted="false">"安装 Hook？"</string>
-    <string name="only_the_claude_code_hook_registered_by_this_app_will_be_removed" formatted="false">"只移除本应用注册的 Claude Code Hook。"</string>
-    <string name="existing_settings_are_kept_start_a_new_claude_code_session_after" formatted="false">"保留已有配置，安装后请新开 Claude Code 会话。"</string>
+    <string name="only_the_claude_code_hook_registered_by_this_app_will_be_removed" formatted="false">"仅移除此应用注册的 Claude Code 和 Codex Hook。"</string>
+    <string name="existing_settings_are_kept_start_a_new_claude_code_session_after" formatted="false">"保留现有配置及其他 Hook。安装后请新开智能体会话，并在 Codex /hooks 中审核 Shello。"</string>
     <string name="uninstall" formatted="false">"卸载"</string>
     <string name="working" formatted="false">"正在处理…"</string>
-    <string name="installation_and_sync_use_ssh_no_extra_ports_are_needed_installat" formatted="false">"通过 SSH 安装和同步，无需额外开放端口。安装会备份并合并现有 Claude Code 配置；卸载只移除本应用的 Hook。"</string>
+    <string name="installation_and_sync_use_ssh_no_extra_ports_are_needed_installat" formatted="false">"通过 SSH 安装和同步。备份并合并 Claude Code 配置与 Codex hooks.json，保留其他 Hook 和 Codex 信任设置。若 Codex 已禁用 Hook，请在 Codex 中开启 features.hooks。"</string>
     <string name="update" formatted="false">"更新"</string>
     <string name="update_host_helper_and_recent_session_support" formatted="false">"更新主机助手与最近会话读取"</string>
     <string name="updating" formatted="false">"正在更新…"</string>
@@ -428,4 +428,8 @@
     <string name="no_active_sessions">没有活跃会话</string>
     <string name="no_saved_connections">没有已保存连接</string>
     <string name="tap_plus_to_add_connection">点按 + 添加连接</string>
+    <string name="agent_session_started" formatted="false">"会话已开始"</string>
+    <string name="agent_task_started" formatted="false">"任务已开始"</string>
+    <string name="agent_task_interrupted" formatted="false">"任务已中断"</string>
+    <string name="agent_session_ended" formatted="false">"会话已结束"</string>
 </resources>

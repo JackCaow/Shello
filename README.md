@@ -40,7 +40,7 @@ Open the downloaded APK on your phone and follow Android's installation prompts.
 - **Persistent remote sessions:** tmux reattachment, automatic reconnection and a background connection service.
 - **Touch terminal:** Chinese IME, text selection, scrolling, direction controls and Ctrl / Esc / Tab shortcuts.
 - **Session home:** thumbnails, reordering and closing; cached previews survive app restarts.
-- **Remote agents:** project-grouped Claude Code / Codex history and a Claude Code Hook inbox for events and approvals.
+- **Remote agents:** project-grouped Claude Code / Codex history and a Claude Code / Codex Hook inbox for events and approvals.
 - **Languages:** English and Simplified Chinese. Follow the system or choose a language in Settings.
 - **Appearance:** Shello, black and light themes, font size and configurable toolbar controls.
 
@@ -96,7 +96,7 @@ Tapping a saved connection authenticates over SSH before opening the **Tmux / �
 
 These CLIs run on the remote computer. Install them and complete their login there; Shello does not include model access or a subscription.
 
-Run `claude` or `codex` in the terminal, or use **最近** to find and resume existing sessions by project. Claude Code events and approvals require installing the helper through **设置 → Hook**. Codex history/resume is supported; Codex approval hooks are not implemented. [Agent session details](docs/HOME_AND_AGENTS.md)
+Run `claude` or `codex` in the terminal, or use **最近** to find and resume existing sessions by project. Claude Code and Codex events and approvals require installing or updating the helper through **设置 → Hook**. Start a new agent session afterwards. In Codex, review and trust the Shello hooks through `/hooks`; explicitly disabled hooks must be enabled in Codex. Codex interactive question replies and provider usage quotas are not implemented. [Agent session details](docs/HOME_AND_AGENTS.md)
 
 ## FAQ
 

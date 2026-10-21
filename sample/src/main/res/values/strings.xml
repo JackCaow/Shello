@@ -89,7 +89,7 @@
     <string name="cannot_read_hook_check_the_connection_or_reinstall" formatted="false">"Cannot read Hook. Check the connection or reinstall."</string>
     <string name="an_agent_needs_your_response" formatted="false">"An agent needs your response"</string>
     <string name="new_agent_event" formatted="false">"New agent event"</string>
-    <string name="hook_installed_start_a_new_claude_code_session_to_use_it" formatted="false">"Hook installed. Start a new Claude Code session to use it."</string>
+    <string name="hook_installed_start_a_new_claude_code_session_to_use_it" formatted="false">"Hooks installed. Start a new agent session; review the Shello hooks in Codex /hooks."</string>
     <string name="hook_uninstalled" formatted="false">"Hook uninstalled"</string>
     <string name="operation_failed_check_ssh_python_3_and_remote_directory_permissi" formatted="false">"Operation failed. Check SSH, Python 3 and remote directory permissions."</string>
     <string name="responded" formatted="false">"Responded"</string>
@@ -245,7 +245,7 @@
     <string name="invalid_configuration" formatted="false">"Invalid configuration"</string>
     <string name="no_agent_events_yet" formatted="false">"No agent events yet"</string>
     <string name="approval_requests_questions_and_completed_tasks_will_appear_here" formatted="false">"Approval requests, questions and completed tasks will appear here."</string>
-    <string name="install_claude_code_hook_on_your_ssh_host" formatted="false">"Install Claude Code Hook on your SSH host"</string>
+    <string name="install_claude_code_hook_on_your_ssh_host" formatted="false">"Install Claude Code and Codex Hooks on your SSH host"</string>
     <string name="agent_question" formatted="false">"Agent question"</string>
     <string name="task_completed" formatted="false">"Task completed"</string>
     <string name="task_failed" formatted="false">"Task failed"</string>
@@ -342,18 +342,18 @@
     <string name="send_the_clear_screen_shortcut" formatted="false">"Send the clear-screen shortcut"</string>
     <string name="send_text_only" formatted="false">"Send text only"</string>
     <string name="install" formatted="false">"Install"</string>
-    <string name="install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque" formatted="false">"Install Claude Code Hook on an SSH host to receive approval requests, questions and completion events."</string>
+    <string name="install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque" formatted="false">"Receive Claude Code approvals, questions and completions, and Codex approvals and session events over SSH."</string>
     <string name="ssh_hosts" formatted="false">"SSH hosts"</string>
     <string name="add_an_ssh_connection_first" formatted="false">"Add an SSH connection first"</string>
     <string name="enabled" formatted="false">"Enabled"</string>
     <string name="not_installed" formatted="false">"Not installed"</string>
     <string name="uninstall_hook" formatted="false">"Uninstall Hook?"</string>
     <string name="install_hook_387" formatted="false">"Install Hook?"</string>
-    <string name="only_the_claude_code_hook_registered_by_this_app_will_be_removed" formatted="false">"Only the Claude Code Hook registered by this app will be removed."</string>
-    <string name="existing_settings_are_kept_start_a_new_claude_code_session_after" formatted="false">"Existing settings are kept. Start a new Claude Code session after installation."</string>
+    <string name="only_the_claude_code_hook_registered_by_this_app_will_be_removed" formatted="false">"Only the Claude Code and Codex hooks registered by this app will be removed."</string>
+    <string name="existing_settings_are_kept_start_a_new_claude_code_session_after" formatted="false">"Existing settings and other hooks are kept. Start a new agent session after installation; review Shello in Codex /hooks."</string>
     <string name="uninstall" formatted="false">"Uninstall"</string>
     <string name="working" formatted="false">"Working…"</string>
-    <string name="installation_and_sync_use_ssh_no_extra_ports_are_needed_installat" formatted="false">"Installation and sync use SSH; no extra ports are needed. Installation backs up and merges existing Claude Code settings. Uninstalling removes only this app\'s Hook."</string>
+    <string name="installation_and_sync_use_ssh_no_extra_ports_are_needed_installat" formatted="false">"Installation and sync use SSH. Existing Claude Code settings and Codex hooks.json are backed up and merged. Other hooks and Codex trust settings are preserved. If Codex hooks are disabled, enable features.hooks in Codex."</string>
     <string name="update" formatted="false">"Update"</string>
     <string name="update_host_helper_and_recent_session_support" formatted="false">"Update host helper and recent session support"</string>
     <string name="updating" formatted="false">"Updating…"</string>
@@ -436,4 +436,8 @@
     <string name="no_active_sessions">No active sessions</string>
     <string name="no_saved_connections">No saved connections</string>
     <string name="tap_plus_to_add_connection">Tap + to connect</string>
+    <string name="agent_session_started" formatted="false">"Session started"</string>
+    <string name="agent_task_started" formatted="false">"Task started"</string>
+    <string name="agent_task_interrupted" formatted="false">"Task interrupted"</string>
+    <string name="agent_session_ended" formatted="false">"Session ended"</string>
 </resources>

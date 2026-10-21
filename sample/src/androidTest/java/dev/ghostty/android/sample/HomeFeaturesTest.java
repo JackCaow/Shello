@@ -75,7 +75,7 @@ public class HomeFeaturesTest {
         }finally{try{run(id,lookup+"\"$T\" kill-session -t "+SshCommand.quote("="+name),null);}finally{new SshProfileStore(context).delete(id);}}
     }
     @Test public void hookApprovalQuestionCompletionOverSsh()throws Exception{
-        String id=profile(),root=fixture().getProperty("hookRoot");String command="GHOSTTY_HOOK_STATE="+SshCommand.quote(root+"/events")+" GHOSTTY_CLAUDE_SETTINGS="+SshCommand.quote(root+"/settings.json")+" python3 "+SshCommand.quote(root+"/ghostty_hook.py")+" ";ExecutorService worker=Executors.newSingleThreadExecutor();
+        String id=profile(),root=fixture().getProperty("hookRoot");String command="GHOSTTY_HOOK_STATE="+SshCommand.quote(root+"/events")+" GHOSTTY_CLAUDE_SETTINGS="+SshCommand.quote(root+"/settings.json")+" GHOSTTY_CODEX_SETTINGS="+SshCommand.quote(root+"/codex-hooks.json")+" python3 "+SshCommand.quote(root+"/ghostty_hook.py")+" ";ExecutorService worker=Executors.newSingleThreadExecutor();
         try{
             assertTrue(new JSONObject(run(id,command+"install",null)).getBoolean("ok"));
             Future<String> request=worker.submit(()->run(id,command+"hook","{\"hook_event_name\":\"PermissionRequest\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo hello\"}}"));
