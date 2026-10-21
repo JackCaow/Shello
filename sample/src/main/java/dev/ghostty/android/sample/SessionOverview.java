@@ -27,13 +27,13 @@ final class SessionOverview {
     private final Runnable autoScroll=new Runnable(){public void run(){if(dragging!=null&&scrollDirection!=0){scroll.smoothScrollBy(dp(18)*scrollDirection,0);scroll.postDelayed(this,40);}}};
     SessionOverview(Activity activity,FrameLayout stage,View background,Actions actions){
         this.activity=activity;this.stage=stage;this.background=background;this.actions=actions;
-        root=column();header=row();root.addView(header,new LinearLayout.LayoutParams(-1,dp(36)));
-        TextView title=SampleUi.text(activity,"会话",14,SampleUi.MUTED);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        root=column();header=row();header.setMinimumHeight(dp(36));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
+        TextView title=SampleUi.sectionTitle(activity,"会话");header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         done=SampleUi.text(activity,"完成",16,SampleUi.GREEN);done.setGravity(Gravity.CENTER);done.setContentDescription("完成会话排序");done.setFocusable(true);
         done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));header.addView(done,new LinearLayout.LayoutParams(dp(64),dp(36)));done.setVisibility(View.GONE);
         scroll=new HorizontalScrollView(activity);scroll.setHorizontalScrollBarEnabled(false);scroll.setClipToPadding(false);
         cards=row();cards.setGravity(Gravity.TOP);scroll.addView(cards,new HorizontalScrollView.LayoutParams(-2,-2));root.addView(scroll);
-        hint=SampleUi.text(activity,"",13,SampleUi.MUTED);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);header.addView(hint);
+        hint=SampleUi.text(activity,"",12,0xff777c82);hint.setIncludeFontPadding(false);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);hint.setMaxWidth(dp(260));header.addView(hint);
         scroll.setOnDragListener((v,event)->{
             if(!(event.getLocalState() instanceof String)||!ordering)return false;
             switch(event.getAction()){

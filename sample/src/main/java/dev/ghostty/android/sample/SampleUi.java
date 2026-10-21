@@ -25,6 +25,13 @@ final class SampleUi {
     static TextView text(Context c,String value,int size,int color){
         TextView t=new TextView(c);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;
     }
+    static TextView sectionTitle(Context c,String value){
+        TextView title=text(c,value,13,0xff8e9298);
+        title.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
+        title.setIncludeFontPadding(false);title.setGravity(Gravity.CENTER_VERTICAL);
+        if(android.os.Build.VERSION.SDK_INT>=28)title.setAccessibilityHeading(true);
+        return title;
+    }
     static void field(EditText field){
         Context c=field.getContext();StateListDrawable states=new StateListDrawable();
         GradientDrawable focus=surface(c,FIELD,18);focus.setStroke(dp(c,1),GREEN);

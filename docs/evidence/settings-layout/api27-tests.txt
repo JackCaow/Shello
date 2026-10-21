@@ -1,0 +1,8 @@
+
+dev.ghostty.android.sample.SettingsActivityTest:...
+
+Time: 31.85
+
+OK (3 tests)
+
+

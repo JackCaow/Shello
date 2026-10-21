@@ -302,12 +302,12 @@ public final class MainActivity extends Activity {
             public void open(String id){openTab(id);}public void close(String id){closeTab(id);}public void closeAll(){closeAllTabs();}
             public void move(String id,int index){if(sshService!=null)sshService.move(id,index);}
         });content.addView(overview.view());
-        LinearLayout connectionHeading=row();TextView savedTitle=label("连接",14,MUTED);savedTitle.setGravity(Gravity.CENTER_VERTICAL);connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,dp(48),1));hookAttention=label("",14,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);content.addView(connectionHeading);
+        LinearLayout connectionHeading=row();connectionHeading.setMinimumHeight(dp(36));TextView savedTitle=SampleUi.sectionTitle(this,"连接");connectionHeading.addView(savedTitle,new LinearLayout.LayoutParams(0,-2,1));hookAttention=label("",13,0xffbd9036);hookAttention.setOnClickListener(v->startActivity(new Intent(this,SettingsActivity.class).putExtra("page","hook")));connectionHeading.addView(hookAttention);LinearLayout.LayoutParams connectionHeaderParams=new LinearLayout.LayoutParams(-1,-2);connectionHeaderParams.topMargin=dp(16);content.addView(connectionHeading,connectionHeaderParams);
         savedConnections=column();content.addView(savedConnections);refreshSavedConnections();
         guideShown=getSharedPreferences("appearance",0).getBoolean("guide",true);if(guideShown){
-            LinearLayout guideHeader=row();TextView heading=label("发现 GHOSTTY",14,MUTED);guideHeader.addView(heading,new LinearLayout.LayoutParams(0,dp(44),1));heading.setGravity(Gravity.CENTER_VERTICAL);
-            android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",14,0xff00ee00);guideHeader.addView(progress);
-            LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,dp(44));hp.topMargin=dp(28);content.addView(guideHeader,hp);
+            LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(36));TextView heading=SampleUi.sectionTitle(this,"发现 Ghostty");guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+            android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
+            LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(16);content.addView(guideHeader,hp);
             String[] names={"扫码配对","远端会话","收件箱与审批","终端主题","快捷键","文本选择"};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
             Runnable update=()->{int count=0;for(int i=0;i<names.length;i++)if(visited.getBoolean("viewed_"+i,false))count++;progress.setText(count+"/"+names.length);};update.run();
             HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout cards=row();scroll.addView(cards);content.addView(scroll);

@@ -41,6 +41,12 @@ final class ToolbarIcon extends Drawable {
             case "edit":line(c,14,4,18,2,22,6,10,18,5,19,6,14,18,2);line(c,14,6,18,10);line(c,12,4,3,4,3,22,21,22,21,13);break;
             case "trash":line(c,3,6,21,6);line(c,9,6,9,3,15,3,15,6);line(c,5,6,6,22,18,22,19,6);line(c,10,10,10,18);line(c,14,10,14,18);break;
             case "plus":line(c,12,4,12,20);line(c,4,12,20,12);break;
+            case "minus":line(c,4,12,20,12);break;
+            case "back":line(c,10,4,2,12,10,20);line(c,2,12,22,12);break;
+            case "sliders":line(c,3,5,21,5);line(c,3,12,21,12);line(c,3,19,21,19);line(c,8,2,8,8);line(c,16,9,16,15);line(c,10,16,10,22);break;
+            case "palette":
+                Path palette=new Path();palette.moveTo(12,2);palette.cubicTo(0,2,0,22,12,22);palette.cubicTo(19,22,10,15,17,14);palette.cubicTo(25,14,23,2,12,2);c.drawPath(palette,p);
+                c.drawCircle(7,8,1,p);c.drawCircle(13,6,1,p);c.drawCircle(18,9,1,p);c.drawCircle(6,14,1,p);break;
             case "close":line(c,5,5,19,19);line(c,19,5,5,19);break;
             case "mic":
                 c.drawRoundRect(9,2,15,15,3,3,p);c.drawArc(5,5,19,19,0,180,false,p);line(c,12,19,12,23);break;
