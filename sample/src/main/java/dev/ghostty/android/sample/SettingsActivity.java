@@ -234,6 +234,7 @@ public final class SettingsActivity extends ScreenActivity {
             if(!updates){section(tr(R.string.update));updates=true;}
             item(p.name,tr(R.string.update_host_helper_and_recent_session_support),"hook",()->{if(working)return;working=true;toast(tr(R.string.updating));hub.configure(p.id,true,(ok,message)->{working=false;if(isDestroyed())return;toast(message);show("hook");});});
         }
+        toggle(getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?"智能体页面保持常亮":"Keep Agents screen awake",null,null,"agent","keepScreenOn",false,null);
         section(tr(R.string.hook_status));toggle(tr(R.string.show_hook_status),tr(R.string.show_status_dots_on_saved_connections),null,"appearance","hookStatus",true,null);
     }
     @Override public void onBackPressed(){if(!page.isEmpty())show("");else super.onBackPressed();}

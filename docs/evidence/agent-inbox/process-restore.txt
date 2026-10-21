@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.AgentRestoreDeviceTest:.
+
+Time: 1.869
+
+OK (1 test)

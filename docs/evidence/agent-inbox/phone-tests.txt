@@ -1,0 +1,10 @@
+dev.ghostty.android.sample.AgentUsageDeviceTest:.
+dev.ghostty.android.sample.AgentInboxModelTest:......
+dev.ghostty.android.sample.AgentTerminalDeviceTest:.
+dev.ghostty.android.sample.AgentNotificationTest:.
+dev.ghostty.android.sample.AgentBoardUiTest:.
+dev.ghostty.android.sample.AgentInboxTest:.
+
+Time: 10.285
+
+OK (11 tests)

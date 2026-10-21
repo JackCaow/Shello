@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.CodexHookDeviceTest:.
+
+Time: 16.975
+
+OK (1 test)

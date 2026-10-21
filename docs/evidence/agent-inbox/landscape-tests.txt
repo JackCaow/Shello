@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.AdaptiveLayoutTest:..
+
+Time: 29.855
+
+OK (2 tests)

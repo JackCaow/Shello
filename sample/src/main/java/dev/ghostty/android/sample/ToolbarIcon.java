@@ -53,6 +53,8 @@ final class ToolbarIcon extends Drawable {
             case "toolbox":
                 c.drawRoundRect(3,10,21,22,2,2,p);line(c,3,14,21,14);line(c,9,18,15,18);
                 line(c,6,10,4,5,9,3,11,7,15,2,20,4,18,10);break;
+            case "filter":line(c,3,6,21,6);line(c,7,12,17,12);line(c,10,18,14,18);break;
+            case "pulse":line(c,2,12,7,12,10,3,14,21,17,12,22,12);break;
             case "history":c.drawArc(3,3,21,21,210,300,false,p);line(c,3,3,3,8,8,8);line(c,12,7,12,12,16,14);break;
             case "up":line(c,7,14,12,9,17,14);break;
             case "down":line(c,7,10,12,15,17,10);break;

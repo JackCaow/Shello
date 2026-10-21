@@ -57,6 +57,7 @@ public class CodexHookDeviceTest {
             final AgentActivity page=activity;AgentInboxTest ui=new AgentInboxTest();
             inst.runOnMainSync(()->{
                 View row=page.body.findViewWithTag(event.id());assertNotNull("Approval row missing",row);row.performClick();
+                View request=page.contentRoot().findViewWithTag(event.id());assertNotNull("Pending request missing",request);request.performClick();
                 assertNotNull(ui.find(page.body,"printf SHELLO_APPROVAL_PROBE"));
             });
             inst.waitForIdleSync();Bitmap image=inst.getUiAutomation().takeScreenshot();

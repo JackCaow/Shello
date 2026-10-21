@@ -7,6 +7,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'sample/src/main/assets/ghostty_hook.py'
 spec = importlib.util.spec_from_file_location('hook', SCRIPT)
@@ -22,8 +23,10 @@ class HookTest(unittest.TestCase):
         hook.CODEX_SETTINGS = Path(self.temp.name) / 'codex/hooks.json'
         hook.private_dir(hook.STATE)
         hook.WAIT = 2
+        self.bridge=patch.object(hook,"configure_usage_bridge",return_value="test");self.bridge.start()
 
     def tearDown(self):
+        self.bridge.stop()
         self.temp.cleanup()
 
     def waiting(self, value, provider='claude'):

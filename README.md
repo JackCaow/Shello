@@ -96,7 +96,7 @@ Tapping a saved connection authenticates over SSH before opening the **Tmux / �
 
 These CLIs run on the remote computer. Install them and complete their login there; Shello does not include model access or a subscription.
 
-Run `claude` or `codex` in the terminal, or use **最近** to find and resume existing sessions by project. Claude Code and Codex events and approvals require installing or updating the helper through **设置 → Hook**. Start a new agent session afterwards. In Codex, review and trust the Shello hooks through `/hooks`; explicitly disabled hooks must be enabled in Codex. Codex interactive question replies and provider usage quotas are not implemented. [Agent session details](docs/HOME_AND_AGENTS.md)
+Run `claude` or `codex` in the terminal, or use **最近** to find and resume existing sessions by project. Claude Code and Codex events and approvals require installing or updating the helper through **设置 → Hook**. Start a new agent session afterwards. In Codex, review and trust the Shello hooks through `/hooks`; explicitly disabled hooks must be enabled in Codex. The inbox groups sessions by state, supports search and agent/host/project filters, individual approvals, archive/restore and attachment to the existing tmux terminal. Private snapshots survive app restarts; cached or offline requests cannot grant approval. The usage sheet reads real signed-in Claude/Codex account quota windows from the host, with reset times and explicit unavailable/stale states. Codex interactive question replies remain unsupported. [Agent session details](docs/HOME_AND_AGENTS.md)
 
 ## FAQ
 

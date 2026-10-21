@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.AgentUsageDeviceTest:.
+
+Time: 2.85
+
+OK (1 test)

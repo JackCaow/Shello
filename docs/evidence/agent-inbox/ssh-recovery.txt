@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.AgentReconnectDeviceTest:.
+
+Time: 18.116
+
+OK (1 test)

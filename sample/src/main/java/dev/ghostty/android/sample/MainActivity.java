@@ -21,6 +21,13 @@ import java.nio.charset.StandardCharsets;
 
 /** Shello terminal controls around offline echo or a sample SSH shell. */
 public final class MainActivity extends LocalizedActivity {
+    private static String requestedAgentTab;
+    static void openAgent(Activity from,String profile,String target){
+        SessionTarget.validate(target);requestedAgentTab=SessionTarget.id(profile,target);
+        from.startActivity(new Intent(from,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));
+    }
+    private static String takeAgentTab(){String id=requestedAgentTab;requestedAgentTab=null;return id;}
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);String id=takeAgentTab();if(id!=null){pendingProfile=id;connectSsh();}}
     private static final int SURFACE=0xff1e1e1e, KEY=0xff111315, TEXT=0xffe6e6e8,
             MUTED=0xff96999f, GREEN=0xff00d86c;
     private TerminalSession session;
@@ -137,7 +144,7 @@ public final class MainActivity extends LocalizedActivity {
             draft.setMaxLines(compact?2:4);
         });
         write(tr(R.string.local_demo_banner)); root.requestFocus();
-        pendingProfile=state==null?null:state.getString("pendingProfile");
+        pendingProfile=state==null?takeAgentTab():state.getString("pendingProfile");
         if(state!=null){restoredDraftTab=state.getString("draftTab");restoredDraft=state.getString("draft","");restoredDraftMode=state.getBoolean("draftMode");}
         boolean legacyFixture=state==null&&BuildConfig.DEBUG&&getIntent().getBooleanExtra("connectLocalSsh",false);
         // Explicit debug fixture launches select files/ssh without deleting saved UI profiles.

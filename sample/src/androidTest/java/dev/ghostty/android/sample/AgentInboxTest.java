@@ -29,7 +29,7 @@ public class AgentInboxTest {
         String[] kinds={"SessionStart","UserPromptSubmit","Stop","Interrupt","SessionEnd","PermissionRequest"};
         int[] titles={R.string.agent_session_started,R.string.agent_task_started,R.string.task_completed,R.string.agent_task_interrupted,R.string.agent_session_ended};
         List<AgentHub.Event> fixtures=new ArrayList<>();
-        for(String kind:kinds)fixtures.add(new AgentHub.Event("inbox-test","Test host",new JSONObject().put("id",UUID.randomUUID().toString()).put("provider","codex").put("hook_event_name",kind).put("status",kind.equals("PermissionRequest")?"pending":"info").put("tool_name","apply_patch").put("tool_input",new JSONObject().put("command","*** Begin Patch\n*** End Patch"))));
+        for(String kind:kinds)fixtures.add(new AgentHub.Event("inbox-test","Test host",new JSONObject().put("id",UUID.randomUUID().toString()).put("provider","codex").put("hook_event_name",kind).put("remainingMs",60000).put("status",kind.equals("PermissionRequest")?"pending":"info").put("tool_name","apply_patch").put("tool_input",new JSONObject().put("command","*** Begin Patch\n*** End Patch"))));
         inst.runOnMainSync(()->{old.addAll(hub.events);hub.busy=true;hub.events.clear();hub.events.addAll(fixtures);});
         AgentActivity activity=null;
         try{
@@ -38,9 +38,10 @@ public class AgentInboxTest {
             activity=(AgentActivity)inst.startActivitySync(new Intent(context,AgentActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));inst.waitForIdleSync();final AgentActivity page=activity;
             inst.runOnMainSync(()->{
                 for(int title:titles)assertNotNull(find(page.body,"● "+AppLanguage.tr(title)));
-                assertNotNull(find(page.body,"Codex · Test host · "+AppLanguage.tr(R.string.received)));
+                assertTrue(AgentInbox.sessions(fixtures,hub.preferences,System.currentTimeMillis()).stream().allMatch(s->"Codex".equals(s.agent())));
                 View text=find(page.body,"● "+AppLanguage.tr(R.string.approval_request_tool,"apply_patch"));assertNotNull(text);
                 ((View)text.getParent().getParent()).performClick();
+                View request=page.contentRoot().findViewWithTag(fixtures.get(fixtures.size()-1).id());assertNotNull(request);request.performClick();
                 assertNotNull(find(page.body,"*** Begin Patch\n*** End Patch"));
                 assertNotNull(find(page.body,AppLanguage.tr(R.string.allow_once)));assertNotNull(find(page.body,AppLanguage.tr(R.string.deny)));
             });
