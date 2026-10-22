@@ -8,11 +8,11 @@ build_tools="$android_sdk/build-tools/35.0.0"
 for file in "$signing_dir/release.p12" "$signing_dir/password"; do
     [[ -f "$file" ]] || { echo "Missing signing input: $file" >&2; exit 1; }
 done
-"$root/gradlew" -p "$root" :sample:assembleRelease
-version=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["elements"][0]["versionName"])' "$root/sample/build/outputs/apk/release/output-metadata.json")
+"$root/android/gradlew" -p "$root/android" :sample:assembleRelease
+version=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["elements"][0]["versionName"])' "$root/android/sample/build/outputs/apk/release/output-metadata.json")
 output="$root/build/releases/v$version"
 mkdir -p "$output"
-"$build_tools/zipalign" -f -p 4 "$root/sample/build/outputs/apk/release/sample-release-unsigned.apk" "$output/aligned.apk"
+"$build_tools/zipalign" -f -p 4 "$root/android/sample/build/outputs/apk/release/sample-release-unsigned.apk" "$output/aligned.apk"
 "$build_tools/apksigner" sign --ks "$signing_dir/release.p12" --ks-key-alias shello \
     --ks-pass "file:$signing_dir/password" \
     --out "$output/Shello-$version-arm64-v8a.apk" "$output/aligned.apk"

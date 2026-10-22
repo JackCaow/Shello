@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="assets/readme/icon.png" width="112" height="112" alt="Shello app icon">
+  <img src="public/assets/readme/icon.png" width="112" height="112" alt="Shello app icon">
 </p>
 <h1 align="center">Shello</h1>
 <p align="center"><strong>Your remote terminal, in your pocket.</strong></p>
-<p align="center">Native Android terminal · SSH + tmux · QR pairing · Claude Code / Codex sessions</p>
+<p align="center">Android & iOS terminals · SSH + tmux · QR pairing · Claude Code / Codex sessions</p>
 <p align="center">
   <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk">Download APK</a> ·
   <a href="#quick-pairing">Quick pairing</a> ·
@@ -12,7 +12,31 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-Shello is an open-source Android terminal for working on your computer from your phone. Run shell tools or Claude Code / Codex, and return to your remote sessions.
+Shello is an open-source remote terminal for working on your computer from your phone. Run shell tools or Claude Code / Codex, and return to your remote sessions.
+
+## Platforms and repository
+
+This monorepo contains both native apps and the shared computer-side pairing and agent integration.
+
+
+```text
+Shello/
+├── android/      # Gradle app, terminal library and AAR consumer
+├── ios/          # SwiftUI app and Swift packages
+├── public/       # Shared hooks, native bridge, assets, patches and notices
+├── companion/    # Stable computer-side pairing download endpoints
+├── skills/       # Agent setup skill
+├── scripts/      # Build, test and release tools
+└── docs/         # Design, integration and validation notes
+```
+
+| Platform | Source | Availability |
+| --- | --- | --- |
+| Android 8.1+ (API 27), ARM64 | `android/sample/` app and `android/terminal/` library | [Download APK](https://github.com/JackCaow/Shello/releases/latest) |
+| iOS / iPadOS 16+ | `ios/` app and Swift packages, `public/native/` VT bridge | Source preview; build with Xcode on macOS. No TestFlight or App Store release yet. |
+| Computer companion | `companion/`, `skills/shello-pair/` | Shared pairing, SSH + tmux setup and Claude / Codex hooks |
+
+See [Android build and embedding](docs/DEVELOPMENT.md) and [iOS build, tests and limitations](docs/IOS_MIGRATION.md). CI builds and tests both platforms. Maven packages are not published.
 
 ## Quick pairing
 
@@ -130,7 +154,7 @@ Tapping a saved connection authenticates over SSH before opening the **Tmux / �
 </details>
 
 <p align="center">
-  <img src="assets/readme/preview.png" width="960" alt="Shello running Claude Code over SSH">
+  <img src="public/assets/readme/preview.png" width="960" alt="Shello running Claude Code over SSH">
 </p>
 <p align="center"><sub>Claude Code over SSH in Shello.</sub></p>
 
@@ -194,7 +218,7 @@ Run `claude` or `codex` in the terminal, or use **最近** to find and resume ex
 
 The embeddable terminal library API remains experimental and may change.
 
-`terminal` contains VT, native views and IME input; `sample` contains the Shello app, SSH and tmux integration. Library consumers supply their own transport. **No Maven package is publicly published.**
+`android/terminal` contains VT, native views and IME input; `android/sample` contains the Shello app, SSH and tmux integration. Library consumers supply their own transport. **No Maven package is publicly published.**
 
 Shello is an independent project powered by the Ghostty terminal engine. It is not an official Ghostty client.
 

@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [API contract](API.md) · [Validation](VALIDATION.md)
 
-Shello contains an installable Android application (`sample`) and a transport-independent terminal library (`terminal`). The library uses the pinned Ghostty VT engine with Android Canvas rendering; it does not embed the Ghostty desktop renderer. Maven packages are not publicly published.
+Shello is an Android / iOS monorepo. The Android application (`android/sample`) and transport-independent terminal library (`android/terminal`) use the pinned Ghostty VT engine with Android Canvas rendering. The iOS app and Swift packages live in `ios/`, with their C bridge in `public/native/`; see [iOS build and verification](IOS_MIGRATION.md). Both apps share `companion/`, the pairing skill and the bundled agent hook. Neither app embeds the Ghostty desktop renderer. Maven packages are not publicly published.
 
 ## Build
 
@@ -13,19 +13,19 @@ export JAVA_HOME=/path/to/jdk-17
 export ANDROID_HOME=/path/to/android-sdk
 export ZIG_BIN=/path/to/zig-0.16.0/zig
 ./scripts/build-native.sh
-./gradlew :terminal:assembleRelease :sample:assembleDebug :sample:assembleRelease
-./gradlew :terminal:publishReleasePublicationToMavenLocal
+./android/gradlew -p android :terminal:assembleRelease :sample:assembleDebug :sample:assembleRelease
+./android/gradlew -p android :terminal:publishReleasePublicationToMavenLocal
 ```
 
 `GHOSTTY_SOURCE=/path/to/pinned/ghostty` optionally reuses a checkout. The script builds from a disposable `git archive` and does not patch that checkout. Generated native files and build outputs are ignored by Git. Gradle fails early if the native library has not been built.
 
 Outputs:
 
-- `terminal/build/outputs/aar/terminal-release.aar`
-- `sample/build/outputs/apk/debug/sample-debug.apk`
+- `android/terminal/build/outputs/aar/terminal-release.aar`
+- `android/sample/build/outputs/apk/debug/sample-debug.apk`
 - Local-only Maven coordinate `dev.ghostty.android:terminal:0.1.0-alpha01` (not registered or remotely published).
 
-For another Android project, use `mavenLocal()` **for local evaluation** and `implementation("dev.ghostty.android:terminal:0.1.0-alpha01")`, or include the `terminal` module. The AAR includes the JNI library, consumer R8 rules, and license texts.
+For another Android project, use `mavenLocal()` **for local evaluation** and `implementation("dev.ghostty.android:terminal:0.1.0-alpha01")`, or include the `android/terminal` module. The AAR includes the JNI library, consumer R8 rules, and license texts.
 
 ## Integrate
 
@@ -64,7 +64,7 @@ System font/glyph differences (new emoji artwork may be absent on old Android), 
 
 ```sh
 # Connect an explicitly chosen ARM64 Android device/emulator.
-ANDROID_SERIAL=your-device ./gradlew :terminal:connectedDebugAndroidTest
+ANDROID_SERIAL=your-device ./android/gradlew -p android :terminal:connectedDebugAndroidTest
 ```
 
 `./scripts/check-artifact.sh` builds a separate R8-enabled consumer against the local Maven AAR, with no project/source dependency. Its debug-signed release APK can be installed to verify JNI under shrinking.

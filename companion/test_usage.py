@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch,Mock
 from urllib.error import HTTPError
 
-spec=importlib.util.spec_from_file_location('usage_helper',Path(__file__).resolve().parents[1]/'sample/src/main/assets/ghostty_hook.py')
+spec=importlib.util.spec_from_file_location('usage_helper',Path(__file__).resolve().parents[1]/'public/agent/ghostty_hook.py')
 h=importlib.util.module_from_spec(spec);spec.loader.exec_module(h)
 
 class UsageTest(unittest.TestCase):

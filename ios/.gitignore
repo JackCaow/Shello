@@ -1,0 +1,6 @@
+Frameworks/
+.build/
+.swiftpm/
+DerivedData/
+Shello.xcodeproj/
+xcuserdata/

@@ -5,3 +5,6 @@
 *.sh text eol=lf
 *.py text eol=lf
 *.ps1 text eol=lf
+
+# Preserve vector asset PDF bytes (including xref offsets).
+*.pdf binary

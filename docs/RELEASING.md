@@ -28,7 +28,7 @@ Before publishing, run release lint, instrumented theme/cache checks on API 27/3
 
 ## Tag-driven GitHub Actions
 
-`.github/workflows/release.yml` builds and publishes on pushes of `v*` tags. The tag must exactly equal `v` plus `sample/build.gradle.kts`'s `versionName`; increment `versionCode` for each new release so Android accepts the upgrade. For example, after setting versionName to `0.1.0-alpha03` and versionCode to `3`, commit and push those changes, then:
+`.github/workflows/release.yml` builds and publishes on pushes of `v*` tags. The tag must exactly equal `v` plus `android/sample/build.gradle.kts`'s `versionName`; increment `versionCode` for each new release so Android accepts the upgrade. For example, after setting versionName to `0.1.0-alpha03` and versionCode to `3`, commit and push those changes, then:
 
 ```sh
 git tag -a v0.1.0-alpha03 -m 'Shello 0.1.0-alpha03'

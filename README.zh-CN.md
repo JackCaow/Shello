@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="assets/readme/icon.png" width="112" height="112" alt="Shello 应用图标">
+  <img src="public/assets/readme/icon.png" width="112" height="112" alt="Shello 应用图标">
 </p>
 <h1 align="center">Shello</h1>
 <p align="center"><strong>把远端终端，放进口袋。</strong></p>
-<p align="center">Android 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
+<p align="center">Android 与 iOS 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
 <p align="center">
   <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk">下载 APK</a> ·
   <a href="#快速配对">快速配对</a> ·
@@ -12,7 +12,31 @@
   <a href="README.md">English</a>
 </p>
 
-Shello 是开源 Android 远程终端。用手机连接自己的电脑或服务器，运行命令、使用 Claude Code / Codex，并恢复远端会话。
+Shello 是开源远程终端。用手机连接自己的电脑或服务器，运行命令、使用 Claude Code / Codex，并恢复远端会话。
+
+## 平台与仓库结构
+
+本 monorepo 包含两端原生应用，以及共享的电脑端配对和智能体集成。
+
+
+```text
+Shello/
+├── android/      # Gradle 应用、终端库及 AAR 消费方验证
+├── ios/          # SwiftUI 应用及 Swift 包
+├── public/       # 共享 Hook、原生桥接、素材、补丁和许可证
+├── companion/    # 保持兼容的电脑端配对下载入口
+├── skills/       # Agent 配置 skill
+├── scripts/      # 构建、测试及发布工具
+└── docs/         # 设计、接入及验收文档
+```
+
+| 平台 | 源码 | 获取方式 |
+| --- | --- | --- |
+| Android 8.1+（API 27），ARM64 | `android/sample/` 应用、`android/terminal/` 终端库 | [下载 APK](https://github.com/JackCaow/Shello/releases/latest) |
+| iOS / iPadOS 16+ | `ios/` 应用及 Swift 包、`public/native/` VT 桥接 | 源码预览版，在 macOS 上使用 Xcode 构建；尚未发布 TestFlight 或 App Store 版本。 |
+| 电脑端 companion | `companion/`、`skills/shello-pair/` | 两端共享配对、SSH + tmux 配置和 Claude / Codex Hook |
+
+参阅 [Android 构建与接入](docs/DEVELOPMENT.md)和 [iOS 构建、测试及限制](docs/IOS_MIGRATION.md)。CI 覆盖两端构建与测试，暂未发布 Maven 包。
 
 ## 快速配对
 
@@ -155,7 +179,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 </details>
 
 <p align="center">
-  <img src="assets/readme/preview.png" width="960" alt="在 Shello 中通过 SSH 运行 Claude Code">
+  <img src="public/assets/readme/preview.png" width="960" alt="在 Shello 中通过 SSH 运行 Claude Code">
 </p>
 <p align="center"><sub>在 Shello 中通过 SSH 运行 Claude Code。</sub></p>
 
@@ -223,7 +247,7 @@ CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 
 
 可嵌入的终端库仍处于实验阶段，API 可能调整。
 
-`terminal` 提供 VT、原生视图与 IME 输入；`sample` 包含 Shello 的 SSH、tmux 与应用界面。库的传输层由接入方提供，**尚未发布 Maven 包**。
+`android/terminal` 提供 VT、原生视图与 IME 输入；`android/sample` 包含 Shello 的 SSH、tmux 与应用界面。库的传输层由接入方提供，**尚未发布 Maven 包**。
 
 Shello 是使用 Ghostty 终端内核的独立项目，并非 Ghostty 官方客户端。
 

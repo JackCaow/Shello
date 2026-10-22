@@ -12,7 +12,7 @@ def arguments(value):
 
 count = 0
 for module in ('sample', 'terminal'):
-    resources = ROOT / module / 'src/main/res'
+    resources = ROOT / 'android' / module / 'src/main/res'
     en = {e.attrib['name']: e for e in ET.parse(resources / 'values/strings.xml').getroot()}
     zh = {e.attrib['name']: e for e in ET.parse(resources / 'values-zh-rCN/strings.xml').getroot()}
     assert en.keys() == zh.keys(), f'{module}: language resource keys differ'

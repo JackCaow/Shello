@@ -1,7 +1,7 @@
-name: Android library
+name: Shello CI
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
   workflow_dispatch:
 concurrency:
@@ -10,6 +10,64 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  ios:
+    name: iOS build and tests
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: '0.16.0'
+      - name: Prepare iOS tools and Simulator
+        id: simulator
+        run: |
+          brew install xcodegen tmux
+          xcodebuild -version
+          python3 - <<'PY'
+          import json, os, subprocess
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '-j']))['devices']
+          phones = [d for runtime, rows in devices.items() if '.iOS-' in runtime for d in rows if d['name'].startswith('iPhone')]
+          if not phones:
+              raise SystemExit('No installed iPhone Simulator runtime')
+          device = phones[0]
+          if device['state'] != 'Booted':
+              subprocess.run(['xcrun', 'simctl', 'boot', device['udid']], check=True)
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', device['udid'], '-b'], check=True)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('udid=' + device['udid'] + '\n')
+          PY
+          printf 'xcode=%s\n' "$(xcodebuild -version | shasum -a 256 | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        id: native-cache
+        with:
+          path: ios/Frameworks/ShelloNative.xcframework
+          key: ios-native-${{ runner.os }}-${{ runner.arch }}-${{ steps.simulator.outputs.xcode }}-${{ hashFiles('scripts/build-native-ios.sh', 'scripts/build-ssh-ios.sh', 'scripts/assemble-ios-frameworks.sh', 'public/native/**', 'public/patches/**') }}
+      - name: Build iOS native libraries
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/shello-ios-verify"
+          { scripts/build-native-ios.sh && scripts/build-ssh-ios.sh && scripts/assemble-ios-frameworks.sh; } 2>&1 | tee "$RUNNER_TEMP/shello-ios-verify/native.log"
+      - uses: actions/cache/save@v4
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        with:
+          path: ios/Frameworks/ShelloNative.xcframework
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
+      - name: Verify iOS native libraries, localization, SSH, pairing and UI
+        env:
+          SHELLO_VERIFY_DIR: ${{ runner.temp }}/shello-ios-verify
+          SHELLO_SKIP_IPAD: '1'
+        run: scripts/verify-ios.sh '${{ steps.simulator.outputs.udid }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verification
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/shello-ios-verify/*.log
+            ${{ runner.temp }}/shello-ios-verify/*.xcresult
   build:
     runs-on: macos-14
     steps:
@@ -38,8 +96,8 @@ jobs:
         with:
           name: android-library
           path: |
-            terminal/build/outputs/aar/*.aar
-            sample/build/outputs/apk/debug/*.apk
+            android/terminal/build/outputs/aar/*.aar
+            android/sample/build/outputs/apk/debug/*.apk
   windows-pairing:
     runs-on: windows-latest
     steps:
@@ -67,5 +125,6 @@ jobs:
           bash -n companion/windows/wsl-host.sh
           python3 -m unittest discover -s tests -p 'test_pair_*.py' -v
           python3 -m unittest discover -s tests -p 'test_release*.py' -v
+          python3 -m unittest discover -s companion -p 'test_*.py' -v
       - name: Validate isolated WSL Linux SSH and tmux backend
         run: SHELLO_WSL_ROOT_TEST=1 python3 -m unittest discover -s tests -p 'test_wsl_host.py' -v

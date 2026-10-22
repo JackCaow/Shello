@@ -19,9 +19,9 @@ Discovery itself does not authenticate or interrupt the current terminal. The sa
 Build (JDK 17 and the configured Android SDK):
 
 ```sh
-./gradlew :sample:assembleDebug :sample:assembleRelease :sample:assembleDebugAndroidTest :sample:lintRelease
-adb -s DEVICE install -r sample/build/outputs/apk/debug/sample-debug.apk
-adb -s DEVICE install -r sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
+./android/gradlew -p android :sample:assembleDebug :sample:assembleRelease :sample:assembleDebugAndroidTest :sample:lintRelease
+adb -s DEVICE install -r android/sample/build/outputs/apk/debug/sample-debug.apk
+adb -s DEVICE install -r android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
 adb -s DEVICE shell am instrument -w \
   -e class dev.ghostty.android.sample.LanSshDiscoveryTest \
   -e expectedSshHosts FIRST_MAC_IP,SECOND_MAC_IP \

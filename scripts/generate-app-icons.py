@@ -11,9 +11,9 @@ import zipfile
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "assets/branding/app-icon-v1"
+ASSETS = ROOT / "public/assets/branding/app-icon-v1"
 OUTPUT = ROOT / "build/app-icons"
-RES = ROOT / "sample/src/main/res"
+RES = ROOT / "android/sample/src/main/res"
 SIZES = (16, 20, 24, 29, 32, 40, 48, 58, 60, 64, 72, 76, 80, 87, 96,
          120, 128, 144, 152, 167, 180, 192, 256, 512, 1024)
 DENSITIES = {"mdpi": (48, 108), "hdpi": (72, 162), "xhdpi": (96, 216),
