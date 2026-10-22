@@ -1,0 +1,11 @@
+{
+  "api": 27,
+  "apk": "R8 release 0.1.0 / versionCode 10",
+  "instrumentation_active": false,
+  "ime": "Trime 3.3.12 / luna_pinyin",
+  "actual_key_and_candidate_taps": true,
+  "uncommitted_pinyin_not_sent": true,
+  "candidate_committed_once": true,
+  "cancel_kept_committed_remote_text": true,
+  "input_type_override": false
+}

@@ -1,0 +1,10 @@
+{
+  "environment": "One ARM64 API 35 emulator; no other emulators, Android builds or regression suites running. Release APK with test instrumentation; same Unicode/ANSI SSH load as the 30-minute test.",
+  "samples": 65,
+  "duration_seconds": 82.22,
+  "tap_to_host_ack_p50_ms": 119.65,
+  "tap_to_host_ack_p95_ms": 167.35,
+  "tap_to_host_ack_max_ms": 548.3,
+  "input_timeouts": 0,
+  "limit": "Injected tap-to-host receipt; not physical keyboard or input-to-display latency."
+}

@@ -1,0 +1,29 @@
+test_both_providers_preserve_multiline_last_turn_and_bound_utf8 (test_hook.HookTest.test_both_providers_preserve_multiline_last_turn_and_bound_utf8) ... ok
+test_busy_session_retains_its_last_prompt_after_history_pruning (test_hook.HookTest.test_busy_session_retains_its_last_prompt_after_history_pruning) ... ok
+test_codex_install_preserves_moshi_and_uninstall_is_owned_only (test_hook.HookTest.test_codex_install_preserves_moshi_and_uninstall_is_owned_only) ... ok
+test_codex_lifecycle_keeps_bounded_prompt_but_never_transcript_path (test_hook.HookTest.test_codex_lifecycle_keeps_bounded_prompt_but_never_transcript_path) ... ok
+test_codex_permission_allow_and_deny_do_not_update_input_or_permissions (test_hook.HookTest.test_codex_permission_allow_and_deny_do_not_update_input_or_permissions) ... ok
+test_codex_timeout_leaves_normal_approval_flow (test_hook.HookTest.test_codex_timeout_leaves_normal_approval_flow) ... ok
+test_completion_has_no_approval (test_hook.HookTest.test_completion_has_no_approval) ... ok
+test_expiry_never_grants_permission (test_hook.HookTest.test_expiry_never_grants_permission) ... ok
+test_install_idempotent_uninstall_preserves_other_hooks (test_hook.HookTest.test_install_idempotent_uninstall_preserves_other_hooks) ... ok
+test_invalid_settings_not_overwritten (test_hook.HookTest.test_invalid_settings_not_overwritten) ... ok
+test_malformed_codex_configuration_does_not_partially_change_claude (test_hook.HookTest.test_malformed_codex_configuration_does_not_partially_change_claude) ... ok
+test_permission_response_exactly_once (test_hook.HookTest.test_permission_response_exactly_once) ... ok
+test_question_answers_preserve_original_input (test_hook.HookTest.test_question_answers_preserve_original_input) ... ok
+test_reject_traversal_and_unknown_decisions (test_hook.HookTest.test_reject_traversal_and_unknown_decisions) ... ok
+test_existing_tmux_attach_does_not_need_history (test_recent.RecentTest.test_existing_tmux_attach_does_not_need_history) ... ok
+test_legacy_codex_and_malformed_files (test_recent.RecentTest.test_legacy_codex_and_malformed_files) ... ok
+test_metadata_deduplication_and_readonly_database (test_recent.RecentTest.test_metadata_deduplication_and_readonly_database) ... ok
+test_new_tmux_session_forces_utf8_and_scopes_color_environment (test_recent.RecentTest.test_new_tmux_session_forces_utf8_and_scopes_color_environment) ... ok
+test_resume_argv_and_cwd_no_shell_interpolation (test_recent.RecentTest.test_resume_argv_and_cwd_no_shell_interpolation) ... ok
+test_auth_error_does_not_turn_into_zero_usage (test_usage.UsageTest.test_auth_error_does_not_turn_into_zero_usage) ... ok
+test_cache_limits_refreshes_and_contains_no_credentials (test_usage.UsageTest.test_cache_limits_refreshes_and_contains_no_credentials) ... ok
+test_claude_oauth_is_host_only_and_account_id_survives_token_rotation (test_usage.UsageTest.test_claude_oauth_is_host_only_and_account_id_survives_token_rotation) ... ok
+test_codex_uses_account_rpc_and_keeps_dynamic_windows (test_usage.UsageTest.test_codex_uses_account_rpc_and_keeps_dynamic_windows) ... ok
+test_missing_credential_is_an_explicit_state (test_usage.UsageTest.test_missing_credential_is_an_explicit_state) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 3.320s
+
+OK

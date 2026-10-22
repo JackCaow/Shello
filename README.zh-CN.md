@@ -18,17 +18,17 @@
 
 Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原生绘制**。从手机连接自己的电脑或服务器，使用 shell、Vim、less 和远端 CLI；通过 tmux 保留远端工作现场，也可查找并恢复 Claude Code / Codex 历史会话。
 
-项目同时提供可嵌入的终端库。当前处于 **Alpha** 阶段，API 和交互仍在完善。
+Android 应用已发布 **v0.1.0**。可嵌入的终端库仍处于实验阶段，API 可能调整，暂未发布 Maven 包。
 
 ## 下载与安装
 
 | 项目 | 说明 |
 | --- | --- |
-| 当前预发布版 | [v0.1.0-alpha08](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha08) |
-| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha08/Shello-0.1.0-alpha08-arm64-v8a.apk) |
+| 当前正式版 | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
+| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
 | Android 要求 | Android 8.1 / API 27 及以上 |
 | 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
-| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha08/SHA256SUMS) |
+| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
 | 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
 
 下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。
@@ -79,7 +79,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 使用与当前 APK 对应的固定版本：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0-alpha08/companion/pair.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0/companion/pair.sh | bash
 ```
 
 查看全部参数：
@@ -99,11 +99,11 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 
 手机生成并保存私钥，电脑只接收公钥；已有 `authorized_keys` 条目会保留。二维码携带临时令牌，不要公开分享。配对完成后可用 **Ctrl+C** 关闭临时服务，已安装的 SSH 公钥会保留。[配对协议与更多说明](docs/HOME_AND_AGENTS.md#pairing)
 
-### Tailscale（main 分支）
+### Tailscale
 
-当前源码已支持 Tailscale 自动发现和二维码配对；已发布的 alpha06 APK 仍仅支持局域网配对。此功能需安装更新后的构建；alpha06 请使用对应 tag 的脚本，或给新脚本传入 `--network lan`。
+当前 APK 和配对脚本均支持 Tailscale 自动发现及二维码配对。两端需连接同一 tailnet；固定版本时请使用对应 Release tag 的脚本。
 
-两端连接 Tailscale 后，main 分支脚本默认优先选择电脑的 Tailscale IPv4 地址。配对页可选择 **自动 / 局域网 / Tailscale**，也可向脚本传入 `--network tailscale` 或 `--network lan`。访问规则需允许 SSH 与临时 HTTPS 配对端口。
+两端连接 Tailscale 后，配对脚本默认优先选择电脑的 Tailscale IPv4 地址。配对页可选择 **自动 / 局域网 / Tailscale**，也可向脚本传入 `--network tailscale` 或 `--network lan`。访问规则需允许 SSH 与临时 HTTPS 配对端口。
 
 自动发现结合 VPN 中明确的设备路由，以及最多四条已保存、已信任 SSH 连接提供的节点列表，仅检测最多 128 个已知地址，不遍历整个网段。若 VPN 只提供聚合路由且尚无已保存连接，先扫码配对一台电脑即可。[实现与验证说明](docs/TAILSCALE.md)
 
@@ -137,6 +137,14 @@ CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 
 **首页显示“暂无预览”？** 新会话需要先打开终端生成预览。之后可见终端每 5 秒、收起或切后台时保存缩略图；关闭会话会清理对应缓存。缩略图是上次画面，不表示连接仍在线。
 
 **能在旧安卓设备上显示所有 emoji 吗？** 字形取决于系统字体；较旧 Android 可能缺少新 emoji。复杂字符、所有输入法和所有 TUI 的兼容性仍有边界，详见[验证记录](docs/VALIDATION.md)。
+
+## 兼容性与限制
+
+- USB／蓝牙键盘的插拔、死键及系统级快捷键仍属实验性；注入按键测试不能替代真实硬件验收。
+- 输入草稿和待发送附件仅在服务运行期间保留，进程结束后不会恢复；已上传文件不会从电脑自动删除。
+- 恢复会话要求电脑及 tmux 仍在运行。厂商省电策略可能中断 SSH，重新打开应用后会尝试重连。
+- 暂不支持 Codex 交互式问题回复和云端推送。账号用量适配受已安装 CLI 和服务端接口影响，可能显示不可用。
+- 已测范围见[验证记录](docs/VALIDATION.md)及[正式版验收](docs/evidence/releases/v0.1.0/README.md)。
 
 ## 开发与开源
 

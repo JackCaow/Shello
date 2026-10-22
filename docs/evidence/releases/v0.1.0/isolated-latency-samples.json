@@ -1,0 +1,262 @@
+[
+  {
+    "elapsed_seconds": 0.35,
+    "ack_ms": 158.61
+  },
+  {
+    "elapsed_seconds": 1.57,
+    "ack_ms": 145.73
+  },
+  {
+    "elapsed_seconds": 2.68,
+    "ack_ms": 40.47
+  },
+  {
+    "elapsed_seconds": 3.81,
+    "ack_ms": 52.83
+  },
+  {
+    "elapsed_seconds": 4.91,
+    "ack_ms": 28.61
+  },
+  {
+    "elapsed_seconds": 6.16,
+    "ack_ms": 97.49
+  },
+  {
+    "elapsed_seconds": 7.36,
+    "ack_ms": 93.83
+  },
+  {
+    "elapsed_seconds": 8.81,
+    "ack_ms": 108.37
+  },
+  {
+    "elapsed_seconds": 10.02,
+    "ack_ms": 138.27
+  },
+  {
+    "elapsed_seconds": 11.22,
+    "ack_ms": 122.37
+  },
+  {
+    "elapsed_seconds": 12.59,
+    "ack_ms": 121.89
+  },
+  {
+    "elapsed_seconds": 13.82,
+    "ack_ms": 70.49
+  },
+  {
+    "elapsed_seconds": 15.0,
+    "ack_ms": 112.28
+  },
+  {
+    "elapsed_seconds": 16.19,
+    "ack_ms": 90.34
+  },
+  {
+    "elapsed_seconds": 17.52,
+    "ack_ms": 119.38
+  },
+  {
+    "elapsed_seconds": 18.74,
+    "ack_ms": 67.63
+  },
+  {
+    "elapsed_seconds": 19.96,
+    "ack_ms": 121.57
+  },
+  {
+    "elapsed_seconds": 21.31,
+    "ack_ms": 142.23
+  },
+  {
+    "elapsed_seconds": 22.52,
+    "ack_ms": 105.75
+  },
+  {
+    "elapsed_seconds": 23.78,
+    "ack_ms": 146.12
+  },
+  {
+    "elapsed_seconds": 25.02,
+    "ack_ms": 136.68
+  },
+  {
+    "elapsed_seconds": 26.4,
+    "ack_ms": 146.47
+  },
+  {
+    "elapsed_seconds": 27.72,
+    "ack_ms": 97.22
+  },
+  {
+    "elapsed_seconds": 29.0,
+    "ack_ms": 154.52
+  },
+  {
+    "elapsed_seconds": 30.27,
+    "ack_ms": 113.99
+  },
+  {
+    "elapsed_seconds": 31.59,
+    "ack_ms": 172.05
+  },
+  {
+    "elapsed_seconds": 33.03,
+    "ack_ms": 84.39
+  },
+  {
+    "elapsed_seconds": 34.3,
+    "ack_ms": 103.26
+  },
+  {
+    "elapsed_seconds": 35.53,
+    "ack_ms": 123.42
+  },
+  {
+    "elapsed_seconds": 36.79,
+    "ack_ms": 121.76
+  },
+  {
+    "elapsed_seconds": 37.99,
+    "ack_ms": 108.84
+  },
+  {
+    "elapsed_seconds": 39.26,
+    "ack_ms": 86.29
+  },
+  {
+    "elapsed_seconds": 40.54,
+    "ack_ms": 137.09
+  },
+  {
+    "elapsed_seconds": 41.79,
+    "ack_ms": 92.19
+  },
+  {
+    "elapsed_seconds": 43.09,
+    "ack_ms": 84.67
+  },
+  {
+    "elapsed_seconds": 44.32,
+    "ack_ms": 140.21
+  },
+  {
+    "elapsed_seconds": 45.99,
+    "ack_ms": 548.3
+  },
+  {
+    "elapsed_seconds": 47.19,
+    "ack_ms": 109.72
+  },
+  {
+    "elapsed_seconds": 48.54,
+    "ack_ms": 142.25
+  },
+  {
+    "elapsed_seconds": 49.77,
+    "ack_ms": 119.65
+  },
+  {
+    "elapsed_seconds": 51.03,
+    "ack_ms": 144.8
+  },
+  {
+    "elapsed_seconds": 52.26,
+    "ack_ms": 126.15
+  },
+  {
+    "elapsed_seconds": 53.49,
+    "ack_ms": 86.03
+  },
+  {
+    "elapsed_seconds": 54.71,
+    "ack_ms": 90.61
+  },
+  {
+    "elapsed_seconds": 56.06,
+    "ack_ms": 202.41
+  },
+  {
+    "elapsed_seconds": 57.37,
+    "ack_ms": 144.81
+  },
+  {
+    "elapsed_seconds": 58.81,
+    "ack_ms": 119.53
+  },
+  {
+    "elapsed_seconds": 60.04,
+    "ack_ms": 101.11
+  },
+  {
+    "elapsed_seconds": 61.27,
+    "ack_ms": 148.96
+  },
+  {
+    "elapsed_seconds": 62.49,
+    "ack_ms": 135.38
+  },
+  {
+    "elapsed_seconds": 63.65,
+    "ack_ms": 82.41
+  },
+  {
+    "elapsed_seconds": 64.92,
+    "ack_ms": 167.35
+  },
+  {
+    "elapsed_seconds": 66.15,
+    "ack_ms": 142.36
+  },
+  {
+    "elapsed_seconds": 67.33,
+    "ack_ms": 104.86
+  },
+  {
+    "elapsed_seconds": 68.58,
+    "ack_ms": 80.34
+  },
+  {
+    "elapsed_seconds": 69.77,
+    "ack_ms": 129.04
+  },
+  {
+    "elapsed_seconds": 71.12,
+    "ack_ms": 144.54
+  },
+  {
+    "elapsed_seconds": 72.54,
+    "ack_ms": 141.39
+  },
+  {
+    "elapsed_seconds": 73.81,
+    "ack_ms": 91.11
+  },
+  {
+    "elapsed_seconds": 75.04,
+    "ack_ms": 104.97
+  },
+  {
+    "elapsed_seconds": 76.33,
+    "ack_ms": 127.31
+  },
+  {
+    "elapsed_seconds": 77.6,
+    "ack_ms": 118.34
+  },
+  {
+    "elapsed_seconds": 78.78,
+    "ack_ms": 87.51
+  },
+  {
+    "elapsed_seconds": 79.98,
+    "ack_ms": 136.84
+  },
+  {
+    "elapsed_seconds": 81.22,
+    "ack_ms": 162.69
+  }
+]

@@ -11,6 +11,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk { abiFilters += "arm64-v8a" }
     }
+    // Keep only the test APK current; do not impose a target SDK on AAR consumers.
+    testOptions { targetSdk = 35 }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     publishing { singleVariant("release") { withSourcesJar() } }
 }

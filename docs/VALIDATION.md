@@ -1,5 +1,9 @@
 # Validation
 
+## Shello 0.1.0 release acceptance
+
+The [stable release acceptance record](evidence/releases/v0.1.0/README.md) consolidates current signed-APK business flow, update/data checks, runtime measurements and their limits. Earlier sections below are historical checkpoints; their exclusions are superseded only where the newer record explicitly supplies evidence. The app version and experimental library API have separate stability scopes.
+
 ## Staged attachments and actual Agent submission
 
 2026-10-22: the attachment + menu is now a styled source sheet with Camera, Photos or videos and Files. Up to four service-owned cards preserve draft text, show bounded image/video previews and progress/errors, and support individual removal. Attachments alone enable Send once uploads finish. Paths are composed only on explicit sending; rotation and tab switching retain the original attachment ownership. Camera output uses a non-exported, URI-granted provider and is cleaned after upload/cancellation.

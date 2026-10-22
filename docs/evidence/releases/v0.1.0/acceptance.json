@@ -1,0 +1,96 @@
+{
+  "date": "2026-10-22",
+  "app_version": "0.1.0",
+  "version_code": 10,
+  "production_runtime_source_commit": "310314ec1071018b561e6ede3cd85cdcdcd0e472",
+  "tested_signed_apk_sha256": "89c2b2c195782d4b1760073c2debc51dd3618d81c4dcdc45f5953f3131bd0bb4",
+  "signing_certificate_sha256": "2a28be23a3a37b400c9ba0ad85325b4d8785efc7b396e4bb6b944045d7027ad5",
+  "android_regressions": {
+    "api27_app_passed": 42,
+    "api27_terminal_passed": 30,
+    "api35_app_passed": 42,
+    "api35_terminal_passed": 30
+  },
+  "host_tests_passed": 24,
+  "release_tests_passed": 6,
+  "pair_launcher_tests_passed": 2,
+  "signed_apk_business_flow": {
+    "qr_image_picker_pairing": true,
+    "pinned_ssh_new_tmux": true,
+    "bundled_hook_install_and_provider_registration": true,
+    "claude_code_real_reply_and_last_turn": true,
+    "claude_permission_request_allow_once": true,
+    "codex_real_reply_and_last_turn": true,
+    "real_sftp_attachment_and_claude_read": true,
+    "vim_unsaved_buffer_network_background_rotation_process_recovery": true,
+    "pinyin_real_key_candidate_commit_and_cancel": true
+  },
+  "upgrade": {
+    "api": 35,
+    "from_version": "0.1.0-alpha08",
+    "to_version": "0.1.0",
+    "version_code": 10,
+    "existing_files": 9,
+    "missing": 0,
+    "changed": 0,
+    "added": 0,
+    "apk_sha256": "89c2b2c195782d4b1760073c2debc51dd3618d81c4dcdc45f5953f3131bd0bb4",
+    "encrypted_credentials_reconnected": true,
+    "same_shell_pid": true,
+    "shell_environment_preserved": true,
+    "cached_preview_preserved": true,
+    "light_theme_and_16sp_font_preserved": true
+  },
+  "runtime": {
+    "duration_seconds": 1830,
+    "output": {
+      "lines": 77249,
+      "seconds": 1800
+    },
+    "samples": 59,
+    "pss_min_kb": 43969,
+    "pss_max_kb": 54529,
+    "second_half_pss_delta_kb": 961.0,
+    "second_half_native_delta_bytes": 18408.0,
+    "input_host_ack_p50_ms": 186.44,
+    "input_host_ack_p95_ms": 411.61,
+    "input_timeouts": 0,
+    "limits": "Emulator public Release APK with same-certificate test instrumentation. Injected tap-to-host ACK, not hardware keyboard or input-to-display latency.",
+    "input_host_ack_max_ms": 2501.66,
+    "apk_sha256": "89c2b2c195782d4b1760073c2debc51dd3618d81c4dcdc45f5953f3131bd0bb4",
+    "gfxinfo": {
+      "frames": "82302",
+      "p50_ms": "16",
+      "p95_ms": "32",
+      "p99_ms": "65",
+      "janky_frames": "18092 (21.98%)"
+    },
+    "app_crash_log_entries": 0
+  },
+  "physical_phone": {
+    "installation_or_ui_mutations_performed": false,
+    "last_available_file_comparison": {
+      "existing": 46,
+      "missing": 0,
+      "changed": 0,
+      "added": 0
+    },
+    "note": "Phone disconnected after successful unchanged-data checks; no installation or UI actions performed on it during this release acceptance."
+  },
+  "publication_scope": "GitHub APK release only; no Maven publication",
+  "limits": [
+    "ARM64 API 27 and API 35 emulator release acceptance, not fresh OEM battery/camera/hardware-keyboard certification",
+    "Memory and latency measurements include virtualization and test instrumentation",
+    "No input-to-display timing claim; input ACK includes ADB, OS, SSH and filesystem scheduling"
+  ],
+  "isolated_latency": {
+    "environment": "One ARM64 API 35 emulator; no other emulators, Android builds or regression suites running. Release APK with test instrumentation; same Unicode/ANSI SSH load as the 30-minute test.",
+    "samples": 65,
+    "duration_seconds": 82.22,
+    "tap_to_host_ack_p50_ms": 119.65,
+    "tap_to_host_ack_p95_ms": 167.35,
+    "tap_to_host_ack_max_ms": 548.3,
+    "input_timeouts": 0,
+    "limit": "Injected tap-to-host receipt; not physical keyboard or input-to-display latency."
+  }
+}

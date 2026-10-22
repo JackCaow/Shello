@@ -1,0 +1,16 @@
+{
+  "api": 35,
+  "from_version": "0.1.0-alpha08",
+  "to_version": "0.1.0",
+  "version_code": 10,
+  "existing_files": 9,
+  "missing": 0,
+  "changed": 0,
+  "added": 0,
+  "apk_sha256": "89c2b2c195782d4b1760073c2debc51dd3618d81c4dcdc45f5953f3131bd0bb4",
+  "encrypted_credentials_reconnected": true,
+  "same_shell_pid": true,
+  "shell_environment_preserved": true,
+  "cached_preview_preserved": true,
+  "light_theme_and_16sp_font_preserved": true
+}

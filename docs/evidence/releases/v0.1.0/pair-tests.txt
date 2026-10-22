@@ -1,0 +1,7 @@
+test_embedded_helper_and_help (__main__.PairLauncherTest.test_embedded_helper_and_help) ... ok
+test_https_pairing_rejects_bad_token_and_installs_only_temp_public_key (__main__.PairLauncherTest.test_https_pairing_rejects_bad_token_and_installs_only_temp_public_key) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.439s
+
+OK

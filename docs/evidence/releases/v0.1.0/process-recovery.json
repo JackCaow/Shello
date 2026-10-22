@@ -1,0 +1,12 @@
+{
+  "api": 27,
+  "release_version": "0.1.0",
+  "normal_launcher_without_instrumentation": true,
+  "app_process_changed": true,
+  "same_shell_pid": true,
+  "same_vim_pid_before_save": true,
+  "unsaved_buffer_saved_through_app_after_recovery": true,
+  "saved_utf8_exact_match": true,
+  "original_shell_environment_restored": true,
+  "reopen_save_and_shell_verification_seconds": 12.11
+}

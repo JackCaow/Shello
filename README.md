@@ -18,17 +18,17 @@
 
 Shello is an open-source Android SSH terminal powered by **Ghostty VT and native Android rendering**. Connect to your computer or server, use shell tools and terminal applications, and keep remote work in tmux. You can also browse and resume remote Claude Code / Codex sessions.
 
-The project includes an embeddable terminal library. It is currently **Alpha**: APIs and interactions are still evolving.
+The Android app is available as **v0.1.0**. The embeddable terminal library remains experimental; its API may change and no Maven package is published.
 
 ## Download
 
 | Item | Details |
 | --- | --- |
-| Current prerelease | [v0.1.0-alpha08](https://github.com/JackCaow/Shello/releases/tag/v0.1.0-alpha08) |
-| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha08/Shello-0.1.0-alpha08-arm64-v8a.apk) |
+| Current release | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
+| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
 | Android | Android 8.1 / API 27 or newer |
 | Architecture | arm64-v8a only; no 32-bit ARM or x86 APK |
-| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0-alpha08/SHA256SUMS) |
+| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
 | Future versions | [All releases](https://github.com/JackCaow/Shello/releases) |
 
 Open the downloaded APK on your phone and follow Android's installation prompts. Public releases use a different certificate from early debug builds and **cannot overwrite those debug installs**. Uninstalling removes local connections and credentials; preserve development installs containing important data. See [signing and upgrade notes](docs/RELEASING.md).
@@ -67,7 +67,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
   | bash -s -- --host 192.168.1.10 --ssh-port 2222
 ```
 
-Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.0-alpha08`.
+Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.0`.
 
 ### 3. Scan from Shello
 
@@ -78,11 +78,11 @@ Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall.
 
 The phone generates and stores its private key; only the public key goes to the computer. Existing `authorized_keys` entries are retained. The QR code contains a temporary token—do not share it publicly. After pairing, **Ctrl+C** closes the temporary service; the installed SSH public key remains. [Protocol and options](docs/HOME_AND_AGENTS.md#pairing)
 
-### Tailscale (main branch)
+### Tailscale
 
-The current source supports Tailscale discovery and QR pairing; the published alpha06 APK still supports LAN pairing only. Build/install the updated app for this feature, or keep alpha06 on its matching launcher tag / `--network lan`.
+The current APK and pairing launcher support Tailscale discovery and QR pairing. Keep both devices connected to the same tailnet and use the matching release launcher when pinning a version.
 
-With Tailscale connected on both devices, the main-branch launcher automatically prefers the computer’s Tailscale IPv4 address. Select **Auto / LAN / Tailscale** on the pairing page, or pass `--network tailscale` / `--network lan` to the script. Network access rules must allow SSH and the temporary HTTPS pairing port.
+With Tailscale connected on both devices, the launcher automatically prefers the computer’s Tailscale IPv4 address. Select **Auto / LAN / Tailscale** on the pairing page, or pass `--network tailscale` / `--network lan` to the script. Network access rules must allow SSH and the temporary HTTPS pairing port.
 
 Discovery combines explicit VPN host routes with peer lists read through up to four saved, trusted SSH connections. It probes at most 128 known Tailscale addresses, never the whole address range. If the VPN exposes only broad routes and there is no saved connection yet, pair one computer first. [Details and validation](docs/TAILSCALE.md)
 
@@ -107,6 +107,14 @@ Run `claude` or `codex` in the terminal, or use **最近** to find and resume ex
 **Why does a card say “暂无预览” (No preview)?** Open the terminal first. Visible terminals checkpoint every five seconds and on minimize/background; closing a tab deletes its preview. A thumbnail shows the last captured screen, not live connection status.
 
 **Are all emoji and terminal apps supported?** Glyph availability depends on Android's fonts. Older devices may lack newer emoji, and not every IME, complex cluster or TUI combination is validated. See [validation and limitations](docs/VALIDATION.md).
+
+## Compatibility and limits
+
+- USB/Bluetooth keyboard hotplug, dead keys and OS-level shortcuts are experimental; injected key tests do not replace real hardware acceptance.
+- Draft text and staged attachments are retained for the running service, but are not restored after process death. Uploaded files are not automatically deleted from the host.
+- Remote recovery depends on the host and tmux remaining alive. Vendor battery restrictions can interrupt SSH; reopen the app to reconnect.
+- Codex interactive question replies and cloud push are not supported. Account usage adapters depend on the installed CLI/provider and may report unavailable.
+- See [validation](docs/VALIDATION.md) and [stable release acceptance](docs/evidence/releases/v0.1.0/README.md) for tested scope.
 
 ## Development
 

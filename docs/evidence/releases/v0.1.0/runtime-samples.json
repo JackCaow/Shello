@@ -1,0 +1,415 @@
+[
+  {
+    "elapsed": 0.1,
+    "ackMs": 112.01,
+    "pssKb": 43969,
+    "nativeAllocated": 23500192,
+    "javaUsed": 4912304
+  },
+  {
+    "elapsed": 30.6,
+    "ackMs": 180.73,
+    "pssKb": 45576,
+    "nativeAllocated": 24372112,
+    "javaUsed": 5596752
+  },
+  {
+    "elapsed": 60.9,
+    "ackMs": 333.1,
+    "pssKb": 45203,
+    "nativeAllocated": 25270224,
+    "javaUsed": 4286032
+  },
+  {
+    "elapsed": 91.5,
+    "ackMs": 270.02,
+    "pssKb": 47419,
+    "nativeAllocated": 26424864,
+    "javaUsed": 5445200
+  },
+  {
+    "elapsed": 122.2,
+    "ackMs": 186.44,
+    "pssKb": 47429,
+    "nativeAllocated": 26971856,
+    "javaUsed": 4470352
+  },
+  {
+    "elapsed": 152.7,
+    "ackMs": 190.92,
+    "pssKb": 47670,
+    "nativeAllocated": 26975552,
+    "javaUsed": 4847184
+  },
+  {
+    "elapsed": 183.0,
+    "ackMs": 250.4,
+    "pssKb": 47150,
+    "nativeAllocated": 26974160,
+    "javaUsed": 4408912
+  },
+  {
+    "elapsed": 213.5,
+    "ackMs": 69.87,
+    "pssKb": 48406,
+    "nativeAllocated": 26996608,
+    "javaUsed": 5613136
+  },
+  {
+    "elapsed": 243.7,
+    "ackMs": 137.54,
+    "pssKb": 46481,
+    "nativeAllocated": 26989056,
+    "javaUsed": 3618384
+  },
+  {
+    "elapsed": 273.9,
+    "ackMs": 57.38,
+    "pssKb": 49233,
+    "nativeAllocated": 26990240,
+    "javaUsed": 3413584
+  },
+  {
+    "elapsed": 304.1,
+    "ackMs": 142.04,
+    "pssKb": 49325,
+    "nativeAllocated": 27018496,
+    "javaUsed": 6555216
+  },
+  {
+    "elapsed": 334.7,
+    "ackMs": 114.75,
+    "pssKb": 46739,
+    "nativeAllocated": 27029568,
+    "javaUsed": 3888720
+  },
+  {
+    "elapsed": 364.9,
+    "ackMs": 67.77,
+    "pssKb": 47627,
+    "nativeAllocated": 27033488,
+    "javaUsed": 4691536
+  },
+  {
+    "elapsed": 395.1,
+    "ackMs": 113.44,
+    "pssKb": 48211,
+    "nativeAllocated": 27036288,
+    "javaUsed": 5125712
+  },
+  {
+    "elapsed": 425.3,
+    "ackMs": 195.39,
+    "pssKb": 49075,
+    "nativeAllocated": 27040336,
+    "javaUsed": 6100560
+  },
+  {
+    "elapsed": 455.7,
+    "ackMs": 241.52,
+    "pssKb": 46490,
+    "nativeAllocated": 27030704,
+    "javaUsed": 3753552
+  },
+  {
+    "elapsed": 486.1,
+    "ackMs": 249.72,
+    "pssKb": 50511,
+    "nativeAllocated": 27973952,
+    "javaUsed": 6018640
+  },
+  {
+    "elapsed": 516.7,
+    "ackMs": 276.42,
+    "pssKb": 49967,
+    "nativeAllocated": 27976752,
+    "javaUsed": 6362704
+  },
+  {
+    "elapsed": 548.5,
+    "ackMs": 318.8,
+    "pssKb": 47678,
+    "nativeAllocated": 27049104,
+    "javaUsed": 5064272
+  },
+  {
+    "elapsed": 584.8,
+    "ackMs": 106.92,
+    "pssKb": 49306,
+    "nativeAllocated": 27034512,
+    "javaUsed": 3446352
+  },
+  {
+    "elapsed": 615.0,
+    "ackMs": 95.72,
+    "pssKb": 46594,
+    "nativeAllocated": 27036144,
+    "javaUsed": 3634768
+  },
+  {
+    "elapsed": 645.4,
+    "ackMs": 212.3,
+    "pssKb": 47282,
+    "nativeAllocated": 27052976,
+    "javaUsed": 4503120
+  },
+  {
+    "elapsed": 675.9,
+    "ackMs": 165.37,
+    "pssKb": 46818,
+    "nativeAllocated": 27041360,
+    "javaUsed": 4003408
+  },
+  {
+    "elapsed": 706.6,
+    "ackMs": 210.43,
+    "pssKb": 47740,
+    "nativeAllocated": 27053216,
+    "javaUsed": 5187152
+  },
+  {
+    "elapsed": 737.0,
+    "ackMs": 161.97,
+    "pssKb": 47892,
+    "nativeAllocated": 27052496,
+    "javaUsed": 5076560
+  },
+  {
+    "elapsed": 767.3,
+    "ackMs": 101.57,
+    "pssKb": 47320,
+    "nativeAllocated": 27055120,
+    "javaUsed": 4273744
+  },
+  {
+    "elapsed": 797.5,
+    "ackMs": 77.06,
+    "pssKb": 47732,
+    "nativeAllocated": 27059680,
+    "javaUsed": 4757072
+  },
+  {
+    "elapsed": 828.3,
+    "ackMs": 331.72,
+    "pssKb": 47688,
+    "nativeAllocated": 27084144,
+    "javaUsed": 5097040
+  },
+  {
+    "elapsed": 863.0,
+    "ackMs": 2501.66,
+    "pssKb": 48828,
+    "nativeAllocated": 29264720,
+    "javaUsed": 5662288
+  },
+  {
+    "elapsed": 896.3,
+    "ackMs": 196.16,
+    "pssKb": 47020,
+    "nativeAllocated": 27061120,
+    "javaUsed": 4326992
+  },
+  {
+    "elapsed": 926.7,
+    "ackMs": 171.32,
+    "pssKb": 48812,
+    "nativeAllocated": 27087168,
+    "javaUsed": 5953104
+  },
+  {
+    "elapsed": 957.5,
+    "ackMs": 185.8,
+    "pssKb": 48268,
+    "nativeAllocated": 27064208,
+    "javaUsed": 5350992
+  },
+  {
+    "elapsed": 987.9,
+    "ackMs": 178.16,
+    "pssKb": 48176,
+    "nativeAllocated": 27065808,
+    "javaUsed": 5322320
+  },
+  {
+    "elapsed": 1018.3,
+    "ackMs": 261.78,
+    "pssKb": 47984,
+    "nativeAllocated": 27077760,
+    "javaUsed": 5097040
+  },
+  {
+    "elapsed": 1048.9,
+    "ackMs": 220.05,
+    "pssKb": 49740,
+    "nativeAllocated": 27058416,
+    "javaUsed": 3503696
+  },
+  {
+    "elapsed": 1079.3,
+    "ackMs": 192.06,
+    "pssKb": 49557,
+    "nativeAllocated": 27058512,
+    "javaUsed": 3446352
+  },
+  {
+    "elapsed": 1109.7,
+    "ackMs": 295.48,
+    "pssKb": 49465,
+    "nativeAllocated": 27073552,
+    "javaUsed": 3647056
+  },
+  {
+    "elapsed": 1140.3,
+    "ackMs": 248.21,
+    "pssKb": 46709,
+    "nativeAllocated": 27060320,
+    "javaUsed": 3778128
+  },
+  {
+    "elapsed": 1170.9,
+    "ackMs": 236.8,
+    "pssKb": 47852,
+    "nativeAllocated": 27067360,
+    "javaUsed": 5125712
+  },
+  {
+    "elapsed": 1201.6,
+    "ackMs": 322.96,
+    "pssKb": 50468,
+    "nativeAllocated": 29311920,
+    "javaUsed": 5736016
+  },
+  {
+    "elapsed": 1232.3,
+    "ackMs": 179.47,
+    "pssKb": 50242,
+    "nativeAllocated": 28060528,
+    "javaUsed": 6325840
+  },
+  {
+    "elapsed": 1263.1,
+    "ackMs": 87.89,
+    "pssKb": 46828,
+    "nativeAllocated": 27474656,
+    "javaUsed": 3696208
+  },
+  {
+    "elapsed": 1293.4,
+    "ackMs": 67.29,
+    "pssKb": 52486,
+    "nativeAllocated": 27480192,
+    "javaUsed": 3343952
+  },
+  {
+    "elapsed": 1323.6,
+    "ackMs": 105.68,
+    "pssKb": 49290,
+    "nativeAllocated": 27071904,
+    "javaUsed": 6243920
+  },
+  {
+    "elapsed": 1353.8,
+    "ackMs": 74.34,
+    "pssKb": 49189,
+    "nativeAllocated": 27072976,
+    "javaUsed": 6153808
+  },
+  {
+    "elapsed": 1384.1,
+    "ackMs": 144.48,
+    "pssKb": 47289,
+    "nativeAllocated": 27075632,
+    "javaUsed": 4466256
+  },
+  {
+    "elapsed": 1414.4,
+    "ackMs": 254.65,
+    "pssKb": 49417,
+    "nativeAllocated": 27087392,
+    "javaUsed": 6506064
+  },
+  {
+    "elapsed": 1444.9,
+    "ackMs": 196.47,
+    "pssKb": 48473,
+    "nativeAllocated": 27069712,
+    "javaUsed": 5613136
+  },
+  {
+    "elapsed": 1475.3,
+    "ackMs": 411.61,
+    "pssKb": 49549,
+    "nativeAllocated": 27075584,
+    "javaUsed": 3356240
+  },
+  {
+    "elapsed": 1506.0,
+    "ackMs": 244.23,
+    "pssKb": 49357,
+    "nativeAllocated": 27078000,
+    "javaUsed": 6440528
+  },
+  {
+    "elapsed": 1536.5,
+    "ackMs": 93.06,
+    "pssKb": 49009,
+    "nativeAllocated": 27073280,
+    "javaUsed": 6006352
+  },
+  {
+    "elapsed": 1566.9,
+    "ackMs": 124.95,
+    "pssKb": 46520,
+    "nativeAllocated": 27064480,
+    "javaUsed": 3778128
+  },
+  {
+    "elapsed": 1597.2,
+    "ackMs": 58.88,
+    "pssKb": 47247,
+    "nativeAllocated": 27066544,
+    "javaUsed": 4175440
+  },
+  {
+    "elapsed": 1627.4,
+    "ackMs": 80.7,
+    "pssKb": 47251,
+    "nativeAllocated": 27066928,
+    "javaUsed": 4265552
+  },
+  {
+    "elapsed": 1657.6,
+    "ackMs": 187.46,
+    "pssKb": 49377,
+    "nativeAllocated": 27100688,
+    "javaUsed": 3290704
+  },
+  {
+    "elapsed": 1688.1,
+    "ackMs": 296.27,
+    "pssKb": 49685,
+    "nativeAllocated": 27088832,
+    "javaUsed": 3790416
+  },
+  {
+    "elapsed": 1718.7,
+    "ackMs": 180.72,
+    "pssKb": 50261,
+    "nativeAllocated": 28033696,
+    "javaUsed": 6620752
+  },
+  {
+    "elapsed": 1765.3,
+    "ackMs": 668.54,
+    "pssKb": 54529,
+    "nativeAllocated": 29034160,
+    "javaUsed": 4765264
+  },
+  {
+    "elapsed": 1799.9,
+    "ackMs": 385.53,
+    "pssKb": 48447,
+    "nativeAllocated": 27094800,
+    "javaUsed": 5473872
+  }
+]

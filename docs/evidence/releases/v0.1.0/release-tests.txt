@@ -1,0 +1,11 @@
+test_existing_draft_can_resume (test_release.ReleaseTest.test_existing_draft_can_resume) ... ok
+test_failed_upload_leaves_draft (test_release.ReleaseTest.test_failed_upload_leaves_draft) ... ok
+test_manual_metadata_does_not_require_a_tag (test_release.ReleaseTest.test_manual_metadata_does_not_require_a_tag) ... ok
+test_new_release_publishes_only_after_upload (test_release.ReleaseTest.test_new_release_publishes_only_after_upload) ... ok
+test_retry_preserves_published_assets (test_release.ReleaseTest.test_retry_preserves_published_assets) ... ok
+test_tag_must_match_android_version (test_release.ReleaseTest.test_tag_must_match_android_version) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.219s
+
+OK

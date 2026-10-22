@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.shello.releaseprobe">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="35"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application android:label="Shello release acceptance probe" android:allowBackup="false"/>
+    <instrumentation android:name="dev.shello.releaseprobe.Probe" android:targetPackage="dev.ghostty.android.sample" android:label="Shello release acceptance probe"/>
+</manifest>

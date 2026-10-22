@@ -1,0 +1,7 @@
+{
+  "api": 27,
+  "actual_network_disabled": true,
+  "automatic_reconnect_seconds": 3.54,
+  "same_vim_pid": true,
+  "unsaved_buffer_retained": true
+}

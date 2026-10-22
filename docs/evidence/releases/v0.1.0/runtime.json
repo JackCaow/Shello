@@ -1,0 +1,26 @@
+{
+  "duration_seconds": 1830,
+  "output": {
+    "lines": 77249,
+    "seconds": 1800
+  },
+  "samples": 59,
+  "pss_min_kb": 43969,
+  "pss_max_kb": 54529,
+  "second_half_pss_delta_kb": 961.0,
+  "second_half_native_delta_bytes": 18408.0,
+  "input_host_ack_p50_ms": 186.44,
+  "input_host_ack_p95_ms": 411.61,
+  "input_timeouts": 0,
+  "limits": "Emulator public Release APK with same-certificate test instrumentation. Injected tap-to-host ACK, not hardware keyboard or input-to-display latency.",
+  "input_host_ack_max_ms": 2501.66,
+  "apk_sha256": "89c2b2c195782d4b1760073c2debc51dd3618d81c4dcdc45f5953f3131bd0bb4",
+  "gfxinfo": {
+    "frames": "82302",
+    "p50_ms": "16",
+    "p95_ms": "32",
+    "p99_ms": "65",
+    "janky_frames": "18092 (21.98%)"
+  },
+  "app_crash_log_entries": 0
+}
