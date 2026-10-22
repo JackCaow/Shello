@@ -66,7 +66,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         saveTop=SampleUi.header(this,"check",tr(original==null?R.string.save_and_connect_over_ssh:R.string.save_connection_changes),GREEN,this::verifyConnection);header.addAction(saveTop);
         ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout form=column();form.setPadding(dp(PAGE_INSET),dp(UiDesign.SECTION),dp(PAGE_INSET),dp(32));scroll.addView(AdaptiveLayout.centered(this,form,640,header));
-        TextView nameLabel=label(tr(R.string.name));nameLabel.setPadding(dp(60),0,0,dp(8));form.addView(nameLabel);
+        form.addView(label(tr(R.string.name)));
         LinearLayout nameLine=row();form.addView(nameLine,new LinearLayout.LayoutParams(-1,-2));
         ImageView serverIcon=SampleUi.icon(this,"server",TEXT);serverIcon.setPadding(dp(12),dp(12),dp(12),dp(12));serverIcon.setBackground(round(uiTheme().input,16));
         LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(48),dp(48));iconParams.rightMargin=dp(12);nameLine.addView(serverIcon,iconParams);
