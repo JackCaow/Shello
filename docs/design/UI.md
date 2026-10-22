@@ -29,16 +29,22 @@ Use one title per page; section labels introduce groups, body text identifies ac
 
 ## Color and accessibility
 
-Use `UiTheme.of(context)` for the Activity palette and `SampleUi` for shared components. The existing **Settings → Theme → Light** choice applies to the entire app and the terminal's default foreground/background. Shello and Black keep dark app chrome. Theme IDs and existing stored preferences remain compatible.
+Use `UiTheme.of(context)` for the Activity palette and `SampleUi` for shared components. The existing **Settings → Appearance & language → Light** choice applies to the entire app and the terminal's default foreground/background. Shello and Black keep dark app chrome. Theme IDs and existing stored preferences remain compatible.
 
 | Light palette role | Color |
 | --- | --- |
-| Canvas | `#F4F7F5` |
+| Canvas | `#F6F7F9` |
 | Surface / sheet | `#FFFFFF` |
-| Input / key | `#EDF2EF` / `#E7EEE9` |
-| Primary text / secondary text | `#18241E` / `#5C6860` |
+| Input / key | `#F1F3F5` / `#F0F2F5` |
+| Primary text / secondary text | `#20252B` / `#626B75` |
 | Accent / on accent | `#087442` / `#FFFFFF` |
-| Separator | `#D4DED7` |
+| Separator | `#EDF0F3` |
+
+Appearance and language share one entry at the top of the settings index and one independent Activity. Theme choices include miniature previews; current settings use checkmarks. Legacy `theme` and `language` routes resolve to the combined page. Existing preference keys and Android per-app language behavior are retained.
+
+Draw inset decorative separators at one physical pixel in settings, menus, lists and toolbars. Use spacing and white surfaces to group content instead of heavy full-width borders. Settings values use the 14sp secondary role. Keep focus outlines and control/selection contrast visible.
+
+The home backdrop draws beneath the transparent status bar, using the same coordinate space as the safe-area content so no color seam appears. Place controls below status/cutout insets and keep fixed navigation outside the scroll view. Retain the IME resize behavior on API 27 and modern edge-to-edge devices.
 
 The palette is immutable for each Activity. Changing between light and dark recreates visible pages and their parents on return, retaining the normal return stack and scroll state. SSH ownership remains in its service; local draft state is saved with the existing tab/recreation mechanism. Native controls, text selection, status/navigation bars and dialogs use the matching Android theme.
 

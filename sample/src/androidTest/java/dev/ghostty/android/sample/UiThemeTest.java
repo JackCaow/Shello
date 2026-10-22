@@ -28,6 +28,18 @@ public class UiThemeTest extends AttachmentTestSupport {
             assertTrue("Primary action label contrast",contrast(theme.onAccent,theme.accent)>=4.5);
         }
     }
+    @Test public void homeBackgroundExtendsUnderTheStatusBar()throws Exception{
+        open();inst.runOnMainSync(()->call(activity,"minimize"));await(()->!(Boolean)field(activity,"imeVisible"));android.os.SystemClock.sleep(500);
+        int[] inset={0};inst.runOnMainSync(()->{
+            View root=(View)field(activity,"root"),home=(View)field(activity,"homePage");int[] origin=new int[2],content=new int[2];root.getLocationOnScreen(origin);home.getLocationOnScreen(content);
+            assertEquals("Status bar must be transparent",Color.TRANSPARENT,activity.getWindow().getStatusBarColor());
+            assertEquals("Backdrop must begin at the screen edge",0,origin[1]);assertTrue("Controls need a status-bar inset",root.getPaddingTop()>0);assertEquals(root.getPaddingTop(),content[1]);inset[0]=content[1];
+            View settings=find(home,AppLanguage.tr(R.string.settings));assertNotNull(settings);settings.getLocationOnScreen(content);assertTrue("Navigation overlaps status icons",content[1]>=inset[0]);
+        });
+        android.graphics.Bitmap screen=inst.getUiAutomation().takeScreenshot();assertNotNull(screen);
+        try{int x=screen.getWidth()/4,a=screen.getPixel(x,inset[0]-2),b=screen.getPixel(x,inset[0]+2);for(int shift:new int[]{0,8,16})assertTrue("Visible seam below status bar",Math.abs(((a>>shift)&255)-((b>>shift)&255))<=3);}finally{screen.recycle();}
+        capture("refined-home");
+    }
     @Test public void unknownAndContentColorsAreNotConverted(){
         UiTheme light=UiTheme.forMode(true);int arbitrary=0xff193b8d;
         assertEquals(arbitrary,light.foreground(arbitrary));assertEquals(arbitrary,light.background(arbitrary));
@@ -60,9 +72,9 @@ public class UiThemeTest extends AttachmentTestSupport {
                 await(()->foreground.get() instanceof SettingsActivity&&foreground.get().hasWindowFocus());
                 SettingsActivity index=(SettingsActivity)foreground.get();int[] scroll={0};
                 inst.runOnMainSync(()->{index.scroll.scrollTo(0,index.dp(120));scroll[0]=index.scroll.getScrollY();index.startActivity(SettingsNavigation.intent(index,"theme"));});
-                await(()->foreground.get() instanceof ThemeSettingsActivity&&foreground.get().hasWindowFocus());
+                await(()->foreground.get() instanceof AppearanceSettingsActivity&&foreground.get().hasWindowFocus());
                 inst.runOnMainSync(()->{View choice=find(foreground.get().getWindow().getDecorView(),light?AppLanguage.tr(R.string.light):"Shello");assertNotNull(choice);choice.performClick();});
-                await(()->foreground.get() instanceof ThemeSettingsActivity&&((ThemeSettingsActivity)foreground.get()).uiTheme().light==light&&foreground.get().hasWindowFocus());
+                await(()->foreground.get() instanceof AppearanceSettingsActivity&&((AppearanceSettingsActivity)foreground.get()).uiTheme().light==light&&foreground.get().hasWindowFocus());
                 inst.runOnMainSync(()->{
                     Activity page=foreground.get();TypedArray a=page.obtainStyledAttributes(new int[]{android.R.attr.windowLightStatusBar,android.R.attr.windowLightNavigationBar});try{assertEquals(light,a.getBoolean(0,false));assertEquals(light,a.getBoolean(1,false));}finally{a.recycle();}
                     page.finish();

@@ -23,7 +23,7 @@ final class InputToolbar extends LinearLayout {
         scrollingButtons=new LinearLayout(context);scrollingButtons.setGravity(Gravity.CENTER_VERTICAL);
         scroll.addView(scrollingButtons,new HorizontalScrollView.LayoutParams(-2,-1));
         addView(scroll,new LinearLayout.LayoutParams(0,dp(48),1));
-        divider=new View(context);divider.setBackgroundColor(UiTheme.background(getContext(),0xff282b2d));LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(dp(1),dp(18));line.setMargins(dp(8),0,dp(8),0);addView(divider,line);
+        divider=SampleUi.separator(context);LinearLayout.LayoutParams line=new LinearLayout.LayoutParams(1,dp(18));line.setMargins(dp(8),0,dp(8),0);addView(divider,line);
         pinnedButtons=new LinearLayout(context);pinnedButtons.setGravity(Gravity.CENTER_VERTICAL);
         addView(pinnedButtons,new LinearLayout.LayoutParams(-2,dp(48)));
     }

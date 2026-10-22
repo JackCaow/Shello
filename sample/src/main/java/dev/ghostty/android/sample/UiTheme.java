@@ -12,13 +12,14 @@ import android.view.WindowInsetsController;
 final class UiTheme {
     private static final UiTheme DARK=new UiTheme(false),LIGHT=new UiTheme(true);
     final boolean light;
-    final int canvas,surface,input,text,secondary,accent,onAccent,border,ripple,toggleOff;
+    final int canvas,surface,input,text,secondary,accent,onAccent,border,ripple,toggleOff,separator;
     private UiTheme(boolean light){
-        this.light=light;canvas=light?0xfff4f7f5:Color.BLACK;surface=light?Color.WHITE:SampleUi.PANEL;
-        input=light?0xffedf2ef:SampleUi.FIELD;text=light?0xff18241e:SampleUi.TEXT;
-        secondary=light?0xff5c6860:SampleUi.MUTED;accent=light?0xff087442:SampleUi.GREEN;
-        onAccent=light?Color.WHITE:0xff062519;border=light?0xffd4ded7:SampleUi.BORDER;
-        toggleOff=light?0xff84958a:0xff242628;
+        this.light=light;canvas=light?0xfff6f7f9:Color.BLACK;surface=light?Color.WHITE:SampleUi.PANEL;
+        input=light?0xfff1f3f5:SampleUi.FIELD;text=light?0xff20252b:SampleUi.TEXT;
+        secondary=light?0xff626b75:SampleUi.MUTED;accent=light?0xff087442:SampleUi.GREEN;
+        onAccent=light?Color.WHITE:0xff062519;border=light?0xffe5e9ee:SampleUi.BORDER;
+        separator=light?0xffedf0f3:0xff25282c;
+        toggleOff=light?0xff87919c:0xff242628;
         ripple=light?0x180b5730:0x22ffffff;
     }
     static String signature(Context c){return ThemePreferences.current(c.getSharedPreferences("appearance",0)).equals("light")?"light":"dark";}
@@ -62,18 +63,18 @@ final class UiTheme {
         if(!light)return color;
         switch(color){
             case Color.BLACK:case SampleUi.PANEL:case SampleUi.FIELD:case 0xff0b0d0e:case 0xff111113:return surface;
-            case 0xff1e1e1e:return 0xffe8eeea;
-            case 0xff101214:case 0xff101113:case 0xff171a1b:case 0xff171a1c:case 0xff15181a:return 0xffe7eee9;
-            case 0xff191b1e:case 0xff191b1d:case 0xff1b1d1f:case 0xff1a1d1e:case 0xff222527:case 0xff111713:return 0xffedf2ef;
+            case 0xff1e1e1e:return 0xffeef1f4;
+            case 0xff101214:case 0xff101113:case 0xff171a1b:case 0xff171a1c:case 0xff15181a:return 0xfff0f2f5;
+            case 0xff191b1e:case 0xff191b1d:case 0xff1b1d1f:case 0xff1a1d1e:case 0xff222527:case 0xff111713:return 0xfff1f3f5;
             case SampleUi.BORDER:case 0xff222426:case 0xff242628:case 0xff242728:case 0xff282b2d:case 0xff303033:case 0xff303438:return border;
-            case 0xff292c30:return 0xffe5ece7;
-            case 0xff42464b:case 0xff41464b:case 0xff54585d:case 0xff575b60:case 0xff5a5b60:return 0xff9aa89f;
-            case 0xff20372b:case 0xff12332a:return 0xffd7ebdf;
-            case 0xff0d2412:case 0xff14271e:case 0xff122c14:case 0xff071b0d:return 0xffe1f0e5;
-            case 0xff1e3526:return 0xffb9d2c1;
-            case 0xff063a18:return 0xffdceddf;
-            case 0xff164d48:return 0xffdfefeb;
-            case 0xff041104:case 0xff032003:return 0xffdff1e4;
+            case 0xff292c30:return 0xffe9edf2;
+            case 0xff42464b:case 0xff41464b:case 0xff54585d:case 0xff575b60:case 0xff5a5b60:return 0xffa7afb8;
+            case 0xff20372b:case 0xff12332a:return 0xffe5f0e9;
+            case 0xff0d2412:case 0xff14271e:case 0xff122c14:case 0xff071b0d:return 0xffeef5f0;
+            case 0xff1e3526:return 0xffdfe8e2;
+            case 0xff063a18:return 0xffedf4ef;
+            case 0xff164d48:return 0xffedf3f2;
+            case 0xff041104:case 0xff032003:return 0xffedf4f0;
             case 0xff173247:case 0xff375166:return 0xffdce9f4;
             case 0xff14243d:return 0xffe7effc;
             case 0xff342016:return 0xfff9ebe2;

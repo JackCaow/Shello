@@ -21,6 +21,7 @@ final class SampleUi {
     static GradientDrawable surface(Context c,int color,int radius){
         GradientDrawable d=new GradientDrawable();d.setColor(UiTheme.background(c,color));d.setCornerRadius(dp(c,radius));return d;
     }
+    static View separator(Context c){View line=new View(c);line.setBackgroundColor(UiTheme.of(c).separator);line.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);return line;}
     static Drawable touch(Context c,int color,int radius){
         return new RippleDrawable(ColorStateList.valueOf(UiTheme.of(c).ripple),surface(c,color,radius),surface(c,Color.WHITE,radius));
     }

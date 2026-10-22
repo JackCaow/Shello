@@ -1,0 +1,12 @@
+
+dev.ghostty.android.sample.UiDesignAuditTest:....
+dev.ghostty.android.sample.SettingsActivityTest:.
+dev.ghostty.android.sample.AdaptiveLayoutTest:..
+dev.ghostty.android.sample.UiThemeTest:....
+dev.ghostty.android.sample.LocalizationTest:.
+
+Time: 83.105
+
+OK (12 tests)
+
+

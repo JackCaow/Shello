@@ -58,7 +58,7 @@ public class UiDesignAuditTest {
     private void capture(String name)throws Exception{SystemClock.sleep(600);Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);File dir=new File(context.getCacheDir(),"design-review");assertTrue(dir.isDirectory()||dir.mkdirs());try(FileOutputStream out=new FileOutputStream(new File(dir,name+".png"))){image.compress(Bitmap.CompressFormat.PNG,100,out);}finally{image.recycle();}}
     private void done(){assertTrue(String.join("\n",problems),problems.isEmpty());}
     @Test public void settingsAndFormsKeepReadableTextAndTouchTargets()throws Exception{
-        for(String name:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
+        for(String name:new String[]{"","appearance","font","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
             Activity page=open(SettingsNavigation.intent(context,name));audit(name.isEmpty()?"settings":name,page);inst.runOnMainSync(page::finish);
         }
         for(Class<? extends Activity> type:List.of(SshDiscoveryActivity.class,PairingActivity.class,ShortcutEditorActivity.class)){

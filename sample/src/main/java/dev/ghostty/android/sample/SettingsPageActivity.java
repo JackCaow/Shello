@@ -54,10 +54,10 @@ public abstract class SettingsPageActivity extends ScreenActivity {
 
     private void addRow(View row){
         if(group==null){
-            group=column();group.setBackground(SampleUi.surface(this,CARD,12));group.setClipToOutline(true);
+            group=column();group.setBackground(SampleUi.surface(this,CARD,uiTheme().light?UiDesign.CARD:12));group.setClipToOutline(true);
             body.addView(group,new LinearLayout.LayoutParams(-1,-2));
         }
-        if(group.getChildCount()>0){View line=new View(this);line.setBackgroundColor(UiTheme.background(SettingsPageActivity.this,DIVIDER));group.addView(line,new LinearLayout.LayoutParams(-1,Math.max(1,dp(1))));}
+        if(group.getChildCount()>0){View line=SampleUi.separator(this);LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,1);rule.leftMargin=dp(16);rule.rightMargin=dp(16);group.addView(line,rule);}
         group.addView(row,new LinearLayout.LayoutParams(-1,-2));
     }
 
@@ -90,7 +90,7 @@ public abstract class SettingsPageActivity extends ScreenActivity {
 
     protected View trailing(String value,boolean chevron){
         LinearLayout end=row();
-        if(value!=null){TextView text=label(value,16,SampleUi.MUTED);text.setSingleLine(true);text.setEllipsize(TextUtils.TruncateAt.END);
+        if(value!=null){TextView text=label(value,14,SampleUi.MUTED);text.setSingleLine(true);text.setEllipsize(TextUtils.TruncateAt.END);
             text.setMaxWidth(dp(getResources().getConfiguration().fontScale>1.2f?100:146));end.addView(text);}
         if(chevron){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(18),dp(18));if(value!=null)p.leftMargin=dp(10);end.addView(SampleUi.icon(this,"right",SampleUi.MUTED),p);}
         return end;

@@ -111,7 +111,7 @@ public final class MainActivity extends LocalizedActivity {
                 | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         root=column(); root.setBackgroundColor(UiTheme.of(this).canvas);
         root.setFocusableInTouchMode(true);
-        if(Build.VERSION.SDK_INT>=30) applyModernInsets();
+        configureInsets();
         setContentView(root);
         stage=new FrameLayout(this); root.addView(stage,new LinearLayout.LayoutParams(-1,-1));
         sheet=column(); sheet.setBackground(round(SURFACE,24)); sheet.setClipToOutline(true);
@@ -413,12 +413,12 @@ public final class MainActivity extends LocalizedActivity {
         pad.setY(Math.max(0,Math.min(pad.getY(),viewport.getHeight()-pad.getHeight())));
     }
     private void buildHome() {
-        homePage=column();homePage.setBackground(new HomeBackdrop());
+        homePage=column();homePage.setBackground(new HomeBackdrop(homePage));
         home=new ScrollView(this);home.setClipToPadding(false);
         LinearLayout content=column();content.setClipChildren(false);int inset=dp(getResources().getConfiguration().screenWidthDp>=600?24:16);content.setPadding(inset,0,inset,dp(110));home.addView(AdaptiveLayout.centered(this,content,1200,null));
         LinearLayout top=row();top.setPadding(inset,0,inset,0);top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         String[] navIcons={"inbox","settings"};int[] navLabels={R.string.agent_inbox,R.string.settings};
-        for(int i=0;i<navIcons.length;i++){final boolean inbox=i==0;View button=SampleUi.header(this,navIcons[i],tr(navLabels[i]),TEXT,()->startActivity(new Intent(this,inbox?AgentActivity.class:SettingsActivity.class)));button.setBackground(SampleUi.touch(this,0xff111713,22));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(48),dp(48));lp.leftMargin=dp(8);top.addView(button,lp);}
+        for(int i=0;i<navIcons.length;i++){final boolean inbox=i==0;View button=SampleUi.header(this,navIcons[i],tr(navLabels[i]),TEXT,()->startActivity(new Intent(this,inbox?AgentActivity.class:SettingsActivity.class)));button.setBackground(SampleUi.touch(this,uiTheme().light?uiTheme().surface:0xff111713,24));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(48),dp(48));lp.leftMargin=dp(8);top.addView(button,lp);}
         homePage.addView(AdaptiveLayout.centered(this,top,1200,null),new LinearLayout.LayoutParams(-1,dp(56)));
         homePage.addView(home,new LinearLayout.LayoutParams(-1,0,1));
         AdaptiveLayout.Columns homeColumns=new AdaptiveLayout.Columns(this,840,24);content.addView(homeColumns,new LinearLayout.LayoutParams(-1,-2));
@@ -434,19 +434,26 @@ public final class MainActivity extends LocalizedActivity {
             LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(48));TextView heading=SampleUi.sectionTitle(this,tr(R.string.discover_shello));guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
             android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
             LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(UiDesign.SECTION);content.addView(guideHeader,hp);
-            String[] names={tr(R.string.qr_pairing),tr(R.string.remote_sessions),tr(R.string.inbox_and_approvals),tr(R.string.terminal_theme),tr(R.string.shortcuts),tr(R.string.text_selection)};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
+            String[] names={tr(R.string.qr_pairing),tr(R.string.remote_sessions),tr(R.string.inbox_and_approvals),tr(R.string.appearance_and_language),tr(R.string.shortcuts),tr(R.string.text_selection)};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
             Runnable update=()->{int count=0;for(int i=0;i<names.length;i++)if(visited.getBoolean("viewed_"+i,false))count++;progress.setText(count+"/"+names.length);};update.run();
             HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout cards=row();scroll.addView(cards);content.addView(scroll);
-            for(int i=0;i<names.length;i++){final int index=i;LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setMinimumHeight(dp(100));card.setPadding(0,dp(12),0,dp(12));card.setBackground(SampleUi.touch(this,0xff191b1d,16));card.setContentDescription(names[i]);card.addView(SampleUi.icon(this,icons[i],0xff00ee00),new LinearLayout.LayoutParams(dp(24),dp(24)));TextView text=label(names[i],13,MUTED);text.setGravity(Gravity.CENTER);text.setPadding(dp(8),dp(8),dp(8),0);card.addView(text);
-                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(SettingsNavigation.intent(this,index==3?"theme":index==4?"shortcuts":"gestures"));}});
+            for(int i=0;i<names.length;i++){final int index=i;LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setMinimumHeight(dp(100));card.setPadding(0,dp(12),0,dp(12));card.setBackground(SampleUi.touch(this,uiTheme().light?uiTheme().surface:0xff191b1d,16));card.setContentDescription(names[i]);card.addView(SampleUi.icon(this,icons[i],0xff00ee00),new LinearLayout.LayoutParams(dp(24),dp(24)));TextView text=label(names[i],13,MUTED);text.setGravity(Gravity.CENTER);text.setPadding(dp(8),dp(8),dp(8),0);card.addView(text);
+                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(SettingsNavigation.intent(this,index==3?"appearance":index==4?"shortcuts":"gestures"));}});
                 LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(112),-2);cp.rightMargin=dp(8);cards.addView(card,cp);}
         }
         stage.addView(homePage,new FrameLayout.LayoutParams(-1,-1));homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);
         addConnection=SampleUi.header(this,"plus",tr(R.string.new_ssh_connection),uiTheme().onAccent,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
     }
     private final class HomeBackdrop extends android.graphics.drawable.Drawable {
-        final android.graphics.Paint paint=new android.graphics.Paint();
-        @Override public void draw(android.graphics.Canvas canvas){android.graphics.Rect b=getBounds();canvas.drawColor(uiTheme().canvas);paint.setShader(new android.graphics.RadialGradient(b.width()*.5f,0,b.width()*.8f,UiTheme.background(MainActivity.this,0xff041104),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(b,paint);paint.setShader(new android.graphics.RadialGradient(b.right,b.bottom,b.width()*.65f,UiTheme.background(MainActivity.this,0xff032003),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(b,paint);}
+        final android.graphics.Paint paint=new android.graphics.Paint();final View owner;
+        HomeBackdrop(View owner){this.owner=owner;}
+        @Override public void draw(android.graphics.Canvas canvas){
+            android.graphics.Rect bounds=getBounds();float width=root.getWidth(),height=root.getHeight();
+            float x=owner==root?0:root.getPaddingLeft(),y=owner==root?0:root.getPaddingTop();
+            canvas.drawColor(uiTheme().canvas);
+            paint.setShader(new android.graphics.RadialGradient(width*.5f-x,-y,Math.max(1,width*.8f),UiTheme.background(MainActivity.this,0xff041104),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(bounds,paint);
+            paint.setShader(new android.graphics.RadialGradient(width-x,height-y,Math.max(1,width*.65f),UiTheme.background(MainActivity.this,0xff032003),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(bounds,paint);
+        }
         @Override public void setAlpha(int a){}@Override public void setColorFilter(android.graphics.ColorFilter f){}@Override public int getOpacity(){return android.graphics.PixelFormat.OPAQUE;}
     }
     private void chooseConnection(){
@@ -512,7 +519,7 @@ public final class MainActivity extends LocalizedActivity {
         }
     }
     private void minimize() {
-        rememberTab();hideKeyboard();if(inputControls!=null)inputControls.clearModifiers();minimized=true;sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
+        rememberTab();hideKeyboard();if(inputControls!=null)inputControls.clearModifiers();minimized=true;root.setBackground(new HomeBackdrop(root));sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
         if(overview!=null&&sshService!=null)overview.refresh(sshService.tabs());
     }
     private void openTab(String id){
@@ -529,7 +536,7 @@ public final class MainActivity extends LocalizedActivity {
     private void closeAllTabs(){
         if(sshService==null)return;shownTab=null;draft.setText("");sshService.closeAll();minimize();
     }
-    private void resumeSession(){minimized=false;homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
+    private void resumeSession(){minimized=false;root.setBackgroundColor(uiTheme().canvas);homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
     @Override public void onBackPressed() {
         if(overview!=null&&overview.back())return;
         if(minimized){super.onBackPressed();return;}
@@ -750,6 +757,20 @@ public final class MainActivity extends LocalizedActivity {
                 +"🧑🏽‍🚀  👩🏻‍🤝‍👨🏿  é\r\n\r\n"
                 +tr(R.string.local_demo_keys)
                 +tr(R.string.local_demo_help));
+    }
+    private void configureInsets(){
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        if(Build.VERSION.SDK_INT>=29)getWindow().setStatusBarContrastEnforced(false);
+        if(Build.VERSION.SDK_INT>=30){
+            getWindow().setDecorFitsSystemWindows(false);getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            getWindow().setNavigationBarContrastEnforced(false);applyModernInsets();
+        }else{
+            View decor=getWindow().getDecorView();decor.setSystemUiVisibility(decor.getSystemUiVisibility()|View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            root.setOnApplyWindowInsetsListener((view,insets)->{
+                view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());
+                return insets.consumeSystemWindowInsets();
+            });
+        }
     }
     @android.annotation.TargetApi(30) private void applyModernInsets() {
         root.setOnApplyWindowInsetsListener((v,insets)->{

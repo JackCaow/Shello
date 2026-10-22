@@ -127,7 +127,7 @@ final class SessionOverview {
         View dim=new View(activity);dim.setBackgroundColor(UiTheme.background(activity,0x66000000));overlay.addView(dim,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout menu=column();menu.setBackground(SampleUi.surface(activity,SampleUi.PANEL,22));menu.setClipToOutline(true);
         menu.addView(action(tr(R.string.reorder),"reorder",false,()->setOrdering(true)));
-        View line=new View(activity);line.setBackgroundColor(UiTheme.background(activity,0xff303033));menu.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
+        View line=SampleUi.separator(activity);LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,1);rule.leftMargin=dp(16);rule.rightMargin=dp(16);menu.addView(line,rule);
         menu.addView(action(tr(R.string.close),"close",true,()->actions.close(tab.id)));
         View gap=new View(activity);gap.setBackgroundColor(UiTheme.background(activity,0xff101113));menu.addView(gap,new LinearLayout.LayoutParams(-1,dp(8)));
         menu.addView(action(tr(R.string.close_all),"close",true,actions::closeAll));

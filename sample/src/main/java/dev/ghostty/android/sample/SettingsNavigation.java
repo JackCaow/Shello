@@ -11,11 +11,10 @@ final class SettingsNavigation {
     static boolean isPage(String page){return page!=null&&!page.isEmpty()&&type(page)!=SettingsActivity.class;}
     static Class<? extends SettingsPageActivity> type(String page){
         switch(page==null?"":page){
-            case "language":return LanguageSettingsActivity.class;
+            case "appearance":case "language":case "theme":return AppearanceSettingsActivity.class;
             case "hook":return HookSettingsActivity.class;
             case "notifications":return NotificationsSettingsActivity.class;
             case "font":return FontSettingsActivity.class;
-            case "theme":return ThemeSettingsActivity.class;
             case "advanced":return AdvancedSettingsActivity.class;
             case "hardware":return HardwareKeyboardSettingsActivity.class;
             case "toolbar":return ToolbarSettingsActivity.class;
