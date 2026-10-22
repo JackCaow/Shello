@@ -138,10 +138,13 @@ public final class ShellChannel {
         if fds[1].revents != 0 { var junk = [UInt8](repeating: 0, count: 64); while Darwin.read(wake[0], &junk, 64) > 0 {} }
     }
     private func deliver(_ d: Data) {
-        slots.wait()
-        callbackQueue.async { [weak self] in
+        // A closed tab may release the channel before queued output reaches the UI.
+        // Keep the semaphore alive until every acquired permit has been returned.
+        let outputSlots = slots
+        outputSlots.wait()
+        callbackQueue.async { [weak self, outputSlots] in
+            defer { outputSlots.signal() }
             self?.onOutput?(d)
-            self?.slots.signal()
         }
     }
 }

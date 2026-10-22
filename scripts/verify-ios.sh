@@ -28,7 +28,7 @@ seed_env() { # UI tests get secrets through the environment so they also work on
 export TEST_RUNNER_SHELLO_HOOK_SCRIPT="$root/public/agent/ghostty_hook.py" TEST_RUNNER_SHELLO_HOOK_STATE="$work/hook"; mkdir -p "$work/hook"
 cd ios; xcodegen generate >/dev/null
 step 'package tests (engine, core, ssh, terminal view, services)'
-xcodebuild test -workspace . -scheme ShelloKit-Package -destination "$dest" -parallel-testing-enabled NO -resultBundlePath "$work/package.xcresult" 2>&1 | tee "$work/package.log" | grep -E "error:|Executed [0-9]+ tests.*\)$|TEST (SUCCEEDED|FAILED)" | tail -4
+xcodebuild test -workspace . -scheme ShelloKit-Package -destination "$dest" -parallel-testing-enabled NO -resultBundlePath "$work/package.xcresult" 2>&1 | tee "$work/package.log" | grep -E "error:|Test Case.*(passed|failed|skipped)|Executed [0-9]+ tests|Restarting after|Failing tests:|TEST (SUCCEEDED|FAILED)"
 grep -q 'TEST SUCCEEDED' "$work/package.log"
 scripts_dir=$root/scripts
 critical=(ShelloUITests/ShelloUITests/testPairingEndToEndThenShell ShelloUITests/ShelloUITests/testSavedConnectionOpensShellAndRunsCommands ShelloUITests/UIReviewTests/testRootEdgeSwipeDoesNotBlockOpeningAnotherPage ShelloUITests/UIReviewTests/testHomeSessionLongPressReorderCloseAndCloseAll)

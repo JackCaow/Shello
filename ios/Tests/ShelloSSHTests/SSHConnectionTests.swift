@@ -7,6 +7,7 @@ import ShelloTerminal
 /// TEST_RUNNER_SHELLO_SSHD_DIR=<dir> TEST_RUNNER_SHELLO_SSHD_USER=$USER xcodebuild test ... Without it they are skipped.
 final class SSHConnectionTests: XCTestCase {
     var dir = ""
+    var port: Int { ProcessInfo.processInfo.environment["SHELLO_SSHD_PORT"].flatMap(Int.init) ?? 2299 }
     override func setUpWithError() throws {
         guard let d = ProcessInfo.processInfo.environment["SHELLO_SSHD_DIR"] else { throw XCTSkip("SHELLO_SSHD_DIR not set") }
         dir = d
@@ -14,9 +15,9 @@ final class SSHConnectionTests: XCTestCase {
     func key(_ name: String) throws -> Data { try Data(contentsOf: URL(fileURLWithPath: dir + "/" + name)) }
     func hostLine(_ file: String) throws -> String {
         let f = String(decoding: try key(file + ".pub"), as: UTF8.self).split(separator: " ")
-        return "[127.0.0.1]:2299 \(f[0]) \(f[1])\n"
+        return "[127.0.0.1]:\(port) \(f[0]) \(f[1])\n"
     }
-    func connection() -> SSHConnection { SSHConnection(host: "127.0.0.1", port: 2299, user: ProcessInfo.processInfo.environment["SHELLO_SSHD_USER"] ?? NSUserName()) }
+    func connection() -> SSHConnection { SSHConnection(host: "127.0.0.1", port: port, user: ProcessInfo.processInfo.environment["SHELLO_SSHD_USER"] ?? NSUserName()) }
 
     func testUnknownHostKeyThenTrusted() throws {
         let c = connection()
@@ -35,7 +36,7 @@ final class SSHConnectionTests: XCTestCase {
             try c.connect(credentials: .privateKey(try key("user_ed25519"), passphrase: nil), knownHosts: try hostLine(host))
             XCTAssertEqual(try c.run("echo ok").status, 0)
         }
-        let bad = "[127.0.0.1]:2299 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UmKboyWgZ+DLu5DUp6ok1DJ3kKIs\n"
+        let bad = "[127.0.0.1]:\(port) ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UmKboyWgZ+DLu5DUp6ok1DJ3kKIs\n"
         XCTAssertThrowsError(try connection().connect(credentials: .privateKey(try key("user_ed25519"), passphrase: nil), knownHosts: bad)) {
             XCTAssertEqual($0 as? SSHError, .hostKeyMismatch)
         }
@@ -54,7 +55,7 @@ final class SSHConnectionTests: XCTestCase {
         }
     }
     func testWrongUserFailsAuthentication() throws {
-        let c = SSHConnection(host: "127.0.0.1", port: 2299, user: "nobody-\(UUID().uuidString.prefix(6))")
+        let c = SSHConnection(host: "127.0.0.1", port: port, user: "nobody-\(UUID().uuidString.prefix(6))")
         XCTAssertThrowsError(try c.connect(credentials: .privateKey(try key("user_ed25519"), passphrase: nil), knownHosts: try hostLine("host_ed25519"))) {
             XCTAssertEqual($0 as? SSHError, .authentication)
         }
@@ -104,6 +105,24 @@ final class SSHConnectionTests: XCTestCase {
         waitFor("20 70", get)
         ch.write(Data("exit\n".utf8))
         wait(for: [closed], timeout: 10)
+    }
+
+    func testChannelCanDeallocateWithOutputStillQueued() throws {
+        for _ in 0..<20 {
+            let c = connection()
+            try c.connect(credentials: .privateKey(try key("user_ed25519"), passphrase: nil), knownHosts: try hostLine("host_ed25519"))
+            let callbacks = DispatchQueue(label: "shello.tests.held-output")
+            callbacks.suspend()
+            defer { callbacks.resume(); callbacks.sync {} }
+            var channel: ShellChannel? = try ShellChannel(connection: c, command: "printf SHELLO_QUEUED_OUTPUT", columns: 80, rows: 24, callbackQueue: callbacks)
+            weak var released = channel
+            channel?.start()
+            channel = nil
+            let deadline = Date().addingTimeInterval(10)
+            while released != nil && Date() < deadline { Thread.sleep(forTimeInterval: 0.01) }
+            XCTAssertNil(released, "The finished pump must release its channel even while output callbacks are suspended")
+            if released != nil { return }
+        }
     }
     /// Wires a channel to a VT session exactly as the app does: output -> VT -> replies back to the PTY.
     final class Screen {
