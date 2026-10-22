@@ -1,0 +1,6 @@
+dev.ghostty.android.sample.SettingsActivityTest:..
+dev.ghostty.android.sample.SessionPreviewStoreTest:....
+
+Time: 5.298
+
+OK (6 tests)

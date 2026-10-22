@@ -10,8 +10,8 @@ android {
         applicationId = "dev.ghostty.android.sample"
         minSdk = 27
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.1.0-alpha07"
+        versionCode = 8
+        versionName = "0.1.0-alpha08"
         ndk { abiFilters += "arm64-v8a" }
     }
     buildTypes { getByName("release") { isMinifyEnabled = true; proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro") } }

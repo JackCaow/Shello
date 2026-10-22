@@ -1,0 +1,45 @@
+{
+  "version": "0.1.0-alpha08",
+  "version_code": 8,
+  "date": "2026-10-22",
+  "merged_pr": "https://github.com/JackCaow/Shello/pull/1",
+  "merged_commit": "299d3c9673dd9e658faba42d8e386c0e379da9ed",
+  "scope": "Release preflight; hosted tag workflow separately rebuilds, signs and publishes",
+  "checks": {
+    "merge_head_ci": "Both Android library jobs succeeded at 5f8ba0e77d644602cd7b3bb8dd21e4073c08802f",
+    "build": "JDK 17 assembleDebug/assembleDebugAndroidTest/assembleRelease, sample/terminal lintRelease passed",
+    "release_script_tests": 6,
+    "pairing_launcher_tests": 2,
+    "tag_metadata": "v0.1.0-alpha08 exactly matches versionName",
+    "api27": {
+      "tests": 6,
+      "coverage": "Theme persistence/migration and session preview cache",
+      "log": "alpha08-api27.txt"
+    },
+    "api35": {
+      "tests": 6,
+      "coverage": "Theme persistence/migration and session preview cache",
+      "log": "alpha08-api35.txt"
+    },
+    "signed_clean_install": {
+      "api": 35,
+      "device": "Fresh temporary Pixel 7 AVD, arm64-v8a",
+      "version_name": "0.1.0-alpha08",
+      "version_code": 8,
+      "result": "Install succeeded, cold launch reached home; screenshot inspected, no AndroidRuntime crash logged"
+    },
+    "release_certificate_sha256": "2a28be23a3a37b400c9ba0ad85325b4d8785efc7b396e4bb6b944045d7027ad5",
+    "local_signed_apk_sha256": "fe22537b4dd01cbb577e91c8e478836fcd3a8b67546592d06e276c320c970ff0"
+  },
+  "prior_device_matrix": [
+    "../input-controls/design-audit.json",
+    "../input-controls/file-types.json",
+    "../input-controls/acceptance.json"
+  ],
+  "limitations": [
+    "Physical USB/Bluetooth keyboard hotplug and OS-delivered shortcuts remain unverified because no physical keyboard was available.",
+    "Fresh install smoke test is not a new real SSH/TUI end-to-end acceptance.",
+    "Existing development-phone data was not uninstalled or replaced with the release-signed APK.",
+    "No Maven publication."
+  ]
+}
