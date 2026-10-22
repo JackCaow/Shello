@@ -6,6 +6,7 @@ Local validation (2026-10-22):
 
 - `:sample:assembleDebug`, `:sample:assembleDebugAndroidTest`, `:sample:lintRelease`, `:terminal:lintRelease`: passed.
 - API 27 ARM64 disposable emulator, `PairingWslTest`: 6/6 passed. Windows/Tailscale command copy, platform/network retention after Activity recreation, in-flight state retention, retry deduplication response/port/pin rejection and bounded certificate clock skew.
+- API 27 landscape layout: `AdaptiveLayoutTest#pairingAndInboxAreBounded` passed.
 - `PairingForwardedDeviceTest`: 1/1 passed with `scripts/test-forwarded-pairing.py`. Real HTTPS with bad certificate pin rejected, RSA public-key append, strict SSH host-key verification through an advertised non-22 port, tmux availability, encrypted saved profile, reconnect to the same tmux pane PID and missing SSH pin rejection. Loopback macOS SSH fixture plus adb forwarding; not Windows networking.
 - `python3 -m unittest discover -s tests -p 'test_pair_*.py' -v`: 18/18 passed. Includes actual TLS through an independent TCP proxy with different advertised/listening ports and existing authorized_keys preservation.
 - PowerShell 7.6.7 on macOS: 84 assertions passed. Native argv round-trip (including Unicode and spaces), embedded helper consistency, LAN/Tailscale choice, CIDR scoping, localized WSL2 listings, foreign mapping/rule preservation, finite lease and HTTPS-only cleanup, read-only check and resumable prerequisites. Windows machine operations mocked.

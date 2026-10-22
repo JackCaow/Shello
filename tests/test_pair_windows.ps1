@@ -43,7 +43,7 @@ try{
  $python=if($env:OS -eq 'Windows_NT'){'python'}else{'python3'}
  $result=Invoke-ShelloCommand (Get-Command $python).Source (@($child)+$values)
  Assert ($result.Code -eq 0) 'Native child exit'
- $actual=@($result.Text|ConvertFrom-Json)
+ $actual=$result.Text|ConvertFrom-Json
  Assert ($actual.Count -eq $values.Count) ('Native argv count: expected '+$values.Count+' got '+$actual.Count+'; output='+$result.Text+'; encoded='+ (Join-NativeArguments (@($child)+$values)))
  for($i=0;$i -lt $values.Count;$i++){Assert ($actual[$i] -ceq $values[$i]) "Native argv round trip $i"}
 }finally{Remove-Item -LiteralPath $child -Force -ErrorAction SilentlyContinue}
