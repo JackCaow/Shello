@@ -49,7 +49,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 python3 /path/to/shello-pair/scripts/start_pairing.py --network auto --ssh-port 22 --ttl 300
 ```
 
-- 仓库内复用 `companion/pair.sh`；复制出去的独立 skill 自动下载并校验固定 v0.1.0 launcher。只下载官方地址，SHA-256 不匹配就停止；不要忽略校验。可用 `--launcher /absolute/path/pair.sh` 明确指定用户信任的本地版本。
+- 仓库内复用 `companion/pair.sh`；复制出去的独立 skill 自动下载并校验固定 v0.1.1 launcher。只下载官方地址，SHA-256 不匹配就停止；不要忽略校验。可用 `--launcher /absolute/path/pair.sh` 明确指定用户信任的本地版本。
 - `auto` 优先已连接的 Tailscale，否则局域网；可用 `--network lan|tailscale` 或 `--host <电脑的 IPv4>`。不要为配对自动加入 tailnet、切换账号或设置路由器端口转发。
 - 工具会先校验服务证书 pin，然后输出 JSON `ready` 事件，包含 `qr_image`、`expires_at_unix`。**立刻读取并在当前对话内展示该本地 PNG**，提示手机打开 **Shello → + → 扫码轻松配对**。支持图片时不能只贴文件路径；没有图片能力的终端可在另一个调用里运行事件提供的 `renderer_python` 与 `render_qr.py <qr_payload_file> <qr_image> --ascii` 显示文本二维码。
 - 服务保持运行时才能配对。等待期间用短时轮询读取进展，避免阻塞整个对话；二维码失效则告诉用户并按需要重新启动。会话终止、过期或中断时会清理临时二维码、payload 和日志。不要把这些文件提交、上传到图床、发送第三方解码服务或保存进 README；也不要打印原始 token。

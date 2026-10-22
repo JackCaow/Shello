@@ -38,11 +38,12 @@ jobs:
       - name: Check pairing launcher
         run: |
           python3 scripts/generate-pair-script.py
-          git diff --exit-code -- companion/pair.sh
+          python3 scripts/generate-windows-pair.py
+          git diff --exit-code -- companion/pair.sh companion/pair.ps1 skills/shello-pair/scripts/pair.ps1
           bash -n companion/pair.sh scripts/package-apk.sh scripts/publish-release.sh
           python3 -m unittest discover -s tests -p 'test_release*.py' -v
           command -v tmux >/dev/null || brew install tmux
-          python3 -m unittest discover -s tests -p 'test_pair_launcher.py' -v
+          python3 -m unittest discover -s tests -p 'test_pair_*.py' -v
       - name: Build native library and validate release
         run: |
           scripts/build-native.sh
@@ -83,6 +84,7 @@ jobs:
           path: |
             build/releases/${{ steps.metadata.outputs.tag }}/*.apk
             build/releases/${{ steps.metadata.outputs.tag }}/shello-pair.sh
+            build/releases/${{ steps.metadata.outputs.tag }}/shello-pair.ps1
             build/releases/${{ steps.metadata.outputs.tag }}/SHA256SUMS
             build/releases/${{ steps.metadata.outputs.tag }}/signature.txt
       - name: Summary

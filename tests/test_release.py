@@ -20,7 +20,7 @@ class ReleaseTest(unittest.TestCase):
         result = subprocess.run(['python3', str(ROOT / 'scripts/release-metadata.py')], env=env, capture_output=True, text=True, check=True)
         self.assertIn('tag=v', result.stdout)
 
-    def publish(self, existing='', fail_upload=False):
+    def publish(self, existing='', fail_upload=False, corrupt_windows=False):
         with tempfile.TemporaryDirectory() as temp:
             folder = Path(temp)
             log = folder / 'calls'
@@ -33,10 +33,11 @@ if sys.argv[1] == 'api': print(os.environ.get('EXISTING',''))
 if sys.argv[1:3] == ['release','upload'] and os.environ['FAIL_UPLOAD'] == '1': sys.exit(1)
 ''')
             gh.chmod(0o755)
-            for name in ('Shello-1.2.3-alpha01-arm64-v8a.apk', 'shello-pair.sh', 'signature.txt'):
+            for name in ('Shello-1.2.3-alpha01-arm64-v8a.apk', 'shello-pair.sh', 'shello-pair.ps1', 'signature.txt'):
                 (folder / name).write_text('test artifact')
             import hashlib
-            (folder / 'SHA256SUMS').write_text(''.join(hashlib.sha256((folder / name).read_bytes()).hexdigest()+'  '+name+'\n' for name in ('Shello-1.2.3-alpha01-arm64-v8a.apk','shello-pair.sh')))
+            (folder / 'SHA256SUMS').write_text(''.join(hashlib.sha256((folder / name).read_bytes()).hexdigest()+'  '+name+'\n' for name in ('Shello-1.2.3-alpha01-arm64-v8a.apk','shello-pair.sh','shello-pair.ps1')))
+            if corrupt_windows: (folder / 'shello-pair.ps1').write_text('corrupt')
             env = dict(os.environ, PATH=temp+os.pathsep+os.environ['PATH'], CALL_LOG=str(log), EXISTING=existing,
                        FAIL_UPLOAD=str(int(fail_upload)), GH_REPO='example/Shello', RELEASE_TAG='v1.2.3-alpha01')
             result = subprocess.run(['bash', str(ROOT / 'scripts/publish-release.sh'), temp], env=env, capture_output=True, text=True)
@@ -47,7 +48,12 @@ if sys.argv[1:3] == ['release','upload'] and os.environ['FAIL_UPLOAD'] == '1': s
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(['api','release','release','release'], [call[0] for call in calls])
         self.assertEqual('create', calls[1][1]); self.assertIn('--draft', calls[1]); self.assertIn('--prerelease', calls[1])
-        self.assertEqual('upload', calls[2][1]); self.assertEqual('edit', calls[3][1]); self.assertIn('--draft=false', calls[3])
+        self.assertEqual('upload', calls[2][1]); self.assertTrue(any(arg.endswith('shello-pair.ps1') for arg in calls[2])); self.assertEqual('edit', calls[3][1]); self.assertIn('--draft=false', calls[3])
+
+    def test_corrupt_windows_launcher_stops_before_release_creation(self):
+        result, calls = self.publish(corrupt_windows=True)
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse(any(call[:2] == ['release','create'] for call in calls))
 
     def test_failed_upload_leaves_draft(self):
         result, calls = self.publish(fail_upload=True)

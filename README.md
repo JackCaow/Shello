@@ -5,7 +5,7 @@
 <p align="center"><strong>Your remote terminal, in your pocket.</strong></p>
 <p align="center">Native Android terminal · SSH + tmux · QR pairing · Claude Code / Codex sessions</p>
 <p align="center">
-  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk">Download APK</a> ·
+  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk">Download APK</a> ·
   <a href="#quick-pairing">Quick pairing</a> ·
   <a href="skills/shello-pair/SKILL.md">Agent skill</a> ·
   <a href="docs/DEVELOPMENT.md">Build & embed</a> ·
@@ -20,7 +20,7 @@ Shello is an open-source Android terminal for working on your computer from your
 
 ### 1. Install Shello on your phone
 
-[**Download Shello APK · v0.1.0**](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) — Android 8.1+, arm64-v8a. Already installed? Continue to step 2. If updating an older debug build, read the [signing and data notes](docs/RELEASING.md) before uninstalling it.
+[**Download Shello APK · v0.1.1**](https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk) — Android 8.1+, arm64-v8a. Already installed? Continue to step 2. If updating an older debug build, read the [signing and data notes](docs/RELEASING.md) before uninstalling it.
 
 ### 2. Copy this prompt to an agent on your computer
 
@@ -56,7 +56,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $shelloPairScript
 
 The script prepares WSL2, Python, OpenSSL, SSH and tmux, then displays a QR code. First setup may require Windows UAC, a restart and initializing an ordinary Linux user; rerun afterwards. Connections open **WSL Linux**, not native PowerShell. Existing SSH configuration, keys and tmux sessions are preserved.
 
-Defaults: Windows-host SSH **2222**, temporary HTTPS **8765**. Add `-Network tailscale` or `-Network lan`; `-Check` only inspects prerequisites. SSH remains available after pairing; temporary pairing forwarding is removed. Rerun after Windows/WSL restarts or address changes. The existing v0.1.0 APK can scan the code; the Windows command selector in the pairing screen requires a subsequent build. Windows machine operations are mocked in CI; a real Windows end-to-end run is still pending. [Setup details and limits](skills/shello-pair/references/windows-wsl.md)
+Defaults: Windows-host SSH **2222**, temporary HTTPS **8765**. Add `-Network tailscale` or `-Network lan`; `-Check` only inspects prerequisites. SSH remains available after pairing; temporary pairing forwarding is removed. Rerun after Windows/WSL restarts or address changes. The v0.1.1 pairing screen includes a Windows command selector. Windows machine operations are mocked in CI; a real Windows end-to-end run is still pending. [Setup details and limits](skills/shello-pair/references/windows-wsl.md)
 
 </details>
 
@@ -84,7 +84,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
   | bash -s -- --host 192.168.1.10 --ssh-port 2222
 ```
 
-Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.0`.
+Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall. Pass `--help` for all options. To use the launcher shipped with the current APK, replace `main` in the URL with `v0.1.1`.
 
 ### 3. Scan from Shello
 
@@ -149,11 +149,11 @@ Tapping a saved connection authenticates over SSH before opening the **Tmux / �
 
 | Item | Details |
 | --- | --- |
-| Current release | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
-| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
+| Current release | [v0.1.1](https://github.com/JackCaow/Shello/releases/tag/v0.1.1) |
+| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk) |
 | Android | Android 8.1 / API 27 or newer |
 | Architecture | arm64-v8a only; no 32-bit ARM or x86 APK |
-| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
+| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.1/SHA256SUMS) |
 | Future versions | [All releases](https://github.com/JackCaow/Shello/releases) |
 
 Open the downloaded APK on your phone and follow Android's installation prompts. Public releases use a different certificate from early debug builds and **cannot overwrite those debug installs**. Uninstalling removes local connections and credentials; preserve development installs containing important data. See [signing and upgrade notes](docs/RELEASING.md).

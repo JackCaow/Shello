@@ -18,7 +18,7 @@ trap 'rm -f "$notes"' EXIT
 cat > "$notes" <<EOF_NOTES
 Shello $version — Android 8.1+ (API 27), arm64-v8a.
 
-Signed release APK, standalone pairing launcher, SHA-256 checksums and certificate details are attached.
+Signed release APK, standalone macOS/Linux and Windows pairing launchers, SHA-256 checksums and certificate details are attached.
 
 Pair on an SSH-enabled Mac/Linux host with Python 3.9+, OpenSSL and tmux:
 
@@ -26,14 +26,28 @@ Pair on an SSH-enabled Mac/Linux host with Python 3.9+, OpenSSL and tmux:
 curl -fsSL https://raw.githubusercontent.com/$GH_REPO/$RELEASE_TAG/companion/pair.sh | bash
 \`\`\`
 
+Windows 11 / WSL2 (run in your ordinary user's PowerShell):
+
+\`\`\`powershell
+Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/$GH_REPO/$RELEASE_TAG/companion/pair.ps1' -OutFile shello-pair.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./shello-pair.ps1
+\`\`\`
+
+Windows opens WSL Linux, not native PowerShell. First setup may require UAC, a restart and initializing a Linux user; rerun afterwards. Real Windows-to-phone end-to-end acceptance is still pending; Windows PowerShell 5.1/7 CI and isolated Linux/Android transport tests passed.
+
 Then select **+ → Pair with QR code** in Shello. Release APKs use the same signing certificate as v0.1.0-alpha02. Earlier debug-signed installations cannot be overwritten; uninstalling them removes saved connection data.
 
 No Maven packages are published. See the source commit history for changes.
 EOF_NOTES
+release_notes="$(cd "$(dirname "$0")/.." && pwd)/docs/releases/$RELEASE_TAG.md"
+if [[ -f "$release_notes" ]]; then
+    printf '\n' >> "$notes"
+    cat "$release_notes" >> "$notes"
+fi
 if [[ "$existing" != true ]]; then
     args=(--verify-tag --draft --title "Shello $RELEASE_TAG" --notes-file "$notes")
     if [[ "$version" == *-* ]]; then args+=(--prerelease); fi
     gh release create "$RELEASE_TAG" "${args[@]}"
 fi
-gh release upload "$RELEASE_TAG" --clobber "$assets/Shello-$version-arm64-v8a.apk" "$assets/shello-pair.sh" "$assets/SHA256SUMS" "$assets/signature.txt"
+gh release upload "$RELEASE_TAG" --clobber "$assets/Shello-$version-arm64-v8a.apk" "$assets/shello-pair.sh" "$assets/shello-pair.ps1" "$assets/SHA256SUMS" "$assets/signature.txt"
 gh release edit "$RELEASE_TAG" --draft=false

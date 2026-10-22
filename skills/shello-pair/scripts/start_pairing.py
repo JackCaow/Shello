@@ -16,8 +16,8 @@ import time
 from urllib.parse import parse_qs, urlparse
 from urllib.request import urlopen
 
-RELEASE_URL = 'https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0/companion/pair.sh'
-RELEASE_SHA256 = '1be4e668458e8d40ec6da4f176f405a81af3d96126c69c22909528944f31497a'
+RELEASE_URL = 'https://raw.githubusercontent.com/JackCaow/Shello/v0.1.1/companion/pair.sh'
+RELEASE_SHA256 = 'f6268ff8bf19ec421f59b96839059c0827b27d129a6febf7d41ee69856aae41a'
 
 
 def emit(event, **fields):

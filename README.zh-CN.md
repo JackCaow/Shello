@@ -5,7 +5,7 @@
 <p align="center"><strong>把远端终端，放进口袋。</strong></p>
 <p align="center">Android 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
 <p align="center">
-  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk">下载 APK</a> ·
+  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk">下载 APK</a> ·
   <a href="#快速配对">快速配对</a> ·
   <a href="skills/shello-pair/SKILL.md">Agent Skill</a> ·
   <a href="docs/DEVELOPMENT.md">构建与接入</a> ·
@@ -20,7 +20,7 @@ Shello 是开源 Android 远程终端。用手机连接自己的电脑或服务�
 
 ### 1. 手机安装 Shello
 
-[**下载 Shello APK · v0.1.0**](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk)，支持 Android 8.1+、arm64-v8a。已经安装可直接进行下一步。升级旧调试版前，请先阅读[签名与数据说明](docs/RELEASING.md)，不要直接卸载仍有重要数据的版本。
+[**下载 Shello APK · v0.1.1**](https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk)，支持 Android 8.1+、arm64-v8a。已经安装可直接进行下一步。升级旧调试版前，请先阅读[签名与数据说明](docs/RELEASING.md)，不要直接卸载仍有重要数据的版本。
 
 ### 2. 在电脑上把这段话发给 Agent
 
@@ -55,7 +55,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $shelloPairScript
 
 脚本准备 WSL2、Python、OpenSSL、SSH 和 tmux，展示二维码。首次安装可能需要 Windows UAC、重启及手动初始化普通 Linux 用户，完成后重跑即可。连接目标是 **WSL Linux**，不是原生 PowerShell；已有 SSH 配置、密钥和 tmux 会话保留。
 
-默认使用 Windows 地址的 SSH **2222**、临时 HTTPS **8765**；可加 `-Network tailscale` 或 `-Network lan`。`-Check` 仅检查前置环境。配对结束后保留 SSH，清理临时配对端口。Windows/WSL 重启或地址变化后需重跑。现有 v0.1.0 APK 可以扫码；配对页的 Windows 命令选择入口属于后续构建。Windows 系统操作由 CI mock 验证，尚无 Windows 真机端到端验收。[完整说明与限制](skills/shello-pair/references/windows-wsl.md)
+默认使用 Windows 地址的 SSH **2222**、临时 HTTPS **8765**；可加 `-Network tailscale` 或 `-Network lan`。`-Check` 仅检查前置环境。配对结束后保留 SSH，清理临时配对端口。Windows/WSL 重启或地址变化后需重跑。v0.1.1 APK 的配对页可以直接选择 Windows 命令。Windows 系统操作由 CI mock 验证，尚无 Windows 真机端到端验收。[完整说明与限制](skills/shello-pair/references/windows-wsl.md)
 
 </details>
 
@@ -95,7 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 使用与当前 APK 对应的固定版本：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.0/companion/pair.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/v0.1.1/companion/pair.sh | bash
 ```
 
 查看全部参数：
@@ -174,11 +174,11 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 
 | 项目 | 说明 |
 | --- | --- |
-| 当前正式版 | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
-| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
+| 当前正式版 | [v0.1.1](https://github.com/JackCaow/Shello/releases/tag/v0.1.1) |
+| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk) |
 | Android 要求 | Android 8.1 / API 27 及以上 |
 | 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
-| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
+| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.1/SHA256SUMS) |
 | 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
 
 下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。

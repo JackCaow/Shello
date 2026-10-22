@@ -22,5 +22,6 @@ rm "$output/aligned.apk"
 expected=2a28be23a3a37b400c9ba0ad85325b4d8785efc7b396e4bb6b944045d7027ad5
 grep -q "certificate SHA-256 digest: $expected" "$output/signature.txt" || { echo 'Unexpected release signing certificate' >&2; exit 1; }
 cp "$root/companion/pair.sh" "$output/shello-pair.sh"
-(cd "$output" && shasum -a 256 "Shello-$version-arm64-v8a.apk" shello-pair.sh > SHA256SUMS)
+cp "$root/companion/pair.ps1" "$output/shello-pair.ps1"
+(cd "$output" && shasum -a 256 "Shello-$version-arm64-v8a.apk" shello-pair.sh shello-pair.ps1 > SHA256SUMS)
 echo "$output"
