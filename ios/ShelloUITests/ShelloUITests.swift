@@ -18,7 +18,7 @@ final class ShelloUITests: XCTestCase {
         app = XCUIApplication()
         let profileDir = NSTemporaryDirectory() + "shello-ui-\(UUID().uuidString)"
         app.launchArguments = ["-SHELLO_UI_TEST", "-SHELLO_TEST_PROFILE_DIR", profileDir, "-AppleLanguages", "(\(language))", "-AppleLocale", language == "en" ? "en_US" : "zh_CN"] + extra
-        if seed { app.launchArguments += ["-SHELLO_TEST_SEED_KEY_B64", env["SHELLO_SEED_KEY_B64"] ?? "", "-SHELLO_TEST_SEED_PUB", env["SHELLO_SEED_HOSTPUB"] ?? "", "-SHELLO_TEST_USER", user, "-SHELLO_TEST_HOST", host] }
+        if seed { app.launchArguments += ["-SHELLO_TEST_SEED_KEY_B64", env["SHELLO_SEED_KEY_B64"] ?? "", "-SHELLO_TEST_SEED_PUB", env["SHELLO_SEED_HOSTPUB"] ?? "", "-SHELLO_TEST_USER", user, "-SHELLO_TEST_HOST", host, "-SHELLO_TEST_PORT", env["SHELLO_SSHD_PORT"] ?? "2299"] }
         // The Local Network permission prompt appears on a physical device (never on the Simulator); allow it.
         addUIInterruptionMonitor(withDescription: "system alerts") { alert in
             let allow = alert.buttons.matching(NSPredicate(format: "label IN {'Allow','OK','允许','好','Allow While Using App'}")).firstMatch

@@ -30,15 +30,35 @@ cd ios; xcodegen generate >/dev/null
 step 'package tests (engine, core, ssh, terminal view, services)'
 xcodebuild test -workspace . -scheme ShelloKit-Package -destination "$dest" -parallel-testing-enabled NO -resultBundlePath "$work/package.xcresult" 2>&1 | tee "$work/package.log" | grep -E "error:|Executed [0-9]+ tests.*\)$|TEST (SUCCEEDED|FAILED)" | tail -4
 grep -q 'TEST SUCCEEDED' "$work/package.log"
-step 'app tests + UI flows'
-scripts_dir=$root/scripts; "$scripts_dir/ios-test-pair.sh" stop "$work/sshd" || true; "$scripts_dir/ios-test-pair.sh" start "$work/sshd"; seed_env
-xcodebuild test -project Shello.xcodeproj -scheme Shello ${SHELLO_ONLY:+-only-testing:$SHELLO_ONLY} -destination "$dest" -parallel-testing-enabled NO -resultBundlePath "$work/app.xcresult" 2>&1 | tee "$work/app.log" | grep -E "error:|Test Case.*(failed)|Executed [0-9]+ tests.*\)$|TEST (SUCCEEDED|FAILED)" | tail -6
-grep -q 'TEST SUCCEEDED' "$work/app.log"
+scripts_dir=$root/scripts
+critical=(ShelloUITests/ShelloUITests/testPairingEndToEndThenShell ShelloUITests/ShelloUITests/testSavedConnectionOpensShellAndRunsCommands ShelloUITests/UIReviewTests/testRootEdgeSwipeDoesNotBlockOpeningAnotherPage)
+run_app_tests() {
+ local app_dest=$1 prefix=$2 models=$3 test
+ local -a smoke remaining
+ step "$prefix: critical UI flows (fresh pairing ticket, SSH state and root edge-back)"
+ "$scripts_dir/ios-test-pair.sh" stop "$work/sshd" || true
+ "$scripts_dir/ios-test-pair.sh" start "$work/sshd"; seed_env
+ if [[ -z ${SHELLO_ONLY:-} ]]; then
+  smoke=()
+  [[ $models == 1 ]] && smoke+=(-only-testing:ShelloAppTests)
+  for test in "${critical[@]}"; do smoke+=("-only-testing:$test"); done
+  # The ticket expires after 10 minutes. Run its flow before the lengthy screenshot walkthroughs.
+  xcodebuild test -project Shello.xcodeproj -scheme Shello "${smoke[@]}" -destination "$app_dest" -parallel-testing-enabled NO -resultBundlePath "$prefix-smoke.xcresult" 2>&1 | tee "$prefix-smoke.log" | grep -E "error:|Test Case.*(passed|failed|skipped)|Executed [0-9]+ tests|TEST (SUCCEEDED|FAILED)"
+  grep -q 'TEST SUCCEEDED' "$prefix-smoke.log"
+ fi
+ step "$prefix: remaining UI flows"
+ remaining=()
+ if [[ -n ${SHELLO_ONLY:-} ]]; then remaining+=("-only-testing:$SHELLO_ONLY"); else
+  remaining+=(-skip-testing:ShelloAppTests)
+  for test in "${critical[@]}"; do remaining+=("-skip-testing:$test"); done
+ fi
+ xcodebuild test -project Shello.xcodeproj -scheme Shello "${remaining[@]}" -destination "$app_dest" -parallel-testing-enabled NO -resultBundlePath "$prefix.xcresult" 2>&1 | tee "$prefix.log" | grep -E "error:|Test Case.*(passed|failed|skipped)|Executed [0-9]+ tests|TEST (SUCCEEDED|FAILED)"
+ grep -q 'TEST SUCCEEDED' "$prefix.log"
+}
+run_app_tests "$dest" "$work/app" 1
 if [[ -n $ipad ]]; then
  step "UI flows on iPad ($ipad)"; xcrun simctl boot "$ipad" 2>/dev/null || true
- "$scripts_dir/ios-test-pair.sh" stop "$work/sshd" || true; "$scripts_dir/ios-test-pair.sh" start "$work/sshd"; seed_env
- xcodebuild test -project Shello.xcodeproj -scheme Shello -only-testing:ShelloUITests -destination "platform=iOS Simulator,id=$ipad" -parallel-testing-enabled NO -resultBundlePath "$work/ipad.xcresult" 2>&1 | tee "$work/ipad.log" | grep -E "error:|Test Case.*(failed)|TEST (SUCCEEDED|FAILED)" | tail -4
- grep -q 'TEST SUCCEEDED' "$work/ipad.log"
+ run_app_tests "platform=iOS Simulator,id=$ipad" "$work/ipad" 0
 fi
 step 'release build for devices (unsigned)'
 xcodebuild -project Shello.xcodeproj -scheme Shello -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO -derivedDataPath "$work/dd" build 2>&1 | tee "$work/release.log" | grep -E "error:|BUILD" | tail -2

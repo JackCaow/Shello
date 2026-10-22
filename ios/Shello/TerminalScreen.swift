@@ -74,18 +74,9 @@ struct TerminalScreen: View {
                 }.frame(minWidth: 48, minHeight: 44).accessibilityIdentifier("terminal.overview").accessibilityLabel(tr("sessions"))
                 if let t = sessions.selected { HeaderTitle(tab: t).layoutPriority(1) }
                 Spacer(minLength: 0)
-                Menu {
-                    if let t = sessions.selected {
-                        if t.isConnected { Button(tr("disconnect_ssh")) { sessions.disconnect(t) } } else { Button(tr("reconnect_ssh")) { sessions.connect(t) } }
-                        Button(tr("scroll_to_bottom")) { controller.view?.scrollToBottom() }
-                        Button(tr("close"), role: .destructive) { confirmClose = true }
-                    }
-                } label: {
-                    Text(sessions.selected?.isConnected == true ? "SSH" : "···").appFont(size: 13, weight: .medium)
-                        .foregroundColor(Color(red: 0.4, green: 0.65, blue: 1)).padding(.horizontal, 12).frame(height: 32)
-                        .background(Color(red: 0.4, green: 0.65, blue: 1).opacity(0.18), in: Capsule())
-                }.frame(minHeight: 44).accessibilityIdentifier("terminal.menu").accessibilityLabel(tr("session_tools"))
-                    .accessibilityValue(sessions.selected?.isConnected == true ? "SSH" : "···")
+                if let tab = sessions.selected {
+                    TerminalConnectionMenu(tab: tab, controller: controller, confirmClose: $confirmClose)
+                }
             }.padding(.horizontal, 12)
         }
         .frame(maxWidth: .infinity).background(theme.terminalSheet)
@@ -93,6 +84,30 @@ struct TerminalScreen: View {
             Button(tr("close"), role: .destructive) { controller.perform("close_session") }.accessibilityIdentifier("terminal.close.confirm")
             Button(tr("cancel"), role: .cancel) {}
         }
+    }
+}
+
+/// Tab state changes do not publish through SessionManager's array of reference objects.
+/// Observe the selected tab so both the visual badge and its menu track reconnects.
+struct TerminalConnectionMenu: View {
+    @EnvironmentObject var sessions: SessionManager
+    @ObservedObject var tab: TerminalTab
+    let controller: TerminalController
+    @Binding var confirmClose: Bool
+
+    var body: some View {
+        Menu {
+            if tab.isConnected { Button(tr("disconnect_ssh")) { sessions.disconnect(tab) } }
+            else { Button(tr("reconnect_ssh")) { sessions.connect(tab) } }
+            Button(tr("scroll_to_bottom")) { controller.view?.scrollToBottom() }
+            Button(tr("close"), role: .destructive) { confirmClose = true }
+        } label: {
+            Text(tab.isConnected ? "SSH" : "···").appFont(size: 13, weight: .medium)
+                .foregroundColor(Color(red: 0.4, green: 0.65, blue: 1)).padding(.horizontal, 12).frame(height: 32)
+                .background(Color(red: 0.4, green: 0.65, blue: 1).opacity(0.18), in: Capsule())
+        }
+        .frame(minHeight: 44).accessibilityIdentifier("terminal.menu").accessibilityLabel(tr("session_tools"))
+        .accessibilityValue(tab.isConnected ? "SSH" : "···")
     }
 }
 

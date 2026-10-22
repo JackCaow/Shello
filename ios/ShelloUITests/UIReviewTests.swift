@@ -136,8 +136,10 @@ final class UIReviewTests: XCTestCase {
     }
 
     func edgeBack(fraction: CGFloat = 0.86, hold: TimeInterval = 0) {
-        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.003, dy: 0.42))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: fraction, dy: 0.42))
+        // At the root, ending over a saved-connection button can activate its picker
+        // when there is no pop recognizer. Use the empty right side of the session row.
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.003, dy: 0.25))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: fraction, dy: 0.25))
         start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: hold)
     }
     func dismissSheetByDraggingGrabber() {
