@@ -33,6 +33,20 @@ public class KeyboardProtocolTest {
             view.setSession(null);input.setTerminalView(null);
         }
     });}
+    @Test public void emptyCompositionCannotSwallowFollowingTerminalKeys(){InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+        try(TerminalSession session=new TerminalSession(40,4)){
+            TerminalView view=new TerminalView(InstrumentationRegistry.getInstrumentation().getTargetContext());List<String> sent=new ArrayList<>();
+            view.setListener(new TerminalView.Listener(){public void onInput(byte[] bytes){sent.add(text(bytes));}public void onResize(int c,int r){}});view.setSession(session);
+            TerminalInputView input=new TerminalInputView(view.getContext());input.setTerminalView(view);
+            InputConnection connection=input.onCreateInputConnection(new EditorInfo());
+            connection.setComposingText("zhong",1);assertTrue(sent.isEmpty());connection.setComposingText("",1);
+            input.onKeyDown(KeyEvent.KEYCODE_T,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_T));
+            input.onKeyUp(KeyEvent.KEYCODE_T,new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_T));
+            assertEquals(List.of("t"),sent);assertEquals("",input.getText().toString());
+            connection.setComposingText("zhongwen",1);assertEquals(1,sent.size());connection.commitText("中文",1);assertEquals(List.of("t","中文"),sent);
+            view.setSession(null);input.setTerminalView(null);
+        }
+    });}
     @Test public void pendingGesturesCannotSendToTheNextSession()throws Exception{
         TerminalView[] view={null};TerminalSession[] sessions=new TerminalSession[2];List<String> sent=new ArrayList<>();
         InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{sessions[0]=new TerminalSession(40,4);sessions[1]=new TerminalSession(40,4);view[0]=new TerminalView(InstrumentationRegistry.getInstrumentation().getTargetContext());view[0].setListener(new TerminalView.Listener(){public void onInput(byte[] b){sent.add(text(b));}public void onResize(int c,int r){}});view[0].setSession(sessions[0]);view[0].setGestureListener((g,x,y)->{view[0].sendKey(TerminalSession.Key.ESCAPE);return true;});View touch=view[0].getChildAt(1);long t=android.os.SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(t,t,0,20,20,0),up=MotionEvent.obtain(t,t+20,1,20,20,0);touch.dispatchTouchEvent(down);touch.dispatchTouchEvent(up);down.recycle();up.recycle();view[0].setSession(sessions[1]);});

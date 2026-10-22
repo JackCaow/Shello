@@ -24,12 +24,16 @@ public final class TerminalInputView extends EditText {
     public TerminalInputView(Context context) { this(context,null); }
     public TerminalInputView(Context context,AttributeSet attrs) {
         super(context,attrs);
-        setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        // Raw terminal keys must reach menus/Vim immediately instead of becoming an
+        // invisible English word in Latin IMEs. Do not force ASCII: CJK IMEs can
+        // still retain Pinyin candidates and commit the selected Unicode text.
+        setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         setHint(R.string.terminal_input_hint);setMinLines(1);setMaxLines(3);
     }
     public void setTerminalView(TerminalView terminal) { this.terminal=terminal;getText().clear(); }
-    private boolean composing(){return BaseInputConnection.getComposingSpanStart(getText())>=0;}
+    private boolean composing(){int start=BaseInputConnection.getComposingSpanStart(getText());return start>=0&&BaseInputConnection.getComposingSpanEnd(getText())>start;}
     @Override public InputConnection onCreateInputConnection(EditorInfo info) {
         InputConnection base=super.onCreateInputConnection(info);
         if(base==null)return null;
