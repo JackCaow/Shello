@@ -111,6 +111,12 @@ function Get-WindowsEndpoint([string]$Choice, [string]$Explicit) {
     $source = if ($tail) { '100.64.0.0/10' } else { Get-NetworkCidr $address $selected[0].PrefixLength }
     return [pscustomobject]@{ Address=$address; Remote=$source }
 }
+function Get-ForwardSource([string]$Target) {
+    # A mirrored WSL behind a Windows-only VPN need not use its Linux default gateway.
+    $local=@(Find-NetRoute -RemoteIPAddress $Target -ErrorAction Stop | Where-Object { $_.PSObject.Properties['IPAddress'] -and $_.IPAddress })
+    if($local.Count -ne 1 -or -not(Test-PairAddress $local[0].IPAddress)){throw 'Cannot determine the private Windows source address for WSL forwarding.'}
+    return $local[0].IPAddress
+}
 function Get-PortProxy([string]$Address,[int]$Port) {
     $r = Invoke-ShelloCommand 'netsh.exe' @('interface','portproxy','show','v4tov4')
     if ($r.Code -ne 0) { throw 'Cannot inspect existing port forwarding.' }
@@ -142,7 +148,7 @@ function Set-ShelloFirewall([string]$Name,$Plan,[int]$Port) {
         $hv=Get-NetFirewallHyperVRule -Name $hvName -ErrorAction SilentlyContinue
         if ($hv -and $hv.DisplayName -ne ('Shello owned '+$hvName)) { throw 'An unrelated Hyper-V firewall rule has this name.' }
         if ($hv) { Remove-NetFirewallHyperVRule -Name $hvName }
-        $remote=if ($Plan.Direct) { $Plan.Remote } else { $Plan.Gateway }
+        $remote=if ($Plan.Direct) { $Plan.Remote } else { $Plan.ForwardSource }
         New-NetFirewallHyperVRule -Name $hvName -DisplayName ('Shello owned '+$hvName) -Direction Inbound -VMCreatorId '{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}' -Protocol TCP -LocalPorts $Port -RemoteAddresses $remote | Out-Null
     }
 }
@@ -250,7 +256,8 @@ function Invoke-ShelloPairing {
         $direct=@($backend.addresses) -contains $endpoint.Address
         $group='Shello-WSL-'+(Get-ShelloHash ($owner+'|'+$endpoint.Address))
         $stateRoot=Join-Path $env:LOCALAPPDATA 'Shello\network';Protect-ShelloFolder $stateRoot
-        $plan=[pscustomobject]@{Address=$endpoint.Address;Remote=$endpoint.Remote;Direct=$direct;Gateway=$backend.gateway;Group=$group;
+        $forwardSource=if($direct){$null}else{Get-ForwardSource $backend.address}
+        $plan=[pscustomobject]@{Address=$endpoint.Address;Remote=$endpoint.Remote;Direct=$direct;ForwardSource=$forwardSource;Group=$group;
             Ssh=[pscustomobject]@{Address=$endpoint.Address;Port=$SshPort;Target=$backend.address;TargetPort=$SshPort};
             Pair=[pscustomobject]@{Address=$endpoint.Address;Port=$PairPort;Target=$backend.address;TargetPort=$PairPort};
             SshRule=$group+'-SSH';PairRule=$group+'-Pair-'+[Guid]::NewGuid().ToString('N');

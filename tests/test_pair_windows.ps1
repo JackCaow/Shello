@@ -33,6 +33,16 @@ Assert ((Get-WindowsEndpoint 'auto' '').Address -eq '100.90.1.2') 'Auto prefers 
 Assert ((Get-WindowsEndpoint 'lan' '').Remote -eq '192.168.15.0/24') 'LAN skips virtual interface'
 Reject {Get-WindowsEndpoint 'lan' '100.90.1.2'} 'does not match'
 Reject {Get-WindowsEndpoint 'auto' '192.168.15.111'} 'assigned'
+# Find-NetRoute emits both an address and a route object. Use the actual Windows
+# source for NAT and for a mirrored backend reached through a Windows-only VPN.
+function Find-NetRoute {param($RemoteIPAddress,$ErrorAction)
+ if($RemoteIPAddress -eq '172.20.0.2'){[pscustomobject]@{IPAddress='172.20.0.1'}}
+ elseif($RemoteIPAddress -eq '192.168.15.191'){[pscustomobject]@{IPAddress='192.168.15.191'}}
+ [pscustomobject]@{NextHop='192.168.15.1'}
+}
+Assert ((Get-ForwardSource '172.20.0.2') -eq '172.20.0.1') 'NAT proxy source'
+Assert ((Get-ForwardSource '192.168.15.191') -eq '192.168.15.191') 'Mirrored/VPN proxy source is not Linux gateway'
+Reject {Get-ForwardSource '8.8.8.8'} 'Cannot determine'
 # Round trip actual native argv including spaces, quotes, trailing backslashes and Unicode.
 $child=Join-Path ([IO.Path]::GetTempPath()) ('shello-argv-'+[Guid]::NewGuid()+'.py')
 try{
@@ -83,7 +93,7 @@ function New-NetFirewallHyperVRule {param($Name,$DisplayName,$Direction,$VMCreat
  $script:hv[$Name]=[pscustomobject]@{DisplayName=$DisplayName}
 }
 $script:busyPort=0
-$plan=[pscustomobject]@{Address='192.168.15.191';Remote='192.168.15.0/24';Direct=$false;Gateway='172.20.0.1';Group='test-owner';
+$plan=[pscustomobject]@{Address='192.168.15.191';Remote='192.168.15.0/24';Direct=$false;ForwardSource='172.20.0.1';Group='test-owner';
  Ssh=[pscustomobject]@{Address='192.168.15.191';Port=2222;Target='172.20.0.2';TargetPort=2222};
  Pair=[pscustomobject]@{Address='192.168.15.191';Port=8765;Target='172.20.0.2';TargetPort=8765};
  SshRule='test-ssh';PairRule='test-pair';State=(Join-Path $temp 'state.json');Ack=(Join-Path $temp 'ack.json');Stop=(Join-Path $temp 'stop');LeaseSeconds=1}

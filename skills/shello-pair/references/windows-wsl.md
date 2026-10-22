@@ -16,7 +16,7 @@
 
 `-Network auto|lan|tailscale`，auto 优先 Windows 的 Tailscale IPv4；`-HostAddress` 必须是本 Windows 主机已分配的私网 IPv4。不要加入 tailnet、开放路由器端口或禁用防火墙。
 
-WSL NAT 模式创建绑定该 Windows 地址的 `netsh portproxy`，以私有归属状态更新自己创建的 SSH 映射；遇到不属于 Shello 的端口/规则立即停止。镜像模式在所选地址确实存在于 WSL 时直连。Windows 防火墙仅放行所选 LAN 子网或 Tailscale 段的两个 TCP 端口；支持 Hyper-V 防火墙的系统同时配置对应来源。WSL 自己的 UFW/nftables 及 tailnet ACL 仍需允许这些端口，不能用关闭防火墙的方式修复。
+WSL NAT 模式创建绑定该 Windows 地址的 `netsh portproxy`，以私有归属状态更新自己创建的 SSH 映射；遇到不属于 Shello 的端口/规则立即停止。镜像模式在所选地址确实存在于 WSL 时直连。Windows 防火墙仅放行所选 LAN 子网或 Tailscale 段的两个 TCP 端口；支持 Hyper-V 防火墙的系统同时配置对应来源；经过端口转发时用 Windows 实际路由选择的源地址，不假定它等于 WSL 默认网关。WSL 自己的 UFW/nftables 及 tailnet ACL 仍需允许这些端口，不能用关闭防火墙的方式修复。
 
 转发后的 HTTPS 证书 pin 在展示二维码前复验；手机随后验证返回的 WSL SSH 指纹、Linux 用户及 SSH 端口。退出、过期或取消时清理本次 HTTPS 转发和临时规则。即使前端意外结束，网络子进程也在 TTL + 180 秒后清理临时映射；WSL 配对进程有自身期限。SSH 监听和 SSH 映射保留，非秘密日志在 `%LOCALAPPDATA%\Shello\network`。二维码和载荷在普通用户私有目录，不能提交或分享。
 
