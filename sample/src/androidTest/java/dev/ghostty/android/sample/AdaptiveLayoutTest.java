@@ -112,7 +112,14 @@ public class AdaptiveLayoutTest {
         Activity rotated=current;inst.runOnMainSync(()->current.setRequestedOrientation(orientation==Configuration.ORIENTATION_LANDSCAPE?ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));await(()->current!=rotated&&current.hasWindowFocus());
         inst.runOnMainSync(()->{EditText host=(EditText)field(current,"host");assertTrue(host.getWidth()<=dp(640));});capture("connection");
         inst.runOnMainSync(()->{EditText password=(EditText)field(current,"password");password.requestFocus();current.getSystemService(android.view.inputmethod.InputMethodManager.class).showSoftInput(password,0);});
-        await(()->decor().getRootWindowInsets()!=null&&(Build.VERSION.SDK_INT>=30?decor().getRootWindowInsets().isVisible(WindowInsets.Type.ime()):((View)field(current,"password")).hasFocus()));
+        await(()->{
+            if(Build.VERSION.SDK_INT>=30)return decor().getRootWindowInsets()!=null&&decor().getRootWindowInsets().isVisible(WindowInsets.Type.ime());
+            // On API 27 focus can precede the cold IME launch by more than 600 ms.
+            // Wait for its real viewport reduction before scrolling to the final action.
+            Rect frame=new Rect();decor().getWindowVisibleDisplayFrame(frame);
+            android.util.DisplayMetrics display=new android.util.DisplayMetrics();current.getWindowManager().getDefaultDisplay().getRealMetrics(display);
+            return ((View)field(current,"password")).hasFocus()&&display.heightPixels-frame.bottom>dp(80);
+        });
         SystemClock.sleep(600);inst.runOnMainSync(()->{View save=(View)field(current,"connectButton");ViewParent parent=save.getParent();while(!(parent instanceof ScrollView))parent=parent.getParent();((ScrollView)parent).scrollTo(0,((ScrollView)parent).getChildAt(0).getHeight());});SystemClock.sleep(400);
         capture("connection-keyboard");
         inst.runOnMainSync(()->inside((View)field(current,"connectButton")));capture("connection-keyboard");

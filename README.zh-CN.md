@@ -209,7 +209,7 @@ CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 
 - 输入草稿和待发送附件仅在服务运行期间保留，进程结束后不会恢复；已上传文件不会从电脑自动删除。
 - 恢复会话要求电脑及 tmux 仍在运行。厂商省电策略可能中断 SSH，重新打开应用后会尝试重连。
 - 暂不支持 Codex 交互式问题回复和云端推送。账号用量适配受已安装 CLI 和服务端接口影响，可能显示不可用。
-- 已测范围见[验证记录](docs/VALIDATION.md)及[正式版验收](docs/evidence/releases/v0.1.0/README.md)。
+- 已测范围见[验证记录](docs/VALIDATION.md)及[正式版验收](docs/evidence/releases/v0.1.1/README.md)。
 
 ## 开发与开源
 

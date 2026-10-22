@@ -180,7 +180,7 @@ Run `claude` or `codex` in the terminal, or use **最近** to find and resume ex
 - Draft text and staged attachments are retained for the running service, but are not restored after process death. Uploaded files are not automatically deleted from the host.
 - Remote recovery depends on the host and tmux remaining alive. Vendor battery restrictions can interrupt SSH; reopen the app to reconnect.
 - Codex interactive question replies and cloud push are not supported. Account usage adapters depend on the installed CLI/provider and may report unavailable.
-- See [validation](docs/VALIDATION.md) and [stable release acceptance](docs/evidence/releases/v0.1.0/README.md) for tested scope.
+- See [validation](docs/VALIDATION.md) and [stable release acceptance](docs/evidence/releases/v0.1.1/README.md) for tested scope.
 
 ## Development
 
