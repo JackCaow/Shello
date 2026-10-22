@@ -51,6 +51,7 @@ jobs:
         shell: powershell
         run: ./tests/test_pair_windows.ps1
       - name: Verify PowerShell 7 pairing lifecycle
+        if: success() || failure()
         shell: pwsh
         run: ./tests/test_pair_windows.ps1
   pairing-integration:
