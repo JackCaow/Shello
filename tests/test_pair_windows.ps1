@@ -34,11 +34,14 @@ Assert ((Get-WindowsEndpoint 'lan' '').Remote -eq '192.168.15.0/24') 'LAN skips 
 Reject {Get-WindowsEndpoint 'lan' '100.90.1.2'} 'does not match'
 Reject {Get-WindowsEndpoint 'auto' '192.168.15.111'} 'assigned'
 # Round trip actual native argv including spaces, quotes, trailing backslashes and Unicode.
-$child=Join-Path ([IO.Path]::GetTempPath()) ('shello-argv-'+[Guid]::NewGuid()+'.ps1')
+$child=Join-Path ([IO.Path]::GetTempPath()) ('shello-argv-'+[Guid]::NewGuid()+'.py')
 try{
- [IO.File]::WriteAllText($child,'[Console]::OutputEncoding = New-Object Text.UTF8Encoding($false); [Console]::Out.WriteLine((ConvertTo-Json -Compress -InputObject @($args)))')
+ [IO.File]::WriteAllText($child,'import json,sys; print(json.dumps(sys.argv[1:]))')
  $values=@('plain','two words','','a"b','C:\folder with space\','literal $() ; &','中文')
- $result=Invoke-ShelloCommand (Get-Process -Id $PID).Path (@('-NoProfile','-File',$child)+$values)
+ # powershell.exe -File discards empty arguments before the script receives them.
+ # Use an ordinary native argv consumer to test the quoting used for wsl.exe.
+ $python=if($env:OS -eq 'Windows_NT'){'python'}else{'python3'}
+ $result=Invoke-ShelloCommand (Get-Command $python).Source (@($child)+$values)
  Assert ($result.Code -eq 0) 'Native child exit'
  $actual=@($result.Text|ConvertFrom-Json)
  Assert ($actual.Count -eq $values.Count) 'Native argv count'

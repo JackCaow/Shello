@@ -44,6 +44,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Verify Windows PowerShell 5.1 pairing lifecycle
         shell: powershell
         run: ./tests/test_pair_windows.ps1

@@ -27,7 +27,7 @@ final class PairingClient {
         com.jcraft.jsch.KeyPair key=com.jcraft.jsch.KeyPair.genKeyPair(new JSch(),com.jcraft.jsch.KeyPair.RSA,3072);
         try{
             ByteArrayOutputStream privateKey=new ByteArrayOutputStream(),publicKey=new ByteArrayOutputStream();key.writePrivateKey(privateKey);key.writePublicKey(publicKey,"ghostty-android");
-            TrustManager[] trust={new X509TrustManager(){public X509Certificate[] getAcceptedIssuers(){return new X509Certificate[0];}public void checkClientTrusted(X509Certificate[] c,String a)throws CertificateException{throw new CertificateException("client");}public void checkServerTrusted(X509Certificate[] c,String a)throws CertificateException{try{if(c.length==0||!hex(MessageDigest.getInstance("SHA-256").digest(c[0].getEncoded())).equals(ticket.pin))throw new CertificateException("Pairing certificate mismatch");c[0].checkValidity();}catch(GeneralSecurityException e){throw new CertificateException(e);}}}};
+            TrustManager[] trust={new X509TrustManager(){public X509Certificate[] getAcceptedIssuers(){return new X509Certificate[0];}public void checkClientTrusted(X509Certificate[] c,String a)throws CertificateException{throw new CertificateException("client");}public void checkServerTrusted(X509Certificate[] c,String a)throws CertificateException{try{if(c.length==0||!hex(MessageDigest.getInstance("SHA-256").digest(c[0].getEncoded())).equals(ticket.pin))throw new CertificateException("Pairing certificate mismatch");checkCertificateTime(c[0].getNotBefore().getTime(),c[0].getNotAfter().getTime(),System.currentTimeMillis());}catch(GeneralSecurityException e){throw new CertificateException(e);}}}};
             SSLContext tls=SSLContext.getInstance("TLS");tls.init(null,trust,new SecureRandom());
             HttpsURLConnection connection=(HttpsURLConnection)new java.net.URL("https://"+ticket.host+":"+ticket.port+"/pair").openConnection();connection.setSSLSocketFactory(tls.getSocketFactory());
             // The QR pins the entire certificate, including the ephemeral identity; no CA/hostname fallback.
@@ -37,6 +37,11 @@ final class PairingClient {
             try{byte[] body=new JSONObject().put("token",ticket.token).put("publicKey",publicKey.toString("UTF-8")).toString().getBytes(StandardCharsets.UTF_8);connection.setFixedLengthStreamingMode(body.length);try(OutputStream out=connection.getOutputStream()){out.write(body);}if(connection.getResponseCode()!=200)throw new IOException("Pairing rejected or expired");try(InputStream in=connection.getInputStream()){response=new JSONObject(new String(read(in,32768),StandardCharsets.UTF_8));}}finally{connection.disconnect();}
             return responseDraft(ticket,response,privateKey.toByteArray());
         }finally{key.dispose();}
+    }
+    // Ephemeral certificates start at host time; a phone can lag by a few seconds.
+    // The complete certificate pin and QR expiry are still checked independently.
+    static void checkCertificateTime(long notBefore,long notAfter,long now)throws CertificateException {
+        if(notBefore>now+30000||notAfter<now-30000)throw new CertificateException("Pairing certificate time mismatch");
     }
     static SshProfileStore.Draft responseDraft(Ticket ticket,JSONObject response,byte[] privateKey)throws Exception {
         if(response.getInt("version")!=1)throw new IOException("Unsupported pairing response");

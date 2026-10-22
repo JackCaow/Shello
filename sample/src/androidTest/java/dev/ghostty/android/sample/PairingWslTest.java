@@ -35,6 +35,11 @@ public class PairingWslTest {
     private View text(View view,String label){if(view instanceof TextView&&label.contentEquals(((TextView)view).getText()))return view;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++){View found=text(g.getChildAt(i),label);if(found!=null)return found;}}return null;}
     private PairingClient.Ticket ticket(){return new PairingClient.Ticket("ghostty-pair://v1?host=192.168.15.191&port=8765&pin="+"a".repeat(64)+"&token="+"b".repeat(43)+"&expires="+(System.currentTimeMillis()/1000+300));}
     private JSONObject reply()throws Exception{return new JSONObject().put("version",1).put("name","Windows / Ubuntu (WSL2)").put("user","tester").put("port",2222).put("hostKeys",new JSONArray().put("ssh-ed25519 AAAA"));}
+    @Test public void ephemeralCertificateAllowsOnlySmallClockSkew()throws Exception{
+        long now=System.currentTimeMillis();PairingClient.checkCertificateTime(now+1000,now+86400000,now);
+        PairingClient.checkCertificateTime(now+30000,now+86400000,now);
+        for(long[] dates:new long[][]{{now+30001,now+86400000},{now-86400000,now-30001}}){try{PairingClient.checkCertificateTime(dates[0],dates[1],now);fail("Certificate outside bounded skew accepted");}catch(java.security.cert.CertificateException expected){}}
+    }
     @Test public void forwardedSshPortUsesWindowsAddressAndOwnPinLabel()throws Exception{
         byte[] key={1,2,3};SshProfileStore.Draft draft=PairingClient.responseDraft(ticket(),reply(),key);key[0]=9;
         assertEquals("192.168.15.191",draft.host);assertEquals(2222,draft.port);assertEquals("tester",draft.user);assertTrue(draft.tmux);assertEquals(1,draft.privateKey[0]);
