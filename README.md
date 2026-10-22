@@ -46,6 +46,16 @@ Open the downloaded APK on your phone and follow Android's installation prompts.
 
 ## Quick pairing
 
+### Let an agent prepare the computer
+
+Ask your agent to use [the Shello pairing skill](skills/shello-pair/SKILL.md):
+
+> Use `skills/shello-pair/SKILL.md` to prepare this computer for Shello. Install missing dependencies, configure SSH and tmux, then show the pairing QR code.
+
+The skill supports macOS, Debian/Ubuntu and Fedora/RHEL. It preserves existing SSH keys/configuration and tmux sessions, and displays a temporary PNG without requiring Pillow. System authentication, when needed, stays in your own terminal or system settings. The skill folder can also be copied into your agent's skills directory; outside this repository it downloads and verifies the pinned official launcher.
+
+For manual setup, follow the steps below.
+
 ### 1. Prepare your computer
 
 Use a Mac or Linux computer reachable from the phone, normally on the same LAN. You need SSH enabled, Python **3.9+**, OpenSSL, tmux and curl. On macOS, enable Remote Login. Allow the phone to reach the SSH port and the temporary HTTPS pairing port.

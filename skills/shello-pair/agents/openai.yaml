@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shello 配对"
+  short_description: "检查依赖并配置 SSH 与 tmux，启动 Shello 扫码配对并展示二维码"
+  default_prompt: "使用 $shello-pair 配置这台电脑，自动补齐依赖并展示 Shello 配对二维码。"

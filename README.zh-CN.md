@@ -46,6 +46,16 @@ Android 应用已发布 **v0.1.0**。可嵌入的终端库仍处于实验阶段�
 
 ## 快速配对
 
+### 让 Agent 自动配置电脑
+
+将[仓库内的 Shello 配对 skill](skills/shello-pair/SKILL.md) 交给 Agent：
+
+> 使用 `skills/shello-pair/SKILL.md` 配置这台电脑，自动安装缺失依赖、配置 SSH 与 tmux，最后展示配对二维码。
+
+支持 macOS、Debian/Ubuntu 和 Fedora/RHEL，保留已有 SSH 密钥、配置和 tmux 会话；二维码输出为临时 PNG，不需要 Pillow。需要系统认证时，在自己的终端或系统设置中完成。也可将整个 skill 文件夹复制到 Agent 的技能目录；脱离本仓库时，它会下载并校验固定版本的官方配对脚本。
+
+手动配置可按以下步骤进行。
+
 ### 1. 准备电脑
 
 手机和电脑应在同一局域网，或能直接访问彼此的网络。电脑需要：

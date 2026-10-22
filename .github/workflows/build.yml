@@ -27,6 +27,11 @@ jobs:
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.2.13676358'
       - run: python3 scripts/generate-pair-script.py && git diff --exit-code -- companion/pair.sh
       - run: bash -n companion/pair.sh scripts/package-apk.sh
+      - name: Validate Shello pairing skill
+        run: |
+          command -v tmux >/dev/null || brew install tmux
+          bash -n skills/shello-pair/scripts/bootstrap.sh
+          python3 -m unittest discover -s tests -p 'test_pair_skill.py' -v
       - run: ./scripts/verify.sh
       - run: ./scripts/check-artifact.sh
       - uses: actions/upload-artifact@v4
