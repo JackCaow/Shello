@@ -1,0 +1,98 @@
+name: Shello
+options:
+  bundleIdPrefix: dev.ghostty
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.1"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  ShelloKit:
+    path: .
+targets:
+  Shello:
+    type: application
+    platform: iOS
+    sources:
+      - path: Shello
+      - path: ../sample/src/main/assets/ghostty_hook.py
+        buildPhase: resources
+      - path: ../terminal/src/main/resources/META-INF/ghostty-android
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: ShelloKit
+        product: ShelloTerminal
+      - package: ShelloKit
+        product: ShelloTerminalUI
+      - package: ShelloKit
+        product: ShelloCore
+      - package: ShelloKit
+        product: ShelloSSH
+      - package: ShelloKit
+        product: ShelloServices
+    info:
+      path: Shello/Info.plist
+      properties:
+        CFBundleDisplayName: Shello
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleLocalizations: [en, zh-Hans]
+        CFBundleDevelopmentRegion: en
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSCameraUsageDescription: Shello uses the camera only to scan the pairing QR code shown on your computer, and for photo attachments you choose to send.
+        NSLocalNetworkUsageDescription: Shello connects to SSH servers on your local network and finds computers to pair with.
+        NSBonjourServices: [_ssh._tcp]
+        NSPhotoLibraryAddUsageDescription: Shello saves nothing to your library.
+        ITSAppUsesNonExemptEncryption: false
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        UIFileSharingEnabled: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ghostty.shello
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_EMIT_LOC_STRINGS: YES
+  ShelloAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [ShelloAppTests]
+    dependencies:
+      - target: Shello
+      - package: ShelloKit
+        product: ShelloServices
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ghostty.shello.apptests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Shello.app/Shello
+        BUNDLE_LOADER: $(TEST_HOST)
+  ShelloUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [ShelloUITests]
+    dependencies:
+      - target: Shello
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ghostty.shello.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Shello:
+    build:
+      targets:
+        Shello: all
+    test:
+      targets: [ShelloAppTests, ShelloUITests]

@@ -7,6 +7,7 @@ explicitly with `install`; `uninstall` removes only this script's hook handlers.
 import fcntl
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import shutil
@@ -187,6 +188,70 @@ def message_preview(value):
     return text[:8192].decode('utf-8', errors='ignore') + ('…' if len(text) > 8192 else '')
 
 
+def claude_transcript_reply(value):
+    """Older Claude Stop payloads omit the reply; read only this session's bounded transcript tail."""
+    name, session = value.get('transcript_path'), value.get('session_id')
+    if not isinstance(name, str) or not isinstance(session, str) or not session:
+        return ''
+    path = Path(name)
+    try:
+        if path.suffix != '.jsonl' or path.is_symlink() or path.stat().st_uid != os.getuid():
+            return ''
+        with path.open('rb') as stream:
+            stream.seek(0, 2)
+            stream.seek(max(0, stream.tell() - 524288))
+            rows = stream.read(524288).splitlines()
+        for line in reversed(rows):
+            try:
+                row = json.loads(line)
+            except (ValueError, UnicodeDecodeError):
+                continue
+            if not isinstance(row, dict) or row.get('sessionId') != session or row.get('isSidechain') is True:
+                continue
+            message = row.get('message', {})
+            if not isinstance(message, dict):
+                continue
+            content = message.get('content', [])
+            if row.get('type') == 'assistant' and message.get('role') == 'assistant':
+                text = content if isinstance(content, str) else '\n'.join(item.get('text', '') for item in content if isinstance(item, dict) and item.get('type') == 'text' and isinstance(item.get('text'), str)) if isinstance(content, list) else ''
+                if text.strip():
+                    return message_preview(text)
+            if row.get('type') == 'user' and (isinstance(content, str) or isinstance(content, list) and any(isinstance(item, dict) and item.get('type') == 'text' for item in content)):
+                break
+    except (OSError, ValueError):
+        pass
+    return ''
+
+
+def claude_executables():
+    # Several CLI installs can share settings; remain compatible with the oldest installed one.
+    candidates = [shutil.which('claude'), binary('claude')]
+    candidates += [str(AGENT_HOME / folder / 'claude') for folder in ('.local/bin', '.npm-global/bin', '.bun/bin')]
+    candidates += ['/opt/homebrew/bin/claude', '/usr/local/bin/claude']
+    return sorted({str(Path(name).resolve()) for name in candidates if name and Path(name).is_file() and os.access(name, os.X_OK)})
+
+
+def claude_version():
+    try:
+        versions = []
+        for executable in claude_executables():
+            result = subprocess.run([executable, '--version'], capture_output=True, text=True, timeout=3, check=True)
+            match = re.search(r'(\d+)\.(\d+)\.(\d+)', result.stdout[:256])
+            if not match:
+                return None
+            versions.append(tuple(int(part) for part in match.groups()))
+        return min(versions) if versions else None
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+
+
+def claude_hook_kinds():
+    kinds = ('PermissionRequest', 'PreToolUse', 'Notification', 'Stop', 'SessionStart', 'UserPromptSubmit', 'SessionEnd')
+    version = claude_version()
+    # StopFailure was introduced in 2.1.78; unknown event keys invalidate older clients' entire hooks config.
+    return kinds + (('StopFailure',) if version is not None and version >= (2, 1, 78) else ())
+
+
 def hook(value, provider='claude'):
     if provider not in ('claude', 'codex'):
         raise ValueError('unsupported provider')
@@ -201,6 +266,8 @@ def hook(value, provider='claude'):
         event['prompt_preview'] = message_preview(value.get('prompt'))
     if kind == 'Stop':
         event['last_assistant_message'] = message_preview(value.get('last_assistant_message'))
+        if provider == 'claude' and not event['last_assistant_message']:
+            event['last_assistant_message'] = claude_transcript_reply(value)
     event['provider'] = provider
     process = agent_process()
     if process:event.update(process)
@@ -268,7 +335,7 @@ def configure_file(settings, provider, remove):
             else:
                 del hooks[kind]
         if not remove:
-            kinds = ('PermissionRequest', 'SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd') if provider == 'codex' else ('PermissionRequest', 'PreToolUse', 'Notification', 'Stop', 'StopFailure', 'SessionStart', 'UserPromptSubmit', 'SessionEnd')
+            kinds = ('PermissionRequest', 'SessionStart', 'UserPromptSubmit', 'Stop', 'Interrupt', 'SessionEnd') if provider == 'codex' else claude_hook_kinds()
             for kind in kinds:
                 timeout = 180 if kind in ('PermissionRequest', 'PreToolUse') else 3 if kind in ('Interrupt', 'SessionEnd') else 10
                 group = {'hooks': [{'type': 'command', 'command': command, 'timeout': timeout}]}

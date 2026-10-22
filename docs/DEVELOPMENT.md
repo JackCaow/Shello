@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [API contract](API.md) · [Validation](VALIDATION.md)
 
-Shello contains an installable Android application (`sample`) and a transport-independent terminal library (`terminal`). The library uses the pinned Ghostty VT engine with Android Canvas rendering; it does not embed the Ghostty desktop renderer. Maven packages are not publicly published.
+Shello is an Android / iOS monorepo. The Android application (`sample`) and transport-independent terminal library (`terminal`) use the pinned Ghostty VT engine with Android Canvas rendering. The iOS app and Swift packages live in `ios/`, with their C bridge in `native/`; see [iOS build and verification](IOS_MIGRATION.md). Both apps share `companion/`, the pairing skill and the bundled agent hook. Neither app embeds the Ghostty desktop renderer. Maven packages are not publicly published.
 
 ## Build
 

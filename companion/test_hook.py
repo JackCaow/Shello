@@ -24,8 +24,10 @@ class HookTest(unittest.TestCase):
         hook.private_dir(hook.STATE)
         hook.WAIT = 2
         self.bridge=patch.object(hook,"configure_usage_bridge",return_value="test");self.bridge.start()
+        self.version=patch.object(hook,"claude_version",return_value=None);self.version.start()
 
     def tearDown(self):
+        self.version.stop()
         self.bridge.stop()
         self.temp.cleanup()
 
@@ -75,6 +77,45 @@ class HookTest(unittest.TestCase):
         self.assertEqual(event['last_assistant_message'], '完成 👩🏽‍💻')
         with self.assertRaises(ValueError):
             hook.respond({'id': event['id'], 'behavior': 'allow'})
+
+    def test_old_claude_stop_recovers_own_last_reply_without_retaining_transcript(self):
+        transcript = Path(self.temp.name) / 'session.jsonl'
+        rows = [
+            {'type':'assistant','sessionId':'other','message':{'role':'assistant','content':[{'type':'text','text':'wrong session'}]}},
+            {'type':'user','sessionId':'session-1','message':{'role':'user','content':'current prompt'}},
+            {'type':'assistant','sessionId':'session-1','message':{'role':'assistant','content':[{'type':'thinking','thinking':'private'},{'type':'text','text':'完成 👩🏽‍💻'}]}},
+            {'type':'assistant','sessionId':'session-1','isSidechain':True,'message':{'role':'assistant','content':'wrong subagent'}},
+        ]
+        transcript.write_text('\n'.join(json.dumps(row) for row in rows))
+        hook.hook({'hook_event_name':'Stop','session_id':'session-1','transcript_path':str(transcript)})
+        event = hook.poll()['events'][0]
+        self.assertEqual(event['last_assistant_message'],'完成 👩🏽‍💻')
+        self.assertNotIn('transcript_path',event)
+        self.assertNotIn('private',json.dumps(event))
+
+    def test_transcript_fallback_does_not_reuse_previous_turn_or_follow_symlink(self):
+        path = Path(self.temp.name) / 'session.jsonl'
+        rows = [{'type':'assistant','sessionId':'s','message':{'role':'assistant','content':'previous reply'}},
+                {'type':'user','sessionId':'s','message':{'role':'user','content':'new turn'}}]
+        path.write_text('\n'.join(json.dumps(row) for row in rows))
+        self.assertEqual(hook.claude_transcript_reply({'session_id':'s','transcript_path':str(path)}),'')
+        link = Path(self.temp.name) / 'linked.jsonl';link.symlink_to(path)
+        self.assertEqual(hook.claude_transcript_reply({'session_id':'s','transcript_path':str(link)}),'')
+
+    def test_claude_optional_hooks_use_oldest_of_parallel_cli_installs(self):
+        from types import SimpleNamespace
+        self.version.stop()
+        with patch.object(hook,'claude_executables',return_value=['old','new']), patch.object(hook.subprocess,'run',side_effect=[SimpleNamespace(stdout='2.1.19 (Claude Code)'),SimpleNamespace(stdout='2.1.306 (Claude Code)')]):
+            self.assertEqual(hook.claude_version(),(2,1,19))
+        self.version.start()
+
+    def test_hook_registration_matches_claude_version(self):
+        for version, expected in [((2,1,19),False),((2,1,77),False),((2,1,78),True),((3,0,0),True),(None,False)]:
+            with patch.object(hook,'claude_version',return_value=version):
+                hook.configure()
+            kinds=hook.read(hook.SETTINGS)['hooks']
+            self.assertEqual('StopFailure' in kinds,expected)
+            self.assertIn('Stop',kinds)
 
     def test_install_idempotent_uninstall_preserves_other_hooks(self):
         existing = {'model': 'keep-this', 'hooks': {'Stop': [{'hooks': [{'type': 'command', 'command': 'echo keep'}]}]}}

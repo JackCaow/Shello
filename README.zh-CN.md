@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">Shello</h1>
 <p align="center"><strong>把远端终端，放进口袋。</strong></p>
-<p align="center">Android 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
+<p align="center">Android 与 iOS 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
 <p align="center">
   <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.1/Shello-0.1.1-arm64-v8a.apk">下载 APK</a> ·
   <a href="#快速配对">快速配对</a> ·
@@ -12,7 +12,19 @@
   <a href="README.md">English</a>
 </p>
 
-Shello 是开源 Android 远程终端。用手机连接自己的电脑或服务器，运行命令、使用 Claude Code / Codex，并恢复远端会话。
+Shello 是开源远程终端。用手机连接自己的电脑或服务器，运行命令、使用 Claude Code / Codex，并恢复远端会话。
+
+## 平台与仓库结构
+
+本 monorepo 包含两端原生应用，以及共享的电脑端配对和智能体集成。
+
+| 平台 | 源码 | 获取方式 |
+| --- | --- | --- |
+| Android 8.1+（API 27），ARM64 | `sample/` 应用、`terminal/` 终端库 | [下载 APK](https://github.com/JackCaow/Shello/releases/latest) |
+| iOS / iPadOS 16+ | `ios/` 应用及 Swift 包、`native/` VT 桥接 | 源码预览版，在 macOS 上使用 Xcode 构建；尚未发布 TestFlight 或 App Store 版本。 |
+| 电脑端 companion | `companion/`、`skills/shello-pair/` | 两端共享配对、SSH + tmux 配置和 Claude / Codex Hook |
+
+参阅 [Android 构建与接入](docs/DEVELOPMENT.md)和 [iOS 构建、测试及限制](docs/IOS_MIGRATION.md)。CI 覆盖两端构建与测试，暂未发布 Maven 包。
 
 ## 快速配对
 
