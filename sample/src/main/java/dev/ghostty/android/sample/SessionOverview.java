@@ -29,10 +29,10 @@ final class SessionOverview {
     private final Runnable autoScroll=new Runnable(){public void run(){if(dragging!=null&&scrollDirection!=0){scroll.smoothScrollBy(dp(18)*scrollDirection,0);scroll.postDelayed(this,40);}}};
     SessionOverview(Activity activity,FrameLayout stage,View background,Actions actions){
         this.activity=activity;this.stage=stage;this.background=background;this.actions=actions;
-        root=column();header=row();header.setMinimumHeight(dp(36));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
+        root=column();header=row();header.setMinimumHeight(dp(48));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
         TextView title=SampleUi.sectionTitle(activity,tr(R.string.sessions));header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         done=SampleUi.text(activity,tr(R.string.done),16,SampleUi.GREEN);done.setGravity(Gravity.CENTER);done.setContentDescription(tr(R.string.finish_reordering_sessions));done.setFocusable(true);
-        done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));header.addView(done,new LinearLayout.LayoutParams(dp(64),dp(36)));done.setVisibility(View.GONE);
+        done.setBackground(SampleUi.touch(activity,0xff14271e,18));done.setOnClickListener(v->setOrdering(false));done.setPadding(dp(12),dp(8),dp(12),dp(8));UiDesign.touch(done);header.addView(done,new LinearLayout.LayoutParams(-2,-2));done.setVisibility(View.GONE);
         scroll=new HorizontalScrollView(activity);scroll.setHorizontalScrollBarEnabled(false);scroll.setClipToPadding(false);
         cards=row();cards.setGravity(Gravity.TOP);scroll.addView(cards,new HorizontalScrollView.LayoutParams(-2,-2));root.addView(scroll);
         scroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
@@ -41,10 +41,10 @@ final class SessionOverview {
             for(int i=0;i<cards.getChildCount();i++){
                 LinearLayout card=(LinearLayout)cards.getChildAt(i);
                 ViewGroup.LayoutParams cp=card.getLayoutParams();cp.width=width;card.setLayoutParams(cp);
-                View thumb=card.getChildAt(0);ViewGroup.LayoutParams tp=thumb.getLayoutParams();tp.width=width;tp.height=width;thumb.setLayoutParams(tp);
+                View thumb=card.getChildAt(0);ViewGroup.LayoutParams tp=thumb.getLayoutParams();tp.width=width;tp.height=tabs.isEmpty()?-2:width;if(tabs.isEmpty())thumb.setMinimumHeight(width);thumb.setLayoutParams(tp);
             }
         });
-        hint=SampleUi.text(activity,"",12,0xff777c82);hint.setIncludeFontPadding(false);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);hint.setMaxWidth(dp(260));header.addView(hint);
+        hint=SampleUi.text(activity,"",12,SampleUi.MUTED);hint.setIncludeFontPadding(false);hint.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);hint.setMaxWidth(dp(260));header.addView(hint);
         scroll.setOnDragListener((v,event)->{
             if(!(event.getLocalState() instanceof String)||!ordering)return false;
             switch(event.getAction()){
@@ -71,10 +71,10 @@ final class SessionOverview {
             LinearLayout card=column();card.setContentDescription(tr(R.string.resume_session_name,tab.name()));card.setFocusable(true);
             card.setOnClickListener(v->{if(!ordering)actions.open(tab.id);});
             FrameLayout thumb=thumbnail(tab);card.addView(thumb,new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
-            TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon("server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(4),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,dp(32)));
+            TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon("server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(8),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,-2));
             String sessionLabel=tab.sessionName().trim();TextView type=SampleUi.text(activity,sessionLabel,14,0xff00bc00);type.setSingleLine();type.setEllipsize(android.text.TextUtils.TruncateAt.END);type.setIncludeFontPadding(false);type.setGravity(Gravity.CENTER_VERTICAL);
             if(!sessionLabel.isEmpty()){ToolbarIcon prompt=new ToolbarIcon("terminal",dp(16),0xff00bc00);prompt.setBounds(0,0,dp(16),dp(16));type.setCompoundDrawables(prompt,null,null,null);type.setCompoundDrawablePadding(dp(5));}
-            card.addView(type,new LinearLayout.LayoutParams(-1,dp(24)));
+            LinearLayout.LayoutParams typeParams=new LinearLayout.LayoutParams(-1,-2);typeParams.topMargin=dp(UiDesign.TEXT_GAP);card.addView(type,typeParams);
             card.setOnLongClickListener(v->{if(ordering)beginDrag(card,tab.id);else showContext(card,thumb,tab);return true;});
             // Directional accessibility actions let keyboard/TalkBack users reorder without dragging.
             card.setAccessibilityDelegate(new View.AccessibilityDelegate(){
@@ -90,13 +90,13 @@ final class SessionOverview {
                 TextView left=SampleUi.header(activity,"left",tr(R.string.move_earlier_258_name,tab.name()),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)-1));
                 TextView right=SampleUi.header(activity,"right",tr(R.string.move_later_259_name,tab.name()),SampleUi.TEXT,()->actions.move(tab.id,tabs.indexOf(tab)+1));
                 left.setEnabled(tabs.indexOf(tab)>0);right.setEnabled(tabs.indexOf(tab)<tabs.size()-1);left.setAlpha(left.isEnabled()?1:.3f);right.setAlpha(right.isEnabled()?1:.3f);
-                controls.addView(left,new LinearLayout.LayoutParams(0,dp(44),1));controls.addView(right,new LinearLayout.LayoutParams(0,dp(44),1));card.addView(controls);
+                controls.addView(left,new LinearLayout.LayoutParams(0,dp(48),1));controls.addView(right,new LinearLayout.LayoutParams(0,dp(48),1));card.addView(controls);
             }
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(cardWidth(),-2);cp.rightMargin=dp(12);cards.addView(card,cp);
         }
         if(tabs.isEmpty()){
             hint.setText("");
-            LinearLayout empty=column();empty.addView(HomeEmptyState.card(activity,true,actions::create),new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
+            LinearLayout empty=column();View invitation=HomeEmptyState.card(activity,true,actions::create);invitation.setMinimumHeight(cardWidth());empty.addView(invitation,new LinearLayout.LayoutParams(cardWidth(),-2));
             cards.addView(empty,new LinearLayout.LayoutParams(cardWidth(),-2));
         }
         else hint.setText(ordering?(tabs.size()==1?tr(R.string.only_one_session_open_more_connections_to_reorder_them):tr(R.string.long_press_and_drag_sessions_to_reorder)):tr(R.string.long_press_for_options));
@@ -174,5 +174,5 @@ final class SessionOverview {
     }
     private int dp(int n){return SampleUi.dp(activity,n);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);return l;}
-    private LinearLayout row(){LinearLayout l=new LinearLayout(activity);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
+    private LinearLayout row(){LinearLayout l=new LinearLayout(activity);l.setGravity(Gravity.CENTER_VERTICAL);l.setBaselineAligned(false);return l;}
 }

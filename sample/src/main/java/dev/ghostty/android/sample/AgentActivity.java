@@ -39,9 +39,9 @@ public final class AgentActivity extends ScreenActivity {
     @Override protected void onStart(){super.onStart();if(hub.preferences.getBoolean("keepScreenOn",false))getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);hub.attach(update);hub.main.post(tick);}
     @Override protected void onStop(){getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);hub.main.removeCallbacks(tick);hub.detach(update);super.onStop();}
     @Override void section(String text){
-        TextView label=SampleUi.text(this,text,13,SampleUi.MUTED);
+        TextView label=SampleUi.sectionTitle(this,text);
         label.setPadding(0,body.getChildCount()==0?0:dp(16),0,dp(12));
-        label.setLineSpacing(dp(4),1);body.addView(label);
+        body.addView(label);
     }
     @Override View item(String title,String detail,String icon,Runnable action){
         LinearLayout card=row();card.setPadding(dp(16),dp(18),dp(16),dp(18));
@@ -49,10 +49,10 @@ public final class AgentActivity extends ScreenActivity {
         card.setContentDescription(title);card.setFocusable(true);
         card.addView(SampleUi.icon(this,icon,SampleUi.MUTED),new LinearLayout.LayoutParams(dp(24),dp(24)));
         LinearLayout text=column();text.setPadding(dp(14),0,dp(12),0);
-        TextView label=SampleUi.text(this,title,17,SampleUi.TEXT);label.setLineSpacing(dp(3),1);text.addView(label);
+        TextView label=SampleUi.text(this,title,17,SampleUi.TEXT);text.addView(label);
         if(detail!=null&&!detail.isEmpty()){
-            TextView subtitle=SampleUi.text(this,detail,13,SampleUi.MUTED);subtitle.setLineSpacing(dp(3),1);
-            LinearLayout.LayoutParams caption=new LinearLayout.LayoutParams(-1,-2);caption.topMargin=dp(6);text.addView(subtitle,caption);
+            TextView subtitle=SampleUi.text(this,detail,13,SampleUi.MUTED);
+            LinearLayout.LayoutParams caption=new LinearLayout.LayoutParams(-1,-2);caption.topMargin=dp(4);text.addView(subtitle,caption);
         }
         card.addView(text,new LinearLayout.LayoutParams(0,-2,1));
         card.addView(SampleUi.icon(this,"right",SampleUi.MUTED),new LinearLayout.LayoutParams(dp(20),dp(20)));
@@ -67,18 +67,18 @@ public final class AgentActivity extends ScreenActivity {
     private String label(String en,String zh){return getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?zh:en;}
     private void actionGroup(){View gap=new View(this);body.addView(gap,new LinearLayout.LayoutParams(1,dp(12)));}
     private boolean requestHeader;
-    private void inboxHeader(){requestHeader=false;header.removeAllViews();header.setMinimumHeight(dp(72));header.setPadding(dp(16),0,dp(16),0);
-        View spacer=new View(this);header.addView(spacer,new LinearLayout.LayoutParams(0,1,1));
-        header.addView(SampleUi.header(this,"home",label("Home","首页"),SampleUi.TEXT,this::finish),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        header.addView(SampleUi.header(this,"settings",tr(R.string.settings),SampleUi.TEXT,()->startActivity(SettingsNavigation.intent(this,"hook"))),new LinearLayout.LayoutParams(dp(48),dp(48)));
+    private void inboxHeader(){requestHeader=false;header.removeAllViews();header.setMinimumHeight(dp(UiDesign.NAVIGATION));header.setPadding(0,0,0,0);
+        heading.setText(tr(R.string.agent_inbox));heading.setPadding(dp(16),0,0,0);UiDesign.type(heading,UiDesign.Type.TITLE);header.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+        header.addView(SampleUi.header(this,"home",label("Home","首页"),SampleUi.TEXT,this::finish),new LinearLayout.LayoutParams(dp(56),dp(56)));
+        header.addView(SampleUi.header(this,"settings",tr(R.string.settings),SampleUi.TEXT,()->startActivity(SettingsNavigation.intent(this,"hook"))),new LinearLayout.LayoutParams(dp(56),dp(56)));
     }
     private void buildInbox(){
         if(built)return;built=true;inboxHeader();
         android.content.SharedPreferences prefs=hub.preferences;provider=prefs.getString("filter_provider",null);hostFilter=prefs.getString("filter_host",null);projectFilter=prefs.getString("filter_project",null);
-        LinearLayout controls=row();controls.setPadding(dp(16),dp(8),dp(16),dp(12));search=new EditText(this);SampleUi.field(search);search.setSingleLine();search.setTextSize(15);search.setHint(label("Search agents, hosts, projects","搜索智能体、主机、项目"));search.setContentDescription("agent_search");search.setText(prefs.getString("search",""));
-        controls.addView(search,new LinearLayout.LayoutParams(0,dp(48),1));
-        View filter=SampleUi.header(this,"filter",label("Filters","筛选"),SampleUi.TEXT,()->filters());filter.setContentDescription("agent_filters");filter.setBackground(SampleUi.touch(this,SampleUi.FIELD,24));LinearLayout.LayoutParams fp=new LinearLayout.LayoutParams(dp(44),dp(44));fp.leftMargin=dp(8);controls.addView(filter,fp);
-        View usage=SampleUi.header(this,"pulse",label("Usages","用量"),SampleUi.TEXT,this::showUsages);usage.setContentDescription("agent_usages");usage.setBackground(SampleUi.touch(this,SampleUi.FIELD,24));LinearLayout.LayoutParams up=new LinearLayout.LayoutParams(dp(44),dp(44));up.leftMargin=dp(8);controls.addView(usage,up);
+        LinearLayout controls=row();controls.setGravity(android.view.Gravity.CENTER_VERTICAL);controls.setPadding(dp(16),dp(8),dp(16),dp(16));search=new EditText(this);SampleUi.field(search);search.setSingleLine();search.setHint(label("Search agents, hosts, projects","搜索智能体、主机、项目"));search.setContentDescription("agent_search");search.setText(prefs.getString("search",""));
+        controls.addView(search,new LinearLayout.LayoutParams(0,-2,1));
+        View filter=SampleUi.header(this,"filter",label("Filters","筛选"),SampleUi.TEXT,()->filters());filter.setContentDescription("agent_filters");filter.setBackground(SampleUi.touch(this,SampleUi.FIELD,24));LinearLayout.LayoutParams fp=new LinearLayout.LayoutParams(dp(48),dp(48));fp.leftMargin=dp(8);controls.addView(filter,fp);
+        View usage=SampleUi.header(this,"pulse",label("Usages","用量"),SampleUi.TEXT,this::showUsages);usage.setContentDescription("agent_usages");usage.setBackground(SampleUi.touch(this,SampleUi.FIELD,24));LinearLayout.LayoutParams up=new LinearLayout.LayoutParams(dp(48),dp(48));up.leftMargin=dp(8);controls.addView(usage,up);
         root.addView(AdaptiveLayout.centered(this,controls,640,null),1);body.setPadding(dp(16),0,dp(16),dp(16));cards=column();body.addView(cards);
         usageBar=row();usageBar.setMinimumHeight(dp(52));usageBar.setPadding(dp(8),0,dp(8),0);usageBar.setBackground(SampleUi.surface(this,SampleUi.FIELD,28));LinearLayout.LayoutParams foot=new LinearLayout.LayoutParams(-1,dp(52));foot.setMargins(dp(16),dp(8),dp(16),dp(12));root.addView(AdaptiveLayout.centered(this,usageBar,608,null),foot);
         search.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence v,int a,int b,int c){}public void onTextChanged(CharSequence v,int a,int b,int c){prefs.edit().putString("search",v.toString()).apply();renderCards();}public void afterTextChanged(android.text.Editable e){}});
@@ -165,7 +165,7 @@ public final class AgentActivity extends ScreenActivity {
         button.addView(agentLogo(provider),new LinearLayout.LayoutParams(dp(26),dp(26)));
         ProgressBar meter=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);meter.setIndeterminate(false);meter.setMax(100);meter.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         android.graphics.drawable.LayerDrawable track=new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{SampleUi.surface(this,0xff303438,3),new android.graphics.drawable.ClipDrawable(SampleUi.surface(this,stale?SampleUi.MUTED:tint,3),android.view.Gravity.LEFT,android.graphics.drawable.ClipDrawable.HORIZONTAL)});track.setId(0,android.R.id.background);track.setId(1,android.R.id.progress);meter.setProgressDrawable(track);meter.setProgress(used==null?0:(int)Math.max(0,Math.min(100,Math.round(used))));LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(0,dp(4),1);mp.leftMargin=dp(10);mp.rightMargin=dp(8);button.addView(meter,mp);
-        TextView value=SampleUi.text(this,percentage,12,stale?SampleUi.MUTED:tint);value.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);button.addView(value);usageBar.addView(button,new LinearLayout.LayoutParams(0,dp(52),1));
+        TextView value=SampleUi.text(this,percentage,12,stale?SampleUi.MUTED:tint);value.setSingleLine();value.setMaxWidth(dp(64));value.setEllipsize(android.text.TextUtils.TruncateAt.END);value.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);button.addView(value);usageBar.addView(button,new LinearLayout.LayoutParams(0,dp(52),1));
     }}
     private void showUsages(){showUsages(null);}
     private void showUsages(String provider){usageProvider=provider;hub.refreshUsage(false);if(usageDialog!=null)usageDialog.dismiss();usageDialog=sheet((provider==null?"":provider.equals("claude")?"Claude Code · ":"Codex · ")+label("Usages","用量"),panel->{usageContent=panel;renderUsageContent(panel);});}

@@ -15,9 +15,9 @@ public abstract class InputSettingsActivity extends SettingsPageActivity {
         for(String id:ids){
             TextView minus=label("−",24,SampleUi.DANGER);minus.setGravity(Gravity.CENTER);minus.setContentDescription(AppLanguage.tr(R.string.input_remove)+(groups?InputText.localize(id):controls().label(id)));minus.setOnClickListener(v->{if(key.equals("layout_toolbar")&&id.equals("ctrl"))return;List<String> next=controls().editable(key);next.remove(id);controls().save(key,next);refreshSettings();});
             TextView handle=label("≡",24,SampleUi.MUTED);handle.setGravity(Gravity.CENTER);handle.setContentDescription(AppLanguage.tr(R.string.input_drag_to_reorder)+(groups?InputText.localize(id):controls().label(id)));
-            LinearLayout accessory=row();accessory.addView(handle,new LinearLayout.LayoutParams(dp(48),dp(40)));
+            LinearLayout accessory=row();accessory.addView(handle,new LinearLayout.LayoutParams(dp(48),dp(48)));
             LinearLayout line=settingRow(groups?InputText.localize(id):controls().label(id),groups?controls().list("group_"+id).size()+AppLanguage.tr(R.string.input_shortcuts):null,null,accessory,()->{if(groups)openLayout("group_"+id,id);else editShortcut(id,key);});
-            line.addView(minus,0,new LinearLayout.LayoutParams(dp(36),dp(40)));if(key.equals("layout_toolbar")&&id.equals("ctrl")){minus.setEnabled(false);minus.setAlpha(.25f);}
+            line.addView(minus,0,new LinearLayout.LayoutParams(dp(48),dp(48)));if(key.equals("layout_toolbar")&&id.equals("ctrl")){minus.setEnabled(false);minus.setAlpha(.25f);}
             handle.setOnTouchListener((v,e)->{if(e.getActionMasked()==MotionEvent.ACTION_DOWN){ClipData clip=ClipData.newPlainText("input-order",id);v.startDragAndDrop(clip,new View.DragShadowBuilder(line),key,0);return true;}return false;});
             line.setOnDragListener((v,e)->{
                 if(!key.equals(e.getLocalState()))return false;
@@ -35,6 +35,6 @@ public abstract class InputSettingsActivity extends SettingsPageActivity {
         if(key.equals("layout_zen")){android.widget.FrameLayout field=new android.widget.FrameLayout(this);field.setBackground(SampleUi.surface(this,0xff12332a,16));ZenRing ring=new ZenRing(this,controls(),id->{});android.widget.FrameLayout.LayoutParams rp=new android.widget.FrameLayout.LayoutParams(dp(240),dp(240),android.view.Gravity.CENTER);field.addView(ring,rp);field.setMinimumHeight(dp(260));return field;}
         if(key.equals("layout_toolbar")){InputToolbar toolbar=new InputToolbar(this);List<View> buttons=new ArrayList<>();for(String id:controls().toolbar()){InputButton button=new InputButton(this,controls().action(id),controls().flag("modifier_icons",false));button.setEnabled(false);buttons.add(button);}toolbar.setButtons(buttons);return toolbar;}
         HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout buttons=row();buttons.setPadding(dp(6),dp(8),dp(6),dp(8));buttons.setBackground(SampleUi.surface(this,0xff111315,28));
-        for(String id:controls().editable(key)){InputButton button=new InputButton(this,controls().action(id),controls().flag("modifier_icons",false));button.setEnabled(false);buttons.addView(button,new LinearLayout.LayoutParams(dp(46),dp(44)));}scroll.addView(buttons);return scroll;
+        for(String id:controls().editable(key)){InputButton button=new InputButton(this,controls().action(id),controls().flag("modifier_icons",false));button.setEnabled(false);buttons.addView(button,new LinearLayout.LayoutParams(button.preferredWidth(48,160),dp(48)));}scroll.addView(buttons);return scroll;
     }
 }

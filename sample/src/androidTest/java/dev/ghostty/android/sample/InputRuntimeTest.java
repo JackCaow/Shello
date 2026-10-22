@@ -28,6 +28,34 @@ public class InputRuntimeTest extends AttachmentTestSupport {
         inst.runOnMainSync(()->{String id=config.put(null,"中文快捷键","text:中文 👨‍👩‍👧‍👦",true);config.save("layout_toolbar",List.of(id,"key_TAB","ctrl"));config.save("layout_composer",List.of("key_ESCAPE",id));controls.refresh();LinearLayout bar=(LinearLayout)field(activity,"toolbar");assertEquals(3,bar.getChildCount());InputToolbar container=(InputToolbar)field(activity,"toolbarContainer");assertEquals(2,container.pinnedButtons.getChildCount());assertEquals("chat",container.pinnedButtons.getChildAt(0).getTag());assertEquals("keyboard",container.pinnedButtons.getChildAt(1).getTag());assertEquals(id,bar.getChildAt(0).getTag());bar.getChildAt(0).performClick();assertEquals(List.of("中文 👨‍👩‍👧‍👦","\r"),bytes);bytes.clear();controls.sequence("C-b, S-TAB",false);assertEquals(List.of("\002","\033[Z"),bytes);String alias=config.put(null,"Panel alias","action:shortcuts",false);controls.perform(alias);assertEquals(View.VISIBLE,((View)field(controls,"panel")).getVisibility());assertTrue(controls.back());
             LinearLayout composer=(LinearLayout)field(activity,"configuredComposer");assertEquals(2,composer.getChildCount());assertEquals(id,composer.getChildAt(1).getTag());});capture("input-toolbar");
     }
+    @Test public void attachmentPreviewAndRemoveHaveSeparateUsableTargets()throws Exception{
+        AttachmentTransfer upload=new AttachmentTransfer(context,"unused",AttachmentTestProvider.uri("normal"),()->{});upload.name="设计说明 · 中文 long filename.pdf";upload.bytes=4096;upload.busy=false;upload.path="/tmp/ui-fixture.pdf";
+        inst.runOnMainSync(()->{fixture.attachments.add(upload);List<String> actions=new ArrayList<>(config.list("layout_composer"));for(int i=1;i<=12;i++)actions.add("key_F"+i);config.save("layout_composer",actions);controls.refresh();});draftMode();inst.runOnMainSync(()->{call(activity,"hideKeyboard");call(activity,"updateAttachmentStatus");((EditText)field(activity,"draft")).setText("检查附件与输入布局");});inst.waitForIdleSync();
+        capture("input-composer-attachments");inst.runOnMainSync(()->call(activity,"showKeyboard"));await(()->(Boolean)field(activity,"imeVisible"));capture("input-composer-keyboard");
+        HorizontalScrollView[] scroll={null};View[] pinned=new View[2];int[][] positions={new int[2],new int[2]};
+        inst.runOnMainSync(()->{
+            View keys=(View)field(activity,"configuredComposer");scroll[0]=(HorizontalScrollView)keys.getParent().getParent();
+            pinned[0]=find((View)field(activity,"composer"),AppLanguage.tr(R.string.input_dictation));pinned[1]=(View)field(activity,"sendButton");
+            assertNotNull(pinned[0]);for(int i=0;i<2;i++){pinned[i].getLocationOnScreen(positions[i]);android.graphics.Rect visible=new android.graphics.Rect();assertTrue("Pinned composer action must stay fully visible above the IME",pinned[i].getGlobalVisibleRect(visible)&&visible.height()>=pinned[i].getHeight()-1);}assertTrue(scroll[0].getChildAt(0).getWidth()>scroll[0].getWidth());
+        });
+        int[] origin=new int[2];inst.runOnMainSync(()->scroll[0].getLocationOnScreen(origin));long down=SystemClock.uptimeMillis();
+        for(int i=0;i<=12;i++){MotionEvent event=MotionEvent.obtain(down,SystemClock.uptimeMillis(),i==0?MotionEvent.ACTION_DOWN:i==12?MotionEvent.ACTION_UP:MotionEvent.ACTION_MOVE,origin[0]+scroll[0].getWidth()*(.85f-.7f*i/12),origin[1]+scroll[0].getHeight()/2f,0);inst.sendPointerSync(event);event.recycle();SystemClock.sleep(15);}SystemClock.sleep(250);
+        inst.runOnMainSync(()->{
+            assertTrue("Composer utility actions did not scroll",scroll[0].getScrollX()>0);for(int i=0;i<2;i++){int[] after=new int[2];pinned[i].getLocationOnScreen(after);assertArrayEquals("A pinned composer action moved",positions[i],after);}
+            scroll[0].scrollTo(scroll[0].getChildAt(0).getWidth(),0);View close=find((View)field(activity,"composer"),AppLanguage.tr(R.string.close_editor_and_keep_draft));android.graphics.Rect visible=new android.graphics.Rect();assertTrue(close.getGlobalVisibleRect(visible));assertTrue("Close editor cannot be reached by scrolling",visible.width()>=close.getWidth()-1);assertTrue(bytes.isEmpty());
+            ((ComposerBody)field(activity,"composerBody")).scrollTo(0,0);ViewGroup tray=(ViewGroup)field(activity,"attachmentCards");assertEquals(1,tray.getChildCount());ViewGroup card=(ViewGroup)tray.getChildAt(0);View remove=find(card,AppLanguage.tr(R.string.attachment_remove,upload.name));assertNotNull(remove);
+            assertTrue(remove.getWidth()>=SampleUi.dp(activity,48)&&remove.getHeight()>=SampleUi.dp(activity,48));
+            assertTrue(card.isClickable());assertEquals(SampleUi.dp(activity,72),card.getWidth());assertEquals(SampleUi.dp(activity,72),card.getHeight());
+            assertEquals("Remove must stay in the upper-right corner",card.getWidth(),remove.getRight());assertEquals(0,remove.getTop());
+            for(int i=0;i<card.getChildCount();i++)assertFalse("Attachment tray must not show filename or size labels",card.getChildAt(i) instanceof TextView);
+            long tap=SystemClock.uptimeMillis();for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_UP}){MotionEvent e=MotionEvent.obtain(tap,tap+20,action,SampleUi.dp(activity,12),SampleUi.dp(activity,60),0);card.dispatchTouchEvent(e);e.recycle();}
+        });await(()->field(activity,"attachmentPreview")!=null&&((android.app.Dialog)field(activity,"attachmentPreview")).isShowing());
+        inst.runOnMainSync(()->{
+            android.app.Dialog detail=(android.app.Dialog)field(activity,"attachmentPreview");assertEquals("Preview must not remove the attachment",1,fixture.attachments.size());detail.dismiss();
+            ViewGroup card=(ViewGroup)((ViewGroup)field(activity,"attachmentCards")).getChildAt(0);View remove=find(card,AppLanguage.tr(R.string.attachment_remove,upload.name));
+            long tap=SystemClock.uptimeMillis();for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_UP}){MotionEvent e=MotionEvent.obtain(tap,tap+20,action,remove.getLeft()+remove.getWidth()/2f,remove.getTop()+remove.getHeight()/2f,0);card.dispatchTouchEvent(e);e.recycle();}
+        });await(()->fixture.attachments.isEmpty());inst.runOnMainSync(()->{assertFalse("Corner tap must not reopen preview",((android.app.Dialog)field(activity,"attachmentPreview")).isShowing());assertTrue("Removal must not submit terminal input",bytes.isEmpty());});
+    }
     @Test public void controlLongPressOpensCorrectAgentGroupsAndLockRetainsPanel()throws Exception{
         inst.runOnMainSync(()->{View ctrl=((LinearLayout)field(activity,"toolbar")).getChildAt(0);long t=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(t,t,0,12,12,0);ctrl.dispatchTouchEvent(down);down.recycle();});SystemClock.sleep(ViewConfiguration.getLongPressTimeout()+100);
         inst.runOnMainSync(()->{View ctrl=((LinearLayout)field(activity,"toolbar")).getChildAt(0);long t=SystemClock.uptimeMillis();MotionEvent up=MotionEvent.obtain(t,t,1,12,12,0);ctrl.dispatchTouchEvent(up);up.recycle();LinearLayout panel=(LinearLayout)field(controls,"panel");assertEquals(View.VISIBLE,panel.getVisibility());View codex=find(panel,"Codex"+AppLanguage.tr(R.string.input_shortcuts_2));assertNotNull(codex);codex.performClick();LinearLayout keys=(LinearLayout)field(controls,"keys");InputButton first=(InputButton)((LinearLayout)keys.getChildAt(0)).getChildAt(0);assertEquals("/new",first.getText().toString());first.performClick();assertEquals(List.of("/new","\r"),bytes);assertEquals(View.GONE,panel.getVisibility());bytes.clear();controls.perform("lock_shortcuts");controls.perform("preset_Claude_2");assertEquals(View.VISIBLE,panel.getVisibility());assertEquals(List.of("/compact","\r"),bytes);});capture("input-shortcuts");
@@ -97,7 +125,23 @@ public class InputRuntimeTest extends AttachmentTestSupport {
         });
     }
     @Test public void compactZenControlsFitWithoutOverlapping(){
-        inst.runOnMainSync(()->{ZenRing ring=new ZenRing(activity,config,id->{});int width=activity.getResources().getDisplayMetrics().densityDpi*400/160,height=activity.getResources().getDisplayMetrics().densityDpi*60/160;ring.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY));ring.layout(0,0,width,height);List<android.graphics.Rect> rectangles=new ArrayList<>();for(int i=0;i<ring.getChildCount();i++){View button=ring.getChildAt(i);android.graphics.Rect bounds=new android.graphics.Rect(button.getLeft(),button.getTop(),button.getRight(),button.getBottom());assertTrue(bounds.left>=0&&bounds.top>=0&&bounds.right<=width&&bounds.bottom<=height);for(android.graphics.Rect prior:rectangles)assertFalse("Compact Zen controls overlap",android.graphics.Rect.intersects(prior,bounds));rectangles.add(bounds);}});
+        inst.runOnMainSync(()->{
+            for(boolean overflow:new boolean[]{false,true}){
+                if(overflow){List<String> ids=new ArrayList<>(config.defaults("layout_zen"));for(int i=1;i<=12;i++)ids.add("key_F"+i);config.save("layout_zen",ids);}
+                ZenRing ring=new ZenRing(activity,config,id->{});int width=SampleUi.dp(activity,400),height=SampleUi.dp(activity,60);
+                ring.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY));ring.layout(0,0,width,height);
+                List<android.graphics.Rect> rectangles=new ArrayList<>();
+                for(View button:ring.buttons()){
+                    android.graphics.Rect bounds=new android.graphics.Rect(button.getLeft(),button.getTop(),button.getRight(),button.getBottom());
+                    assertTrue(bounds.left>=0&&bounds.top>=0&&bounds.bottom<=height);
+                    assertTrue("Zen target is too small",button.getWidth()>=SampleUi.dp(activity,48)&&button.getHeight()>=SampleUi.dp(activity,48));
+                    for(android.graphics.Rect prior:rectangles)assertFalse("Compact Zen controls overlap",android.graphics.Rect.intersects(prior,bounds));rectangles.add(bounds);
+                }
+                View last=ring.buttons().get(ring.buttons().size()-1);ring.scrollTo(last.getRight()-width,0);
+                assertTrue("Trailing Zen action is unreachable",last.getLeft()-ring.getScrollX()>=0&&last.getRight()-ring.getScrollX()<=width);
+                if(overflow)assertTrue("Overflow must scroll instead of shrinking controls",ring.getScrollX()>0);
+            }
+        });
     }
     @Test public void toolbarIconsActuallyRenderVisibleStrokes(){
         inst.runOnMainSync(()->{LinearLayout toolbar=(LinearLayout)field(activity,"toolbar");View icon=null;for(int i=0;i<toolbar.getChildCount();i++)if("pad".equals(toolbar.getChildAt(i).getTag()))icon=toolbar.getChildAt(i);assertNotNull(icon);assertTrue(icon.getWidth()>0);android.graphics.Bitmap bitmap=android.graphics.Bitmap.createBitmap(toolbar.getWidth(),toolbar.getHeight(),android.graphics.Bitmap.Config.ARGB_8888);toolbar.draw(new android.graphics.Canvas(bitmap));int bright=0;for(int y=icon.getTop();y<icon.getBottom();y++)for(int x=icon.getLeft();x<icon.getRight();x++){int color=bitmap.getPixel(x,y);if(android.graphics.Color.red(color)>170&&android.graphics.Color.green(color)>170&&android.graphics.Color.blue(color)>170)bright++;}bitmap.recycle();assertTrue("D-Pad icon was invisible",bright>20);});

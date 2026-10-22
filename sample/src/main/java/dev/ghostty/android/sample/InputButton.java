@@ -10,20 +10,21 @@ final class InputButton extends TextView {
     private final ToolbarIcon icon;
     private boolean toolbarStyle;
     InputButton(Context context,InputActions.Action action,boolean modifierIcons){
-        super(context);setGravity(Gravity.CENTER);setTextColor(SampleUi.TEXT);setTextSize(13);setTypeface(Typeface.MONOSPACE);setIncludeFontPadding(false);setSingleLine(true);setMinWidth(SampleUi.dp(context,42));setFocusable(true);
+        super(context);setGravity(Gravity.CENTER);setTextColor(SampleUi.TEXT);UiDesign.type(this,UiDesign.Type.CONTROL);UiDesign.touch(this);setSingleLine(true);setEllipsize(android.text.TextUtils.TruncateAt.END);setPadding(SampleUi.dp(context,12),0,SampleUi.dp(context,12),0);setFocusable(true);
         String id=action==null?"none":action.id(),label=action==null?"":action.label();setTag(id);setContentDescription(label);
         boolean modifier=java.util.List.of("ctrl","alt","shift","super").contains(id);
         if(modifier){setText(modifierIcons?switch(id){case "ctrl"->"⌃";case "alt"->"⌥";case "shift"->"⇧";default->"⌘";}:label);icon=null;}
         else if(id.startsWith("key_")||id.startsWith("char_")||id.startsWith("preset_")||id.startsWith("custom_")||id.startsWith("ctrl_")){setText(label);icon=null;}
         else icon=new ToolbarIcon(action==null?"close":action.icon(),SampleUi.dp(context,20),SampleUi.TEXT);
-        setAutoSizeTextTypeUniformWithConfiguration(9,13,1,android.util.TypedValue.COMPLEX_UNIT_SP);
-        setBackground(SampleUi.touch(context,0xff171a1b,24));
+
+        setBackground(SampleUi.touch(context,0xff171a1b,12));
     }
     void toolbarStyle(boolean pinned){
         toolbarStyle=true;setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_NONE);setTextSize(12);setEllipsize(android.text.TextUtils.TruncateAt.END);setPadding(SampleUi.dp(getContext(),8),0,SampleUi.dp(getContext(),8),0);
         setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0xff35433c),pinned?null:circle(0xff15181a),circle(Color.WHITE)));
     }
-    int toolbarWidth(){return Math.max(SampleUi.dp(getContext(),52),Math.min(SampleUi.dp(getContext(),112),(int)Math.ceil(getPaint().measureText(getText().toString()))+SampleUi.dp(getContext(),24)));}
+    int preferredWidth(int minimum,int maximum){return Math.max(SampleUi.dp(getContext(),minimum),Math.min(SampleUi.dp(getContext(),maximum),(int)Math.ceil(getPaint().measureText(getText().toString()))+SampleUi.dp(getContext(),24)));}
+    int toolbarWidth(){return preferredWidth(52,112);}
     private android.graphics.drawable.Drawable circle(int color){return new android.graphics.drawable.Drawable(){
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);{paint.setColor(color);}
         @Override public void draw(Canvas canvas){Rect b=getBounds();float height=Math.min(SampleUi.dp(getContext(),36),b.height()),natural=icon==null?getPaint().measureText(getText().toString())+SampleUi.dp(getContext(),16):height,width=Math.min(Math.max(height,natural),b.width()-SampleUi.dp(getContext(),8));canvas.drawRoundRect(b.exactCenterX()-width/2,b.exactCenterY()-height/2,b.exactCenterX()+width/2,b.exactCenterY()+height/2,height/2,height/2,paint);}

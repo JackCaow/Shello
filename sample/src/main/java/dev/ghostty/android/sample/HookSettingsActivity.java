@@ -9,7 +9,7 @@ import android.widget.TextView;
 public final class HookSettingsActivity extends SettingsPageActivity {
     @Override protected void renderSettings(){
         heading.setText("Hook");section(tr(R.string.install));
-        TextView intro=copy(tr(R.string.install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque));intro.setTextColor(SampleUi.TEXT);intro.setTextSize(16);
+        TextView intro=copy(tr(R.string.install_claude_code_hook_on_an_ssh_host_to_receive_approval_reque));intro.setTextColor(SampleUi.TEXT);UiDesign.type(intro,UiDesign.Type.BODY);
         section(tr(R.string.ssh_hosts));AgentHub hub=AgentHub.get(this);java.util.List<SshProfileStore.Entry> profiles=new SshProfileStore(this).list();
         if(profiles.isEmpty())item(tr(R.string.add_an_ssh_connection_first),null,"plus",()->startActivity(new Intent(this,SshDiscoveryActivity.class)));
         for(SshProfileStore.Entry p:profiles){boolean enabled=hub.enabled(p.id);item(p.name,enabled?tr(hub.states.getOrDefault(p.id,R.string.enabled)):tr(R.string.not_installed),"server",()->{
