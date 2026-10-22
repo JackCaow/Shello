@@ -16,6 +16,7 @@ import java.util.*;
 
 /** Local discovery and user-driven SSH setup; no credentials are passed through Intents. */
 public final class SshDiscoveryActivity extends LocalizedActivity {
+    private static final int PAGE_INSET=24;
     private static final int TEXT=0xffe6e6e8,MUTED=0xff96999f,GREEN=SampleUi.GREEN,CARD=0xff111315;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final List<LanSshDiscovery.Host> hosts=new ArrayList<>();
@@ -32,7 +33,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private SshProfileStore.Draft original;
     private CheckBox tmux;
     private static final int IMPORT_KEY=72;
-    private TextView badge,status,listingStatus;
+    private TextView badge,listingStatus;
     private LinearLayout list;
     private Dialog picker;
     private LanSshDiscovery scanner;
@@ -59,40 +60,40 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
             root.setPadding(i.left,i.top,i.right,Math.max(i.bottom,ime.bottom));return WindowInsets.CONSUMED;
         });
-        SampleUi.NavigationBar header=new SampleUi.NavigationBar(this,original==null?tr(R.string.new_connection):tr(R.string.edit_connection),this::cancelEdit);
+        SampleUi.NavigationBar header=new SampleUi.NavigationBar(this,original==null?tr(R.string.new_connection):tr(R.string.edit_connection),
+                original==null?"close":"back",tr(original==null?R.string.cancel:R.string.back),this::cancelEdit);
         root.addView(header,new LinearLayout.LayoutParams(-1,-2));
-        if(original!=null){saveTop=SampleUi.header(this,"check",tr(R.string.save_connection_changes),GREEN,this::verifyConnection);header.addAction(saveTop);}
+        saveTop=SampleUi.header(this,"check",tr(original==null?R.string.save_and_connect_over_ssh:R.string.save_connection_changes),GREEN,this::verifyConnection);header.addAction(saveTop);
         ScrollView scroll=new ScrollView(this);scroll.setVerticalScrollBarEnabled(false);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout form=column();form.setPadding(dp(UiDesign.PAGE),dp(UiDesign.SECTION),dp(UiDesign.PAGE),dp(32));scroll.addView(AdaptiveLayout.centered(this,form,640,header));
-        form.addView(label(tr(R.string.name)));
-        LinearLayout nameRow=row();nameRow.setPadding(0,dp(4),dp(8),dp(4));nameRow.setBackground(round(CARD,20));
-        form.addView(nameRow,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout form=column();form.setPadding(dp(PAGE_INSET),dp(UiDesign.SECTION),dp(PAGE_INSET),dp(32));scroll.addView(AdaptiveLayout.centered(this,form,640,header));
+        TextView nameLabel=label(tr(R.string.name));nameLabel.setPadding(dp(60),0,0,dp(8));form.addView(nameLabel);
+        LinearLayout nameLine=row();form.addView(nameLine,new LinearLayout.LayoutParams(-1,-2));
+        ImageView serverIcon=SampleUi.icon(this,"server",TEXT);serverIcon.setPadding(dp(12),dp(12),dp(12),dp(12));serverIcon.setBackground(round(uiTheme().input,16));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(48),dp(48));iconParams.rightMargin=dp(12);nameLine.addView(serverIcon,iconParams);
+        LinearLayout nameRow=row();nameRow.setPadding(0,0,dp(8),0);nameRow.setBackground(round(uiTheme().input,20));
+        nameLine.addView(nameRow,new LinearLayout.LayoutParams(0,-2,1));
         name=field(tr(R.string.my_mac),tr(R.string.connection_name));name.setBackgroundColor(UiTheme.background(SshDiscoveryActivity.this,Color.TRANSPARENT));
         nameRow.addView(name,new LinearLayout.LayoutParams(0,-2,1));
         badge=button(tr(R.string.discovering),tr(R.string.discover_ssh_servers_on_your_network),this::showPicker);UiDesign.type(badge,UiDesign.Type.SECONDARY);badge.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));
-        badge.setPadding(dp(12),0,dp(12),0);badge.setBackground(round(0xff0d2412,18));
+        badge.setBackground(new android.graphics.drawable.InsetDrawable(round(0xff0d2412,14),0,dp(7),0,dp(7)));badge.setPadding(dp(10),0,dp(10),0);
         nameRow.addView(badge,new LinearLayout.LayoutParams(-2,dp(48)));
         LinearLayout addressRow=row();addressRow.setGravity(Gravity.TOP);margin(form,addressRow,24);
         LinearLayout hostColumn=column(),portColumn=column();addressRow.addView(hostColumn,new LinearLayout.LayoutParams(0,-2,1));
-        LinearLayout.LayoutParams portParams=new LinearLayout.LayoutParams(dp(84),-2);portParams.leftMargin=dp(12);addressRow.addView(portColumn,portParams);
+        LinearLayout.LayoutParams portParams=new LinearLayout.LayoutParams(dp(80),-2);portParams.leftMargin=dp(12);addressRow.addView(portColumn,portParams);
         hostColumn.addView(label(tr(R.string.host)));host=field("192.168.1.100",tr(R.string.ssh_host_address));hostColumn.addView(host,new LinearLayout.LayoutParams(-1,-2));
         portColumn.addView(label(tr(R.string.port)));port=field("22",tr(R.string.ssh_port));port.setInputType(InputType.TYPE_CLASS_NUMBER);port.setText("22");portColumn.addView(port,new LinearLayout.LayoutParams(-1,-2));
-        status=text("",13,MUTED);margin(form,status,20);
-        TextView refresh=button(tr(R.string.scan_again),tr(R.string.scan_the_network_for_ssh_servers_again),()->rescan(true));refresh.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));margin(form,refresh,12);
-        margin(form,label(tr(R.string.username)),20);user=field(tr(R.string.username_on_the_server),tr(R.string.ssh_username));form.addView(user,new LinearLayout.LayoutParams(-1,-2));
-        margin(form,label(tr(R.string.authentication)),24);
+        margin(form,label(tr(R.string.username)),24);user=field(tr(R.string.username_on_the_server),tr(R.string.ssh_username));form.addView(user,new LinearLayout.LayoutParams(-1,-2));
         authChoices=new RadioGroup(this);authChoices.setOrientation(RadioGroup.HORIZONTAL);authChoices.setBaselineAligned(false);
-        authChoices.setPadding(dp(4),dp(4),dp(4),dp(4));authChoices.setBackground(round(CARD,18));
-        RadioButton passwordChoice=SampleUi.segment(this,tr(R.string.password),R.id.auth_password),keyChoice=SampleUi.segment(this,tr(R.string.private_key),R.id.auth_key);
-        authChoices.addView(passwordChoice,new RadioGroup.LayoutParams(0,-2,1));authChoices.addView(keyChoice,new RadioGroup.LayoutParams(0,-2,1));
-        form.addView(authChoices,new LinearLayout.LayoutParams(-1,-2));authChoices.check(R.id.auth_password);
-        passwordFields=column();margin(form,passwordFields,12);password=secretField(tr(R.string.login_password),tr(R.string.ssh_login_password));passwordFields.addView(password,new LinearLayout.LayoutParams(-1,-2));
+        authChoices.setBackground(round(uiTheme().input,24));
+        authChoices.addView(authChoice(tr(R.string.password),R.id.auth_password));authChoices.addView(authChoice(tr(R.string.private_key),R.id.auth_key));
+        margin(form,authenticationRow(),24);authChoices.check(R.id.auth_password);
+        passwordFields=column();margin(form,passwordFields,20);passwordFields.addView(label(tr(R.string.password)));password=secretField(tr(R.string.login_password),tr(R.string.ssh_login_password));passwordFields.addView(password,new LinearLayout.LayoutParams(-1,-2));
         keyFields=column();keyFields.setVisibility(View.GONE);margin(form,keyFields,12);
         TextView importKey=button(tr(R.string.choose_private_key),tr(R.string.import_ssh_private_key),this::importKey);importKey.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,-2));
         keyStatus=text(tr(R.string.openssh_pem_private_keys_supported),13,MUTED);margin(keyFields,keyStatus,12);
-        passphrase=secretField(tr(R.string.key_passphrase_optional),tr(R.string.ssh_key_passphrase));margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(UiDesign.FIELD));
+        passphrase=secretField(tr(R.string.key_passphrase_optional),tr(R.string.ssh_key_passphrase));margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(48));
         authChoices.setOnCheckedChangeListener((group,id)->{passwordFields.setVisibility(id==R.id.auth_password?View.VISIBLE:View.GONE);keyFields.setVisibility(id==R.id.auth_key?View.VISIBLE:View.GONE);});
-        tmux=new SampleUi.Toggle(this);tmux.setText(tr(R.string.keep_remote_session));tmux.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));tmux.setContentDescription(tr(R.string.keep_remote_sessions_with_tmux));margin(form,tmux,20);
+        tmux=new SampleUi.Toggle(this);tmux.setText(tr(R.string.keep_remote_session));tmux.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));tmux.setContentDescription(tr(R.string.keep_remote_sessions_with_tmux));tmux.setMinHeight(dp(48));tmux.setPadding(dp(16),dp(12),dp(78),dp(12));margin(form,tmux,24);
         TextView tmuxHint=text(tr(R.string.install_tmux_on_the_server_to_return_to_your_shell_and_editor_aft),13,MUTED);margin(form,tmuxHint,4);
         connectionStatus=text(tr(R.string.verify_the_server_fingerprint_on_first_connection_connections_are),13,MUTED);margin(form,connectionStatus,24);
         connectButton=button(original==null?tr(R.string.save_and_connect):tr(R.string.save_changes_and_connect),tr(R.string.save_and_connect_over_ssh),this::verifyConnection);connectButton.setTextColor(uiTheme().onAccent);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
@@ -114,7 +115,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         scroll.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
             int step=dp(4),spare=Math.max(0,b-t-connectButton.getHeight()-dp(8));
             int bottom=Math.min(dp(32),spare/step*step);
-            if(form.getPaddingBottom()!=bottom)form.setPadding(dp(UiDesign.PAGE),dp(UiDesign.SECTION),dp(UiDesign.PAGE),bottom);
+            if(form.getPaddingBottom()!=bottom)form.setPadding(dp(PAGE_INSET),dp(UiDesign.SECTION),dp(PAGE_INSET),bottom);
         });
         root.setFocusableInTouchMode(true);root.requestFocus();
         cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
@@ -158,7 +159,6 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private void render(boolean running,String message){
         scanning=running;scanStatus=message;
         badge.setText(hosts.isEmpty()?(running?tr(R.string.discovering):tr(R.string.discover_servers)):AppLanguage.quantity(R.plurals.servers_found,hosts.size(),hosts.size()));
-        status.setText(message+(running?"":"\n"+(hosts.isEmpty()?tr(R.string.no_ssh_servers_found_make_sure_ssh_is_enabled_on_your_computer):tr(R.string.only_hosts_responding_with_an_ssh_banner_on_port_22_are_shown))));
         renderList();
     }
     private void showPicker(){
@@ -193,8 +193,8 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
             LinearLayout card=row();card.setPadding(dp(18),dp(16),dp(18),dp(16));card.setBackground(SampleUi.touch(this,CARD,20));
             ImageView icon=SampleUi.icon(this,"server",MUTED);icon.setPadding(0,0,dp(14),0);card.addView(icon,new LinearLayout.LayoutParams(dp(42),dp(48)));
             LinearLayout labels=column();card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
-            TextView title=text(item.name,19,TEXT);title.setMaxLines(2);labels.addView(title);
-            TextView address=text(item.address+":22"+(NetworkAddress.tailscale(item.address)?" · Tailscale":" · LAN"),15,MUTED);address.setTypeface(Typeface.MONOSPACE);labels.addView(address);
+            TextView title=text(item.name,20,TEXT);title.setMaxLines(2);title.setEllipsize(android.text.TextUtils.TruncateAt.END);labels.addView(title);
+            TextView address=text(item.address+":22"+(NetworkAddress.tailscale(item.address)?" · Tailscale":" · LAN"),15,MUTED);address.setTypeface(Typeface.MONOSPACE);LinearLayout.LayoutParams addressParams=new LinearLayout.LayoutParams(-1,-2);addressParams.topMargin=dp(4);labels.addView(address,addressParams);
             ImageView arrow=SampleUi.icon(this,"right",MUTED);card.addView(arrow,new LinearLayout.LayoutParams(dp(24),dp(24)));
             card.setContentDescription(tr(R.string.selected_server,item.name,item.address));
             card.setFocusable(true);card.setOnClickListener(v->{name.setText(item.name);host.setText(item.address);port.setText("22");picker.dismiss();});
@@ -298,9 +298,37 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private EditText field(String hint,String description){
         EditText e=new EditText(this);e.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));e.setHintTextColor(UiTheme.foreground(SshDiscoveryActivity.this,MUTED));e.setTextSize(17);e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);e.setHint(hint);e.setContentDescription(description);
-        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);return e;
+        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);e.setPadding(dp(14),dp(10),dp(14),dp(10));e.setMinHeight(dp(48));e.setMinimumHeight(dp(48));return e;
     }
-    private TextView label(String value){TextView t=text(value,14,MUTED);t.setPadding(0,0,0,dp(8));return t;}
+    private RadioButton authChoice(String title,int id){
+        RadioButton choice=SampleUi.segment(this,title,id);UiDesign.type(choice,UiDesign.Type.SECONDARY);choice.setSingleLine(true);
+        choice.setTextColor(new android.content.res.ColorStateList(new int[][]{{android.R.attr.state_checked},{}},new int[]{uiTheme().text,uiTheme().secondary}));
+        android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_checked},round(uiTheme().light?Color.WHITE:0xff292c30,20));states.addState(new int[]{},round(Color.TRANSPARENT,20));
+        choice.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(uiTheme().ripple),new android.graphics.drawable.InsetDrawable(states,dp(3)),round(Color.WHITE,24)));
+        choice.setPadding(dp(12),dp(8),dp(12),dp(8));return choice;
+    }
+    private LinearLayout authenticationRow(){
+        TextView heading=label(tr(R.string.authentication));heading.setPadding(0,0,0,0);
+        LinearLayout row=new LinearLayout(this){
+            @Override protected void onMeasure(int ws,int hs){
+                int choicesWidth=authChoices.getPaddingLeft()+authChoices.getPaddingRight();
+                for(int i=0;i<authChoices.getChildCount();i++){
+                    TextView choice=(TextView)authChoices.getChildAt(i);
+                    choicesWidth+=Math.max(dp(48),(int)Math.ceil(choice.getPaint().measureText(choice.getText().toString()))+choice.getPaddingLeft()+choice.getPaddingRight());
+                }
+                int labelWidth=(int)Math.ceil(heading.getPaint().measureText(heading.getText().toString()));
+                boolean stacked=labelWidth+dp(16)+choicesWidth>MeasureSpec.getSize(ws);
+                setOrientation(stacked?VERTICAL:HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout.LayoutParams hp=(LinearLayout.LayoutParams)heading.getLayoutParams();hp.width=stacked?-1:0;hp.weight=stacked?0:1;hp.rightMargin=stacked?0:dp(16);
+                LinearLayout.LayoutParams cp=(LinearLayout.LayoutParams)authChoices.getLayoutParams();cp.width=stacked?-1:choicesWidth;cp.topMargin=stacked?dp(8):0;
+                for(int i=0;i<authChoices.getChildCount();i++){RadioGroup.LayoutParams p=(RadioGroup.LayoutParams)authChoices.getChildAt(i).getLayoutParams();p.width=stacked?0:-2;p.weight=stacked?1:0;}
+                super.onMeasure(ws,hs);
+            }
+        };
+        row.addView(heading,new LinearLayout.LayoutParams(0,-2,1));row.addView(authChoices,new LinearLayout.LayoutParams(-2,-2));return row;
+    }
+    private TextView label(String value){TextView t=text(value,16,TEXT);t.setPadding(0,0,0,dp(8));return t;}
     private TextView text(String value,int size,int color){return SampleUi.text(this,value,size,color);}
     private TextView button(String value,String description,Runnable action){TextView t=text(value,17,TEXT);t.setBackground(SampleUi.touch(this,Color.TRANSPARENT,16));t.setGravity(Gravity.CENTER);t.setMinHeight(dp(UiDesign.TOUCH));t.setContentDescription(description);t.setFocusable(true);t.setOnClickListener(v->action.run());return t;}
     private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
