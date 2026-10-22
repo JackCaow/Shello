@@ -47,7 +47,7 @@ jobs:
       - name: Build native library and validate release
         run: |
           scripts/build-native.sh
-          ./gradlew --no-daemon :sample:assembleRelease :sample:lintRelease :terminal:lintRelease
+          ./android/gradlew -p android --no-daemon :sample:assembleRelease :sample:lintRelease :terminal:lintRelease
       - name: Restore signing inputs
         env:
           KEYSTORE_BASE64: ${{ secrets.SHELLO_RELEASE_KEYSTORE_BASE64 }}

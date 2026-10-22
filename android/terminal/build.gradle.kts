@@ -2,6 +2,7 @@ plugins { id("com.android.library"); id("maven-publish") }
 group = "dev.ghostty.android"
 version = "0.1.0-alpha01"
 android {
+    sourceSets.getByName("main").resources.srcDir(rootProject.file("../public/resources"))
     namespace = "dev.ghostty.android"
     compileSdk = 35
     ndkVersion = "28.2.13676358"

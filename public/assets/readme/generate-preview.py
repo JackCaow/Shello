@@ -6,7 +6,7 @@ from pathlib import Path
 import argparse
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT = Path(__file__).resolve().parent
 SCENES = [
     ('docs/evidence/tui-colors/claude-dark-diff.png', 'YOUR TERMINAL,\nWITH YOU.', 'Claude Code over SSH', 'Native terminal rendering for your remote tools.'),
@@ -26,7 +26,7 @@ def main():
     if font_path is None:
         parser.error('Supply --font /path/to/font.ttf')
     def font(size): return ImageFont.truetype(str(font_path), size)
-    icon = Image.open(ROOT / 'assets/branding/app-icon-v1/icon-1024.png').convert('RGB')
+    icon = Image.open(ROOT / 'public/assets/branding/app-icon-v1/icon-1024.png').convert('RGB')
     icon.resize((192, 192), Image.Resampling.LANCZOS).save(OUT / 'icon.png', optimize=True)
     frames = []
     for i, (source, title, heading, description) in enumerate(SCENES):

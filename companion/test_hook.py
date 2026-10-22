@@ -9,7 +9,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'sample/src/main/assets/ghostty_hook.py'
+SCRIPT = Path(__file__).resolve().parents[1] / 'public/agent/ghostty_hook.py'
 spec = importlib.util.spec_from_file_location('hook', SCRIPT)
 hook = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(hook)

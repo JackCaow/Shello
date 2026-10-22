@@ -40,7 +40,7 @@ def load(path):
 
 catalog = {}
 for module in ('sample', 'terminal'):
-    res = ROOT / module / 'src/main/res'
+    res = ROOT / 'android' / module / 'src/main/res'
     for lang, folder in (('en', 'values'), ('zh-Hans', 'values-zh-rCN')):
         for f in sorted((res / folder).glob('*.xml')):
             if f.name in ('ic_launcher_colors.xml', 'ids.xml', 'styles.xml'):

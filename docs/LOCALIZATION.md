@@ -9,10 +9,10 @@ when a screen changes language.
 
 ## Resource layout
 
-- `sample/src/main/res/values/strings.xml`: default English app strings and plurals.
-- `sample/src/main/res/values-zh-rCN/strings.xml`: Simplified Chinese app translations.
-- `terminal/src/main/res/values*/strings.xml`: embeddable terminal input and accessibility strings.
-- `sample/src/main/res/xml/locales_config.xml`: Android 13+ supported app languages.
+- `android/sample/src/main/res/values/strings.xml`: default English app strings and plurals.
+- `android/sample/src/main/res/values-zh-rCN/strings.xml`: Simplified Chinese app translations.
+- `android/terminal/src/main/res/values*/strings.xml`: embeddable terminal input and accessibility strings.
+- `android/sample/src/main/res/xml/locales_config.xml`: Android 13+ supported app languages.
 
 Use `AppLanguage.tr(R.string.key, args...)` for app text, including service messages;
 use `AppLanguage.quantity(R.plurals.key, count, args...)` for counts and relative times.
@@ -31,7 +31,7 @@ render their status in the newly selected language.
 
 ```sh
 python3 scripts/check-localization.py
-./gradlew :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:lintRelease
+./android/gradlew -p android :sample:assembleDebug :sample:assembleDebugAndroidTest :sample:lintRelease
 adb shell am instrument -w \
   -e class dev.ghostty.android.sample.LocalizationTest,dev.ghostty.android.sample.SettingsActivityTest \
   dev.ghostty.android.sample.test/androidx.test.runner.AndroidJUnitRunner

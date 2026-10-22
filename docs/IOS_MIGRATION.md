@@ -5,7 +5,7 @@ Native iOS / iPadOS port of the Android app (iOS 16+, arm64 device and Simulator
 ## Layout
 | Path | Purpose |
 |---|---|
-| `native/shello_vt.{c,h}` | Platform-neutral C wrapper over libghostty-vt (port of the JNI file) |
+| `public/native/shello_vt.{c,h}` | Platform-neutral C wrapper over libghostty-vt (port of the JNI file) |
 | `scripts/build-native-ios.sh`, `build-ssh-ios.sh`, `assemble-ios-frameworks.sh` | Build `ios/Frameworks/ShelloNative.xcframework` (device + simulator) with Zig 0.16.0, OpenSSL 3.4.1, libssh2 1.11.1 (checksums pinned) |
 | `ios/Sources/ShelloTerminal` | `TerminalSession`: thread-confined VT engine, key/mouse/paste encoders, checkpoints |
 | `ios/Sources/ShelloTerminalUI` | `TerminalView`: Core Graphics renderer, cursor/blink, wide + emoji cells, grapheme shaping, selection with handles, gestures, soft + hardware keyboard |

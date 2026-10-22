@@ -21,9 +21,9 @@ targets:
     platform: iOS
     sources:
       - path: Shello
-      - path: ../sample/src/main/assets/ghostty_hook.py
+      - path: ../public/agent/ghostty_hook.py
         buildPhase: resources
-      - path: ../terminal/src/main/resources/META-INF/ghostty-android
+      - path: ../public/resources/META-INF/ghostty-android
         type: folder
         buildPhase: resources
     dependencies:

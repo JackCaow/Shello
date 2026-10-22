@@ -1,5 +1,6 @@
 plugins { id("com.android.application") }
 android {
+    sourceSets.getByName("main").assets.srcDir(rootProject.file("../public/agent"))
     buildFeatures { buildConfig = true }
     namespace = "dev.ghostty.android.sample"
     compileSdk = 35

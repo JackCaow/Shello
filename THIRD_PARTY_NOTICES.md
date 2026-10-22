@@ -13,7 +13,7 @@ These notices are packaged under `META-INF/ghostty-android/` in the library's cl
 - Björn Höhrmann notice
 - Zig MIT license
 
-Android platform fonts, ICU and libc are provided by the operating system. Build-only Gradle wrapper code is Apache-2.0; its distribution license is retained at `licenses/Gradle-LICENSE`. SDK/NDK, Gradle, Zig compiler and upstream source archives are not checked into this repository.
+Android platform fonts, ICU and libc are provided by the operating system. Build-only Gradle wrapper code is Apache-2.0; its distribution license is retained at `android/licenses/Gradle-LICENSE`. SDK/NDK, Gradle, Zig compiler and upstream source archives are not checked into this repository.
 
 Upstream source locations:
 - https://github.com/ghostty-org/ghostty
@@ -21,7 +21,7 @@ Upstream source locations:
 - https://github.com/ziglang/zig
 - https://github.com/gradle/gradle
 
-The sample application (not the terminal AAR) uses [mwiede/JSch 2.28.8](https://github.com/mwiede/jsch) for SSH. Its BSD-style JSch/JZlib and jBCrypt notices are retained in `sample/src/main/assets/third_party/jsch/` and packaged in the sample APK.
+The sample application (not the terminal AAR) uses [mwiede/JSch 2.28.8](https://github.com/mwiede/jsch) for SSH. Its BSD-style JSch/JZlib and jBCrypt notices are retained in `android/sample/src/main/assets/third_party/jsch/` and packaged in the sample APK.
 
 The sample also includes [Bouncy Castle bcprov-jdk18on 1.86](https://www.bouncycastle.org/download/bouncy-castle-java/) (MIT) for JSch Ed25519 support on Android, including API 27. Its upstream notice is packaged at `assets/third_party/bouncycastle/LICENSE.md`. This dependency is not included in the terminal AAR.
 

@@ -27,7 +27,7 @@ The original connection remains usable until verification succeeds. Validation/a
 On macOS with tmux installed and an ARM64 Android emulator running:
 
 ```sh
-./gradlew :sample:assembleDebug :sample:assembleDebugAndroidTest
+./android/gradlew -p android :sample:assembleDebug :sample:assembleDebugAndroidTest
 uv run --with paramiko==5.1.0 python scripts/verify-connection-flow.py --serial emulator-5580
 ```
 
@@ -46,8 +46,8 @@ An aggregate notification covers the running SSH connections; its **全部断开
 Build/install the debug sample, unlock an authorized Android device, then run:
 
 ```sh
-./gradlew :sample:assembleDebug :sample:assembleDebugAndroidTest
-adb -s DEVICE_SERIAL install -r sample/build/outputs/apk/debug/sample-debug.apk
+./android/gradlew -p android :sample:assembleDebug :sample:assembleDebugAndroidTest
+adb -s DEVICE_SERIAL install -r android/sample/build/outputs/apk/debug/sample-debug.apk
 python3 scripts/local-ssh.py start --serial DEVICE_SERIAL --tmux
 ```
 
@@ -136,7 +136,7 @@ For direct Wi-Fi connections, two-computer fixtures and sustained physical-devic
 With the fixture still running, install the instrumentation APK and run:
 
 ```sh
-adb -s DEVICE_SERIAL install -r sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
+adb -s DEVICE_SERIAL install -r android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
 adb -s DEVICE_SERIAL shell am instrument -w -r \
   dev.ghostty.android.sample.test/androidx.test.runner.AndroidJUnitRunner
 python3 scripts/local-ssh.py stop --serial DEVICE_SERIAL

@@ -1,7 +1,7 @@
 name: Shello CI
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
   workflow_dispatch:
 concurrency:
@@ -78,8 +78,8 @@ jobs:
         with:
           name: android-library
           path: |
-            terminal/build/outputs/aar/*.aar
-            sample/build/outputs/apk/debug/*.apk
+            android/terminal/build/outputs/aar/*.aar
+            android/sample/build/outputs/apk/debug/*.apk
   windows-pairing:
     runs-on: windows-latest
     steps:

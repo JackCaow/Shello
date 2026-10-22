@@ -171,7 +171,7 @@ PermitTunnel no
                 import qrcode
                 hook_root = root / 'hook-fixture'
                 hook_root.mkdir()
-                shutil.copy(repo / 'sample/src/main/assets/ghostty_hook.py', hook_root / 'ghostty_hook.py')
+                shutil.copy(repo / 'public/agent/ghostty_hook.py', hook_root / 'ghostty_hook.py')
                 with (root / 'test.properties').open('a') as props:
                     props.write(f'hookRoot={hook_root}\nhostPublicKey=' + ' '.join((root / 'host_key.pub').read_text().split()[:2]) + '\n')
                 pair_port = free_port()
@@ -186,7 +186,7 @@ PermitTunnel no
             if args.physical:
                 for port in (ssh_port,password_port):
                     subprocess.run(adb+['reverse','--no-rebind',f'tcp:{port}',f'tcp:{port}'],check=True);reversed_ports.append(port)
-            for apk in ('sample/build/outputs/apk/debug/sample-debug.apk', 'sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk'):
+            for apk in ('android/sample/build/outputs/apk/debug/sample-debug.apk', 'android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk'):
                 subprocess.run(adb + ['install', '-r', str(repo / apk)], check=True)
             subprocess.run(adb + ['shell', 'run-as', package, 'mkdir', '-p', 'cache/ssh-flow'], check=True)
             for name in ('test.properties', 'client_key', 'client_key_encrypted') + (('pair.txt',) if args.home_features else ()):

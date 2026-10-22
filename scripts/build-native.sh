@@ -24,12 +24,12 @@ mkdir -p "$root/.native"
 patched=$(mktemp -d "$root/.native/source.XXXXXX")
 trap 'rm -rf "$patched"' EXIT
 git -C "$GHOSTTY_SOURCE" archive "$commit" | tar -x -C "$patched"
-patch -s -d "$patched" -p1 < "$root/patches/legacy-keycap-selectors.patch"
+patch -s -d "$patched" -p1 < "$root/public/patches/legacy-keycap-selectors.patch"
 # The archive is inside Shello's checkout: never let Ghostty infer our release tag.
 (cd "$patched" && "$ZIG_BIN" build -Dversion-string=1.3.2-dev+b58ef1d678be -Demit-lib-vt -Dtarget=aarch64-linux-android.27 -Doptimize=ReleaseFast -Dsimd=false -Dvt-features=-kitty_graphics --prefix "$root/.native/install")
-output="$root/terminal/src/main/jniLibs/arm64-v8a/libghostty_android.so"
+output="$root/android/terminal/src/main/jniLibs/arm64-v8a/libghostty_android.so"
 mkdir -p "$(dirname "$output")"
 "$ndk/aarch64-linux-android27-clang" -shared -fPIC -O2 -Wl,--no-undefined -Wl,-z,max-page-size=16384 -I"$patched/include" \
- "$root/terminal/src/main/cpp/ghostty_android.c" "$root/.native/install/lib/libghostty-vt.a" -lm -o "$output"
+ "$root/android/terminal/src/main/cpp/ghostty_android.c" "$root/.native/install/lib/libghostty-vt.a" -lm -o "$output"
 if "$ndk/llvm-nm" "$output" | grep -E ' [tTwW] (calloc|free)$'; then echo 'Unexpected hidden allocator stub' >&2; exit 1; fi
 printf 'Built %s\n' "$output"

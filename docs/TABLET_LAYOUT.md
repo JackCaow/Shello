@@ -13,9 +13,9 @@ The sample app sizes content against its current window, not the physical displa
 Build the sample and instrumentation APKs:
 
 ```sh
-./gradlew :sample:assembleDebug :sample:assembleDebugAndroidTest
-adb -s "$TEST_SERIAL" install -r sample/build/outputs/apk/debug/sample-debug.apk
-adb -s "$TEST_SERIAL" install -r sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
+./android/gradlew -p android :sample:assembleDebug :sample:assembleDebugAndroidTest
+adb -s "$TEST_SERIAL" install -r android/sample/build/outputs/apk/debug/sample-debug.apk
+adb -s "$TEST_SERIAL" install -r android/sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
 ```
 
 On a disposable emulator, grant camera access and, on API 33+, notifications before running unattended UI/SSH checks. Enable the emulator's software keyboard. The notification permission prompt otherwise pauses Activity-resume assertions; it is not a connection failure.
