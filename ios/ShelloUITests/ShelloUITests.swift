@@ -106,9 +106,17 @@ final class ShelloUITests: XCTestCase {
 
     func testPairingEndToEndThenShell() throws {
         guard let qr = env["SHELLO_QR"] else { throw XCTSkip("pairing harness not running") }
+        let expires = URLComponents(string: qr.trimmingCharacters(in: .whitespacesAndNewlines))?.queryItems?.first { $0.name == "expires" }.flatMap { Double($0.value ?? "") } ?? 0
+        XCTAssertGreaterThan(expires, Date().timeIntervalSince1970, "pairing fixture expired before launch")
         launch(seed: false, extra: ["-SHELLO_OPEN_PAIR", "-SHELLO_TEST_QR", qr.trimmingCharacters(in: .whitespacesAndNewlines)])
+        // A fresh physical install may ask for camera access before the app's confirmation.
+        let permission = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch
+        if permission.waitForExistence(timeout: 2) {
+            let allow = permission.buttons.matching(NSPredicate(format: "label IN {'Allow','允许','OK','好'}")).firstMatch
+            if allow.exists { allow.tap() }
+        }
         let confirm = app.alerts.firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 20), "confirmation alert missing\n\(app.debugDescription.prefix(3000))")
+        XCTAssertTrue(confirm.waitForExistence(timeout: 20), "confirmation alert missing; status=\(app.descendants(matching: .any)["pair.status"].firstMatch.label)\n\(app.debugDescription.prefix(3000))")
         confirm.buttons.matching(NSPredicate(format: "label == %@", "Pair")).firstMatch.tap()
         el("picker.shell", timeout: 40).tap()
         el("terminal.view")

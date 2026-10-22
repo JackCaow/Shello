@@ -133,6 +133,11 @@ struct QRScannerView: UIViewRepresentable {
         override func layoutSubviews() { super.layoutSubviews(); preview?.frame = bounds }
         func configure() {
             onState?((tr("opening_camera"), false))
+            // A simulator (or device without a camera) must not raise a system
+            // permission dialog that blocks pairing from an imported QR image.
+            guard AVCaptureDevice.default(for: .video) != nil else {
+                onState?((tr("camera_unavailable_reopen_this_page_or_scan_from_an_image"), true)); return
+            }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized: setup()
             case .notDetermined: AVCaptureDevice.requestAccess(for: .video) { ok in DispatchQueue.main.async { ok ? self.setup() : self.onState?((tr("camera_access_is_off_scan_from_an_image_or_allow_camera_access_in"), true)) } }
