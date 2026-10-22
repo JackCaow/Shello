@@ -78,7 +78,12 @@ final class UIReviewTests: XCTestCase {
         let secondID = cards.element(boundBy: 1).identifier
         cards.element(boundBy: 0).press(forDuration: 1); shot("review-session-menu")
         element("session.reorder").tap()
-        cards.element(boundBy: 0).press(forDuration: 0.8, thenDragTo: cards.element(boundBy: 1))
+        // The context-menu preview can still cover the original tile while its
+        // dismissal animation finishes. Wait for the actual drag surface.
+        hittable(element("home.reorder.done"))
+        hittable(cards.element(boundBy: 0)); hittable(cards.element(boundBy: 1))
+        cards.element(boundBy: 0).press(forDuration: 1, thenDragTo: cards.element(boundBy: 1), withVelocity: .slow, thenHoldForDuration: 0.5)
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in cards.element(boundBy: 0).identifier == secondID }, object: nil)], timeout: 10), .completed)
         element("home.reorder.done").tap()
         XCTAssertEqual(cards.element(boundBy: 0).identifier, secondID)
         element("home.settings").tap(); element("settings.appearance").tap(); element("theme.light").tap()

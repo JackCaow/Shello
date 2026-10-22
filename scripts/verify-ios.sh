@@ -31,11 +31,11 @@ step 'package tests (engine, core, ssh, terminal view, services)'
 xcodebuild test -workspace . -scheme ShelloKit-Package -destination "$dest" -parallel-testing-enabled NO -resultBundlePath "$work/package.xcresult" 2>&1 | tee "$work/package.log" | grep -E "error:|Executed [0-9]+ tests.*\)$|TEST (SUCCEEDED|FAILED)" | tail -4
 grep -q 'TEST SUCCEEDED' "$work/package.log"
 scripts_dir=$root/scripts
-critical=(ShelloUITests/ShelloUITests/testPairingEndToEndThenShell ShelloUITests/ShelloUITests/testSavedConnectionOpensShellAndRunsCommands ShelloUITests/UIReviewTests/testRootEdgeSwipeDoesNotBlockOpeningAnotherPage)
+critical=(ShelloUITests/ShelloUITests/testPairingEndToEndThenShell ShelloUITests/ShelloUITests/testSavedConnectionOpensShellAndRunsCommands ShelloUITests/UIReviewTests/testRootEdgeSwipeDoesNotBlockOpeningAnotherPage ShelloUITests/UIReviewTests/testHomeSessionLongPressReorderCloseAndCloseAll)
 run_app_tests() {
  local app_dest=$1 prefix=$2 models=$3 test
  local -a smoke remaining
- step "$prefix: critical UI flows (fresh pairing ticket, SSH state and root edge-back)"
+ step "$prefix: critical UI flows (fresh pairing ticket, SSH state, root edge-back and session reorder)"
  "$scripts_dir/ios-test-pair.sh" stop "$work/sshd" || true
  "$scripts_dir/ios-test-pair.sh" start "$work/sshd"; seed_env
  if [[ -z ${SHELLO_ONLY:-} ]]; then

@@ -25,7 +25,7 @@ scripts/verify-ios.sh            # needs a booted iOS Simulator and xcodegen
 ```
 `verify-ios.sh` starts an unprivileged sshd on 127.0.0.1:2299 and the real `companion/pair.py`, then runs: localization check, all Swift package tests, hosted app tests, the XCUITest flows, and an unsigned Release build for devices. To run on a device set a development team in Xcode (`ios/project.yml` leaves signing automatic).
 
-On each simulator, pairing, SSH command round trips and root edge-back run before the longer screenshot walkthroughs so the pairing ticket stays within its ten-minute lifetime. Their results are in `app-smoke.log` / `app-smoke.xcresult` (or `ipad-smoke.*`); the remaining UI flows use `app.*` / `ipad.*`. Required CI covers iPhone; local verification also runs an available iPad unless `SHELLO_SKIP_IPAD=1`.
+On each simulator, pairing, SSH command round trips, root edge-back and home-session reordering run before the longer screenshot walkthroughs so the pairing ticket stays within its ten-minute lifetime and critical interaction failures stop early. Their results are in `app-smoke.log` / `app-smoke.xcresult` (or `ipad-smoke.*`); the remaining UI flows use `app.*` / `ipad.*`. Required CI covers iPhone; local verification also runs an available iPad unless `SHELLO_SKIP_IPAD=1`.
 
 ## Validation recorded on 2026-10-22
 
