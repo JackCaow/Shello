@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://github.com/JackCaow/Shello/releases">下载 APK</a> ·
   <a href="#快速配对">快速配对</a> ·
+  <a href="#agent-skill">Agent Skill</a> ·
   <a href="docs/DEVELOPMENT.md">构建与接入</a> ·
   <a href="README.md">English</a>
 </p>
@@ -44,7 +45,28 @@ Android 应用已发布 **v0.1.0**。可嵌入的终端库仍处于实验阶段�
 - **界面语言**：英文与简体中文，支持跟随系统或在设置中单独切换。
 - **外观设置**：Shello / 黑色 / 浅色主题、字体大小与工具栏配置。
 
+## Agent Skill
+
+使用 **[shello-pair](skills/shello-pair/SKILL.md)**，让 Agent 自动准备电脑并展示配对二维码。Skill 会检查和安装缺失依赖、按需开启 SSH，在隔离会话中验证 tmux，最后启动临时 HTTPS 配对服务。
+
+如果已经克隆仓库，将这段话交给 Agent：
+
+> 使用 `skills/shello-pair/SKILL.md` 配置这台电脑，自动安装缺失依赖、配置 SSH 与 tmux，最后展示配对二维码。
+
+如果还没有本地代码，可以直接告诉 Agent：
+
+> 克隆 https://github.com/JackCaow/Shello，然后按照 `skills/shello-pair/SKILL.md` 将这台电脑与 Shello 配对。
+
+也可将完整的 `skills/shello-pair/` 文件夹复制到 Agent 的技能目录。需要保留 `scripts/`、`references/` 和 `agents/`，不能只复制 `SKILL.md`；脱离本仓库时，Skill 会下载并校验固定版本的官方配对脚本。
+
+- **支持系统**：macOS、Debian/Ubuntu、Fedora/RHEL，暂不支持原生 Windows。
+- **保留现有环境**：保留 SSH 密钥、访问配置和 tmux 会话；管理员认证在自己的终端或系统设置中完成。
+- **二维码展示**：支持临时 PNG，无图片能力时可显示终端二维码；Skill 默认配对有效期为 5 分钟，结束后清理临时文件。
+- **结果验证**：明确区分“手机公钥已安装”和“手机 SSH 已连接”，不会将前者误报为配对成功。
+
 ## 快速配对
+
+不使用 Agent 时，可按以下步骤手动配置。
 
 ### 1. 准备电脑
 
