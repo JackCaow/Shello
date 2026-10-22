@@ -43,6 +43,23 @@ Agent 会准备电脑环境并展示二维码。如果需要系统认证，在�
 Agent 生成的二维码默认 **5 分钟**有效，过期后让 Agent 重新生成即可。不使用 Agent，或需要更多选项时，展开下面的说明。
 
 <details>
+<summary>Windows 11 / WSL2 配对</summary>
+
+在目标电脑的普通 PowerShell 中运行：
+
+```powershell
+$shelloPairScript = Join-Path $env:TEMP 'shello-pair.ps1'
+Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.ps1' -OutFile $shelloPairScript
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $shelloPairScript
+```
+
+脚本准备 WSL2、Python、OpenSSL、SSH 和 tmux，展示二维码。首次安装可能需要 Windows UAC、重启及手动初始化普通 Linux 用户，完成后重跑即可。连接目标是 **WSL Linux**，不是原生 PowerShell；已有 SSH 配置、密钥和 tmux 会话保留。
+
+默认使用 Windows 地址的 SSH **2222**、临时 HTTPS **8765**；可加 `-Network tailscale` 或 `-Network lan`。`-Check` 仅检查前置环境。配对结束后保留 SSH，清理临时配对端口。Windows/WSL 重启或地址变化后需重跑。现有 v0.1.0 APK 可以扫码；配对页的 Windows 命令选择入口属于后续构建。Windows 系统操作由 CI mock 验证，尚无 Windows 真机端到端验收。[完整说明与限制](skills/shello-pair/references/windows-wsl.md)
+
+</details>
+
+<details>
 <summary>手动配对与依赖安装</summary>
 
 ### 1. 准备电脑
@@ -103,9 +120,9 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 <details>
 <summary>单独安装 Agent Skill</summary>
 
-也可将完整的 `skills/shello-pair/` 文件夹复制到 Agent 的技能目录。需要保留 `scripts/`、`references/` 和 `agents/`，不能只复制 `SKILL.md`；脱离本仓库时，Skill 会下载并校验固定版本的官方配对脚本。
+也可将完整的 `skills/shello-pair/` 文件夹复制到 Agent 的技能目录。需要保留 `scripts/`、`references/` 和 `agents/`，不能只复制 `SKILL.md`；脱离本仓库时，Unix Skill 下载并校验固定版本的官方配对脚本；Windows 启动器和辅助文件已内嵌在 skill 中。
 
-- **支持系统**：macOS、Debian/Ubuntu、Fedora/RHEL，暂不支持原生 Windows。
+- **支持系统**：macOS、Debian/Ubuntu、Fedora/RHEL，以及 Windows 11 + WSL2；不支持原生 PowerShell 会话。
 - **保留现有环境**：保留 SSH 密钥、访问配置和 tmux 会话；管理员认证在自己的终端或系统设置中完成。
 - **二维码展示**：支持临时 PNG，无图片能力时可显示终端二维码；Skill 默认配对有效期为 5 分钟，结束后清理临时文件。
 - **结果验证**：明确区分“手机公钥已安装”和“手机 SSH 已连接”，不会将前者误报为配对成功。

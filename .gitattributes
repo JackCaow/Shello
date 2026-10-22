@@ -1,3 +1,7 @@
 * text=auto
 *.bat text eol=crlf
 *.patch whitespace=-blank-at-eol,-blank-at-eof
+# Standalone pairing bundles embed these files byte-for-byte, including on Windows.
+*.sh text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf

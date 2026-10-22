@@ -210,7 +210,7 @@
     <string name="scan_from_image" formatted="false">"Scan from image"</string>
     <string name="choose_a_saved_pairing_qr_code" formatted="false">"Choose a saved pairing QR code"</string>
     <string name="about_pairing" formatted="false">"About pairing"</string>
-    <string name="enable_ssh_and_install_tmux_on_your_computer_first_your_private_k" formatted="false">"Enable SSH and install tmux on your computer first. Your private key is generated and encrypted on this device; only the public key is installed on the computer. The QR code pins the HTTPS certificate and contains a one-time token that expires after 3 minutes."</string>
+    <string name="enable_ssh_and_install_tmux_on_your_computer_first_your_private_k" formatted="false">"Enable SSH and install tmux on your computer first. Your private key is generated and encrypted on this device; only the public key is installed on the computer. The QR code pins the HTTPS certificate and contains a short-lived one-time token. Windows uses WSL2; the script may request system authorization."</string>
     <string name="point_at_a_qr_code_to_scan" formatted="false">"Point at a QR code to scan"</string>
     <string name="camera_unavailable_reopen_this_page_or_scan_from_an_image" formatted="false">"Camera unavailable. Reopen this page or scan from an image."</string>
     <string name="camera_access_is_off_scan_from_an_image_or_allow_camera_access_in" formatted="false">"Camera access is off. Scan from an image or allow camera access in system settings."</string>
@@ -478,4 +478,7 @@
     <string name="app_preferences">App</string>
     <string name="appearance_scope">Applies to the app and terminal defaults.</string>
     <string name="system_language">System language</string>
+    <string name="computer_platform">Computer platform</string>
+    <string name="windows_wsl_pairing_hint">Run in Windows PowerShell. The script prepares WSL2 and forwards SSH and pairing ports. You will connect to Linux inside WSL2, not a native PowerShell session.</string>
+    <string name="verifying_paired_endpoint">Public key installed. Verifying SSH + tmux at %1$s@%2$s:%3$d…</string>
 </resources>
