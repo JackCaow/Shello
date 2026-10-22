@@ -42,13 +42,13 @@ jobs:
             sample/build/outputs/apk/debug/*.apk
   windows-pairing:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        shell: [powershell, pwsh]
     steps:
       - uses: actions/checkout@v4
-      - name: Verify standalone Windows launcher and owned network lifecycle
-        shell: ${{ matrix.shell }}
+      - name: Verify Windows PowerShell 5.1 pairing lifecycle
+        shell: powershell
+        run: ./tests/test_pair_windows.ps1
+      - name: Verify PowerShell 7 pairing lifecycle
+        shell: pwsh
         run: ./tests/test_pair_windows.ps1
   pairing-integration:
     runs-on: ubuntu-latest
