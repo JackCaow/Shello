@@ -70,7 +70,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         LinearLayout nameLine=row();form.addView(nameLine,new LinearLayout.LayoutParams(-1,-2));
         ImageView serverIcon=SampleUi.icon(this,"server",TEXT);serverIcon.setPadding(dp(12),dp(12),dp(12),dp(12));serverIcon.setBackground(round(uiTheme().input,16));
         LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(48),dp(48));iconParams.rightMargin=dp(12);nameLine.addView(serverIcon,iconParams);
-        LinearLayout nameRow=row();nameRow.setPadding(0,0,dp(8),0);nameRow.setBackground(round(uiTheme().input,20));
+        LinearLayout nameRow=row();nameRow.setAddStatesFromChildren(true);nameRow.setBackground(inputBackground(20));nameRow.setPadding(0,0,dp(8),0);
         nameLine.addView(nameRow,new LinearLayout.LayoutParams(0,-2,1));
         name=field(tr(R.string.my_mac),tr(R.string.connection_name));name.setBackgroundColor(UiTheme.background(SshDiscoveryActivity.this,Color.TRANSPARENT));
         nameRow.addView(name,new LinearLayout.LayoutParams(0,-2,1));
@@ -298,7 +298,16 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private EditText field(String hint,String description){
         EditText e=new EditText(this);e.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));e.setHintTextColor(UiTheme.foreground(SshDiscoveryActivity.this,MUTED));e.setTextSize(17);e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);e.setHint(hint);e.setContentDescription(description);
-        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);e.setPadding(dp(14),dp(10),dp(14),dp(10));e.setMinHeight(dp(48));e.setMinimumHeight(dp(48));return e;
+        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);e.setBackground(inputBackground(18));e.setPadding(dp(14),dp(10),dp(14),dp(10));e.setMinHeight(dp(48));e.setMinimumHeight(dp(48));return e;
+    }
+    private android.graphics.drawable.StateListDrawable inputBackground(int radius){
+        android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
+        for(boolean focused:new boolean[]{true,false}){
+            GradientDrawable surface=new GradientDrawable();surface.setColor(uiTheme().light?0xffe7ebf0:0xff23272c);surface.setCornerRadius(dp(radius));
+            surface.setStroke(dp(1),focused?uiTheme().accent:(uiTheme().light?0xffc6ced8:0xff363c43));
+            states.addState(focused?new int[]{android.R.attr.state_focused}:new int[]{},surface);
+        }
+        return states;
     }
     private RadioButton authChoice(String title,int id){
         RadioButton choice=SampleUi.segment(this,title,id);UiDesign.type(choice,UiDesign.Type.SECONDARY);choice.setSingleLine(true);
