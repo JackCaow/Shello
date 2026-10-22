@@ -42,7 +42,13 @@ final class ShelloUITests: XCTestCase {
         el("profile.Local sshd").tap()
         el("picker.shell").tap()
         _ = el("terminal.view", timeout: 30)
-        waitScreen("@")
+        waitShellReady()
+    }
+    func waitShellReady() {
+        let connection = el("terminal.menu")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "SSH"), object: connection)], timeout: 20), .completed)
+        app.typeText("echo SHELLO_UI_READY_$((6*7))\n")
+        waitScreen("SHELLO_UI_READY_42")
     }
 
     func testHomeEmptyStateAndMenus() {
@@ -68,7 +74,7 @@ final class ShelloUITests: XCTestCase {
         el("picker.new"); Thread.sleep(forTimeInterval: 2)            // let the existing list load
         let before = sessionIDs()
         el("picker.new").tap()
-        waitScreen("@")
+        waitShellReady()
         app.typeText("echo TMUXKEEP_$((5*5))\n")
         waitScreen("TMUXKEEP_25")
         el("terminal.menu").tap(); app.buttons["Close"].firstMatch.tap(); el("terminal.close.confirm").tap()
@@ -106,7 +112,7 @@ final class ShelloUITests: XCTestCase {
         confirm.buttons.matching(NSPredicate(format: "label == %@", "Pair")).firstMatch.tap()
         el("picker.shell", timeout: 40).tap()
         el("terminal.view")
-        waitScreen("@", timeout: 30)
+        waitShellReady()
     }
 
     func testManualFormTrustPromptSavesConnection() {

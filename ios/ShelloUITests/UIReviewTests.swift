@@ -30,7 +30,10 @@ final class UIReviewTests: XCTestCase {
     }
     func openShell() {
         element("profile.Local sshd").tap(); element("picker.shell").tap(); let terminal = element("terminal.view", timeout: 25)
-        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", "@"), object: terminal)], timeout: 20), .completed)
+        let connection = element("terminal.menu")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "SSH"), object: connection)], timeout: 20), .completed)
+        app.typeText("echo SHELLO_UI_READY_$((6*7))\n")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", "SHELLO_UI_READY_42"), object: terminal)], timeout: 20), .completed)
     }
     func testToolbarPreviewPinsButtonsAndUsesCurrentAppearance() throws {
         try launch()

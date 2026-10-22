@@ -70,10 +70,17 @@ final class AgentHubIntegrationTests: XCTestCase {
         XCTAssertNotNil(hub.diagnostics[profile.id]?["capabilities"])
         // Drop a fake pending request into the spool through the hook protocol, then answer it.
         let event = #"{"hook_event_name":"PermissionRequest","session_id":"sess-1","tool_name":"Bash","tool_input":{"command":"ls"},"cwd":"/tmp/demo"}"#
-        let hookRun = try await RemoteCommand.run(profileID: profile.id, store: store, command: "(\(command)hook >/dev/null 2>&1 &) ; sleep 0.2; echo started", input: Data(event.utf8))
+        // Non-interactive Bash redirects an asynchronous job's implicit stdin to /dev/null.
+        // Give the producer an explicit private payload and keep it alive across SSH channel closure.
+        let payload = ShellQuote.quote(state + "/pending-request.json")
+        let hookRun = try await RemoteCommand.run(profileID: profile.id, store: store, command: "umask 077; cat > \(payload); (nohup env \(command)hook < \(payload) >/dev/null 2>&1 &) ; echo started", input: Data(event.utf8))
         XCTAssertTrue(String(decoding: hookRun, as: UTF8.self).contains("started"))
-        try await Task.sleep(nanoseconds: 600_000_000)
-        await hub.refresh()
+        let deadline = Date().addingTimeInterval(10)
+        repeat {
+            await hub.refresh()
+            if hub.events.contains(where: { $0.isPending() }) { break }
+            try await Task.sleep(nanoseconds: 200_000_000)
+        } while Date() < deadline
         let pending = hub.events.first { $0.isPending() }
         XCTAssertNotNil(pending, "the hook should have spooled a pending request")
         if let pending {

@@ -85,6 +85,7 @@ struct TerminalScreen: View {
                         .foregroundColor(Color(red: 0.4, green: 0.65, blue: 1)).padding(.horizontal, 12).frame(height: 32)
                         .background(Color(red: 0.4, green: 0.65, blue: 1).opacity(0.18), in: Capsule())
                 }.frame(minHeight: 44).accessibilityIdentifier("terminal.menu").accessibilityLabel(tr("session_tools"))
+                    .accessibilityValue(sessions.selected?.isConnected == true ? "SSH" : "···")
             }.padding(.horizontal, 12)
         }
         .frame(maxWidth: .infinity).background(theme.terminalSheet)

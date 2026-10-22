@@ -137,7 +137,8 @@ final class SSHConnectionTests: XCTestCase {
             return (ch, screen, closed)
         }
         let (first, s1, closed1) = try open()
-        waitFor("@", { s1.text }, timeout: 20)
+        first.write(Data("echo SHELLO_READY_$((6*7))\n".utf8))
+        waitFor("SHELLO_READY_42", { s1.text }, timeout: 20)
         first.write(Data("echo PERSIST_$((6*7))\n".utf8)); waitFor("PERSIST_42", { s1.text })
         first.close(); wait(for: [closed1], timeout: 10)   // drop the SSH client; tmux keeps the session
         let (second, s2, closed2) = try open()

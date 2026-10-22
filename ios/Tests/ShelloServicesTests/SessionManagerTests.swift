@@ -41,7 +41,8 @@ final class SessionManagerTests: XCTestCase {
         defer { tabsDebug = "" }
         tabsDebug = "\(tab.state)"
         until("connected") { self.tabsDebug = "\(tab.state)"; return tab.state == .connected }
-        until("prompt") { self.screen(tab).contains("@") }
+        m.send(tab, Data("echo SHELLO_READY_$((6*7))\n".utf8))
+        until("shell command round trip") { self.screen(tab).contains("SHELLO_READY_42") }
         m.send(tab, Data("echo KEEP_$((6*7))\n".utf8))
         until("echo") { self.screen(tab).contains("KEEP_42") }
         m.disconnect(tab)
