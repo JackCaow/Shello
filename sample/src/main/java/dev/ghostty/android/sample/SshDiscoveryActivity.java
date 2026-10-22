@@ -304,7 +304,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
         for(boolean focused:new boolean[]{true,false}){
             GradientDrawable surface=new GradientDrawable();surface.setColor(uiTheme().light?0xffe7ebf0:0xff23272c);surface.setCornerRadius(dp(radius));
-            surface.setStroke(dp(1),focused?uiTheme().accent:(uiTheme().light?0xffc6ced8:0xff363c43));
+            if(focused)surface.setStroke(dp(1),uiTheme().accent);
             states.addState(focused?new int[]{android.R.attr.state_focused}:new int[]{},surface);
         }
         return states;
