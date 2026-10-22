@@ -58,11 +58,11 @@ def ticket(payload):
     return fields
 
 
-def verify_listener(fields):
+def verify_listener(fields, connect_host=None, connect_port=None):
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE  # The scanned, random session certificate is pinned below.
-    with socket.create_connection((fields['host'], int(fields['port'])), timeout=2) as connection:
+    with socket.create_connection((connect_host or fields['host'], connect_port or int(fields['port'])), timeout=2) as connection:
         with context.wrap_socket(connection, server_hostname=fields['host']) as tls:
             if hashlib.sha256(tls.getpeercert(binary_form=True)).hexdigest() != fields['pin']:
                 raise ValueError('Pairing service certificate pin mismatch')
@@ -101,6 +101,8 @@ def run(options):
                    '--port', str(options.port), '--ttl', str(options.ttl), '--qr-file', str(payload)]
         if options.host:
             command += ['--host', options.host]
+        for flag, value in [('--bind', options.bind), ('--ssh-check-port', options.ssh_check_port), ('--advertise-port', options.advertise_port), ('--name', options.name)]:
+            if value is not None: command += [flag, str(value)]
         for key in options.host_key:
             command += ['--host-key', str(key.expanduser().resolve())]
         if options.authorized_keys:
@@ -124,14 +126,15 @@ def run(options):
                 ready_deadline = time.monotonic() + 10
                 while True:
                     try:
-                        verify_listener(fields)
+                        probe_host='127.0.0.1' if options.bind=='0.0.0.0' else options.bind
+                        verify_listener(fields,probe_host,options.port if options.bind and options.port else None)
                         break
                     except OSError:
                         if process.poll() is not None or time.monotonic() > ready_deadline:
                             raise RuntimeError('Pairing HTTPS listener did not become ready')
                         time.sleep(.1)
                 subprocess.run([str(renderer_python), str(renderer), str(payload), str(image)], check=True)
-                emit('ready', qr_image=str(image), expires_at_unix=int(fields['expires']),
+                emit('ready', host=fields['host'],port=int(fields['port']),certificate_sha256=fields['pin'],qr_image=str(image), expires_at_unix=int(fields['expires']),
                      qr_payload_file=str(payload), renderer_python=str(renderer_python))
                 installed = False
                 completion_deadline = time.monotonic() + options.ttl + 45
@@ -155,6 +158,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--network', choices=('auto', 'lan', 'tailscale'), default='auto')
     parser.add_argument('--host')
+    parser.add_argument('--bind', help='Internal listener IPv4 for a forwarded endpoint')
+    parser.add_argument('--ssh-check-port', type=int)
+    parser.add_argument('--advertise-port', type=int)
+    parser.add_argument('--name')
     parser.add_argument('--ssh-port', type=int, default=22)
     parser.add_argument('--port', type=int, default=0)
     parser.add_argument('--ttl', type=int, default=300)
@@ -162,6 +169,8 @@ def main():
     parser.add_argument('--host-key', action='append', type=Path, default=[], help='Host public key for a nonstandard SSH server')
     parser.add_argument('--authorized-keys', type=Path, help='Nonstandard authorized_keys path; default is the current user')
     options = parser.parse_args()
+    if any(p is not None and not 1 <= p <= 65535 for p in (options.ssh_check_port,options.advertise_port)):
+        parser.error('Invalid forwarded port')
     if not 30 <= options.ttl <= 600 or not 1 <= options.ssh_port <= 65535 or not 0 <= options.port <= 65535:
         parser.error('Use ttl 30..600, ssh-port 1..65535 and port 0..65535')
     try:

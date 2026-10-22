@@ -210,7 +210,7 @@
     <string name="scan_from_image" formatted="false">"从图片扫描"</string>
     <string name="choose_a_saved_pairing_qr_code" formatted="false">"选择已保存的配对二维码"</string>
     <string name="about_pairing" formatted="false">"配对说明"</string>
-    <string name="enable_ssh_and_install_tmux_on_your_computer_first_your_private_k" formatted="false">"电脑需要先开启 SSH 并安装 tmux。手机生成私钥并保存在本机加密存储；电脑只安装公钥。二维码固定 HTTPS 证书和一次性令牌，3 分钟后失效。"</string>
+    <string name="enable_ssh_and_install_tmux_on_your_computer_first_your_private_k" formatted="false">"电脑需要先开启 SSH 并安装 tmux。手机生成私钥并保存在本机加密存储；电脑只安装公钥。二维码固定 HTTPS 证书和短时有效的一次性令牌。Windows 通过 WSL2 连接，脚本可能请求系统授权。"</string>
     <string name="point_at_a_qr_code_to_scan" formatted="false">"对准二维码，即可识别"</string>
     <string name="camera_unavailable_reopen_this_page_or_scan_from_an_image" formatted="false">"相机暂不可用，请重新进入或从图片扫描"</string>
     <string name="camera_access_is_off_scan_from_an_image_or_allow_camera_access_in" formatted="false">"相机权限未开启；可从图片扫描，或在系统设置中允许相机权限。"</string>
@@ -470,4 +470,7 @@
     <string name="app_preferences">应用</string>
     <string name="appearance_scope">应用于界面及终端默认配色。</string>
     <string name="system_language">系统语言</string>
+    <string name="computer_platform">电脑系统</string>
+    <string name="windows_wsl_pairing_hint">在 Windows PowerShell 中运行。脚本配置 WSL2 并转发 SSH 和配对端口；连接的是 WSL2 内的 Linux，不是原生 PowerShell 会话。</string>
+    <string name="verifying_paired_endpoint">公钥已安装，正在验证 %1$s@%2$s:%3$d 的 SSH 与 tmux…</string>
 </resources>

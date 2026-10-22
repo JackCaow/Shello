@@ -40,3 +40,27 @@ jobs:
           path: |
             terminal/build/outputs/aar/*.aar
             sample/build/outputs/apk/debug/*.apk
+  windows-pairing:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        shell: [powershell, pwsh]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify standalone Windows launcher and owned network lifecycle
+        shell: ${{ matrix.shell }}
+        run: ./tests/test_pair_windows.ps1
+  pairing-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y tmux openssh-server python3-venv
+      - name: Check generated launchers and real HTTPS forwarding
+        run: |
+          python3 scripts/generate-pair-script.py
+          python3 scripts/generate-windows-pair.py
+          git diff --exit-code -- companion/pair.sh companion/pair.ps1 skills/shello-pair/scripts/pair.ps1
+          bash -n companion/windows/wsl-host.sh
+          python3 -m unittest discover -s tests -p 'test_pair_*.py' -v
+      - name: Validate isolated WSL Linux SSH and tmux backend
+        run: SHELLO_WSL_ROOT_TEST=1 python3 -m unittest discover -s tests -p 'test_wsl_host.py' -v

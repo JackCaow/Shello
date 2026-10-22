@@ -35,11 +35,15 @@ final class PairingClient {
             connection.setConnectTimeout(7000);connection.setReadTimeout(7000);connection.setInstanceFollowRedirects(false);connection.setDoOutput(true);connection.setRequestMethod("POST");connection.setRequestProperty("Content-Type","application/json");
             JSONObject response;
             try{byte[] body=new JSONObject().put("token",ticket.token).put("publicKey",publicKey.toString("UTF-8")).toString().getBytes(StandardCharsets.UTF_8);connection.setFixedLengthStreamingMode(body.length);try(OutputStream out=connection.getOutputStream()){out.write(body);}if(connection.getResponseCode()!=200)throw new IOException("Pairing rejected or expired");try(InputStream in=connection.getInputStream()){response=new JSONObject(new String(read(in,32768),StandardCharsets.UTF_8));}}finally{connection.disconnect();}
-            SshProfileStore.Draft d=new SshProfileStore.Draft();d.host=ticket.host;d.port=response.getInt("port");d.user=response.getString("user");d.name=response.getString("name");d.auth="key";d.privateKey=privateKey.toByteArray();d.tmux=true;
+            return responseDraft(ticket,response,privateKey.toByteArray());
+        }finally{key.dispose();}
+    }
+    static SshProfileStore.Draft responseDraft(Ticket ticket,JSONObject response,byte[] privateKey)throws Exception {
+        if(response.getInt("version")!=1)throw new IOException("Unsupported pairing response");
+            SshProfileStore.Draft d=new SshProfileStore.Draft();d.host=ticket.host;d.port=response.getInt("port");d.user=response.getString("user");d.name=response.getString("name");d.auth="key";d.privateKey=privateKey.clone();d.tmux=true;
             String host=d.port==22?d.host:"["+d.host+"]:"+d.port;StringBuilder pins=new StringBuilder();JSONArray hostKeys=response.getJSONArray("hostKeys");
             for(int i=0;i<hostKeys.length();i++){String value=hostKeys.getString(i);if(!value.matches("(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521)) [A-Za-z0-9+/=]+"))throw new IOException("Invalid host pin");pins.append(host).append(' ').append(value).append('\n');}d.knownHosts=pins.toString().getBytes(StandardCharsets.UTF_8);
             if(d.validate()!=null||pins.length()==0)throw new IOException("Invalid paired profile");return d;
-        }finally{key.dispose();}
     }
     static byte[] read(InputStream in,int limit)throws IOException{ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] bytes=new byte[4096];for(int n;(n=in.read(bytes))!=-1;){if(out.size()+n>limit)throw new IOException("Too large");out.write(bytes,0,n);}return out.toByteArray();}
     static String hex(byte[] bytes){StringBuilder s=new StringBuilder();for(byte b:bytes)s.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return s.toString();}

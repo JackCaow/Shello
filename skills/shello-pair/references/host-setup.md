@@ -2,7 +2,7 @@
 
 ## 支持范围与权限
 
-自动助手支持 macOS/Homebrew、Debian/Ubuntu/apt-get、Fedora/RHEL/dnf。先运行 `bootstrap.sh --check`；同一台主机重复执行不会主动升级已满足条件的软件，不会改用户 shell/tmux 配置。
+Unix bootstrap 支持 macOS/Homebrew、Debian/Ubuntu/apt-get、Fedora/RHEL/dnf。Windows 请使用 [WSL2 配对](windows-wsl.md)，不要在 Windows 运行 Unix bootstrap。先运行 `bootstrap.sh --check`；同一台主机重复执行不会主动升级已满足条件的软件，不会改用户 shell/tmux 配置。
 
 Python 需要 3.9+，且 `ssl`、`venv`、`ensurepip` 可用。qrcode==8.2 由原有 launcher 安装在普通用户私有 venv，图片渲染只用 qrcode 与 Python 标准库，不需要 Pillow。OpenSSL 用于临时 HTTPS 证书；tmux 用于远端会话保留。
 

@@ -44,6 +44,23 @@ Open **+ → 扫码轻松配对** (QR pairing), allow camera access, and scan th
 The agent's QR code is valid for **5 minutes** by default. If it expires, ask the agent to generate another one. For setup without an agent or more options, expand the sections below.
 
 <details>
+<summary>Pair a Windows 11 / WSL2 computer</summary>
+
+Run in your ordinary Windows user's PowerShell:
+
+```powershell
+$shelloPairScript = Join-Path $env:TEMP 'shello-pair.ps1'
+Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair.ps1' -OutFile $shelloPairScript
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $shelloPairScript
+```
+
+The script prepares WSL2, Python, OpenSSL, SSH and tmux, then displays a QR code. First setup may require Windows UAC, a restart and initializing an ordinary Linux user; rerun afterwards. Connections open **WSL Linux**, not native PowerShell. Existing SSH configuration, keys and tmux sessions are preserved.
+
+Defaults: Windows-host SSH **2222**, temporary HTTPS **8765**. Add `-Network tailscale` or `-Network lan`; `-Check` only inspects prerequisites. SSH remains available after pairing; temporary pairing forwarding is removed. Rerun after Windows/WSL restarts or address changes. The existing v0.1.0 APK can scan the code; the Windows command selector in the pairing screen requires a subsequent build. Windows machine operations are mocked in CI; a real Windows end-to-end run is still pending. [Setup details and limits](skills/shello-pair/references/windows-wsl.md)
+
+</details>
+
+<details>
 <summary>Manual pairing and dependencies</summary>
 
 ### 1. Prepare your computer
@@ -83,9 +100,9 @@ The phone generates and stores its private key; only the public key goes to the 
 <details>
 <summary>Install the Agent skill separately</summary>
 
-You can also copy the complete `skills/shello-pair/` folder into your agent's skills directory. Include its `scripts/`, `references/` and `agents/` resources, not only `SKILL.md`; outside this repository it downloads and verifies the pinned official launcher.
+You can also copy the complete `skills/shello-pair/` folder into your agent's skills directory. Include its `scripts/`, `references/` and `agents/` resources, not only `SKILL.md`; outside this repository the Unix skill downloads and verifies the pinned official launcher, while the Windows launcher and helpers are bundled.
 
-- **Hosts:** macOS, Debian/Ubuntu and Fedora/RHEL; native Windows is not supported.
+- **Hosts:** macOS, Debian/Ubuntu, Fedora/RHEL and Windows 11 + WSL2; native PowerShell sessions are not supported.
 - **Existing setup:** SSH keys, access configuration and tmux sessions are retained. Administrator authentication stays in your own terminal or system settings.
 - **QR display:** a temporary PNG, or a terminal QR when images are unavailable; the default skill session expires after 5 minutes and cleans up its temporary files.
 - **Verification:** a public key being installed is reported separately from a phone successfully connecting over SSH.
