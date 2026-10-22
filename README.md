@@ -5,68 +5,46 @@
 <p align="center"><strong>Your remote terminal, in your pocket.</strong></p>
 <p align="center">Native Android terminal · SSH + tmux · QR pairing · Claude Code / Codex sessions</p>
 <p align="center">
-  <a href="https://github.com/JackCaow/Shello/releases">Download APK</a> ·
+  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk">Download APK</a> ·
   <a href="#quick-pairing">Quick pairing</a> ·
-  <a href="#agent-skill">Agent skill</a> ·
+  <a href="skills/shello-pair/SKILL.md">Agent skill</a> ·
   <a href="docs/DEVELOPMENT.md">Build & embed</a> ·
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-<p align="center">
-  <img src="assets/readme/preview.png" width="960" alt="Shello running Claude Code over SSH">
-</p>
-<p align="center"><sub>Claude Code over SSH in Shello.</sub></p>
-
-Shello is an open-source Android SSH terminal powered by **Ghostty VT and native Android rendering**. Connect to your computer or server, use shell tools and terminal applications, and keep remote work in tmux. You can also browse and resume remote Claude Code / Codex sessions.
-
-The Android app is available as **v0.1.0**. The embeddable terminal library remains experimental; its API may change and no Maven package is published.
-
-## Download
-
-| Item | Details |
-| --- | --- |
-| Current release | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
-| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
-| Android | Android 8.1 / API 27 or newer |
-| Architecture | arm64-v8a only; no 32-bit ARM or x86 APK |
-| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
-| Future versions | [All releases](https://github.com/JackCaow/Shello/releases) |
-
-Open the downloaded APK on your phone and follow Android's installation prompts. Public releases use a different certificate from early debug builds and **cannot overwrite those debug installs**. Uninstalling removes local connections and credentials; preserve development installs containing important data. See [signing and upgrade notes](docs/RELEASING.md).
-
-## Features
-
-- **SSH connections:** passwords or private keys, host-key verification, saved connection editing and LAN discovery.
-- **QR pairing:** run one command on your computer, scan the QR code and verify SSH access.
-- **Persistent remote sessions:** tmux reattachment, automatic reconnection and a background connection service.
-- **Touch terminal:** Chinese IME, text selection, scrolling, direction controls and Ctrl / Esc / Tab shortcuts.
-- **Session home:** thumbnails, reordering and closing; cached previews survive app restarts.
-- **Remote agents:** project-grouped Claude Code / Codex history and a Claude Code / Codex Hook inbox for events and approvals.
-- **Languages:** English and Simplified Chinese. Follow the system or choose a language in Settings.
-- **Appearance:** Shello, black and light themes, font size and configurable toolbar controls.
-
-## Agent skill
-
-Use **[shello-pair](skills/shello-pair/SKILL.md)** to let an agent prepare the computer and show a pairing QR code. It checks and installs missing dependencies, enables SSH when needed, verifies tmux in an isolated session, and starts the temporary HTTPS pairing service.
-
-If the repository is already cloned, ask your agent:
-
-> Use `skills/shello-pair/SKILL.md` to prepare this computer for Shello. Install missing dependencies, configure SSH and tmux, then show the pairing QR code.
-
-Without a local checkout, give the agent this prompt:
-
-> Clone https://github.com/JackCaow/Shello and follow `skills/shello-pair/SKILL.md` to pair this computer with Shello.
-
-You can also copy the complete `skills/shello-pair/` folder into your agent's skills directory. Include its `scripts/`, `references/` and `agents/` resources, not only `SKILL.md`; outside this repository it downloads and verifies the pinned official launcher.
-
-- **Hosts:** macOS, Debian/Ubuntu and Fedora/RHEL; native Windows is not supported.
-- **Existing setup:** SSH keys, access configuration and tmux sessions are retained. Administrator authentication stays in your own terminal or system settings.
-- **QR display:** a temporary PNG, or a terminal QR when images are unavailable; the default skill session expires after 5 minutes and cleans up its temporary files.
-- **Verification:** a public key being installed is reported separately from a phone successfully connecting over SSH.
+Shello is an open-source Android terminal for working on your computer from your phone. Run shell tools or Claude Code / Codex, and return to your remote sessions.
 
 ## Quick pairing
 
-For manual setup without an agent, follow these steps.
+**Install → Copy to your agent → Scan.** Keep your phone and computer on the same Wi-Fi, or connect both to the same Tailscale network.
+
+### 1. Install Shello on your phone
+
+[**Download Shello APK · v0.1.0**](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) — Android 8.1+, arm64-v8a. Already installed? Continue to step 2. If updating an older debug build, read the [signing and data notes](docs/RELEASING.md) before uninstalling it.
+
+### 2. Copy this prompt to an agent on your computer
+
+Open an agent that can run terminal commands **on the computer you want to connect to**, then copy and send:
+
+```text
+Help me pair this computer with Shello.
+Get https://github.com/JackCaow/Shello and follow
+skills/shello-pair/SKILL.md.
+Install missing dependencies, configure SSH and tmux,
+then display the pairing QR code.
+Preserve existing SSH configuration and sessions.
+```
+
+The agent prepares the computer and displays a QR code. If system authentication is needed, complete it in your own terminal or system settings.
+
+### 3. Scan with Shello
+
+Open **+ → 扫码轻松配对** (QR pairing), allow camera access, and scan the code from your own computer. Confirm the address and wait for SSH verification. Once the connection is saved, select an existing session or create a new one.
+
+The agent's QR code is valid for **5 minutes** by default. If it expires, ask the agent to generate another one. For setup without an agent or more options, expand the sections below.
+
+<details>
+<summary>Manual pairing and dependencies</summary>
 
 ### 1. Prepare your computer
 
@@ -100,7 +78,22 @@ Add `--port 8765` to use a fixed HTTPS pairing port when configuring a firewall.
 
 The phone generates and stores its private key; only the public key goes to the computer. Existing `authorized_keys` entries are retained. The QR code contains a temporary token—do not share it publicly. After pairing, **Ctrl+C** closes the temporary service; the installed SSH public key remains. [Protocol and options](docs/HOME_AND_AGENTS.md#pairing)
 
-### Tailscale
+</details>
+
+<details>
+<summary>Install the Agent skill separately</summary>
+
+You can also copy the complete `skills/shello-pair/` folder into your agent's skills directory. Include its `scripts/`, `references/` and `agents/` resources, not only `SKILL.md`; outside this repository it downloads and verifies the pinned official launcher.
+
+- **Hosts:** macOS, Debian/Ubuntu and Fedora/RHEL; native Windows is not supported.
+- **Existing setup:** SSH keys, access configuration and tmux sessions are retained. Administrator authentication stays in your own terminal or system settings.
+- **QR display:** a temporary PNG, or a terminal QR when images are unavailable; the default skill session expires after 5 minutes and cleans up its temporary files.
+- **Verification:** a public key being installed is reported separately from a phone successfully connecting over SSH.
+
+</details>
+
+<details>
+<summary>Tailscale and network options</summary>
 
 The current APK and pairing launcher support Tailscale discovery and QR pairing. Keep both devices connected to the same tailnet and use the matching release launcher when pinning a version.
 
@@ -108,11 +101,45 @@ With Tailscale connected on both devices, the launcher automatically prefers the
 
 Discovery combines explicit VPN host routes with peer lists read through up to four saved, trusted SSH connections. It probes at most 128 known Tailscale addresses, never the whole address range. If the VPN exposes only broad routes and there is no saved connection yet, pair one computer first. [Details and validation](docs/TAILSCALE.md)
 
-## Connect manually
+</details>
+
+<details>
+<summary>Connect with your own SSH credentials</summary>
 
 Choose **+ → 使用自己的 SSH**, enter the host, port and username, or select a host from LAN discovery. Use password or private-key authentication, verify the host fingerprint, then save the connection.
 
 Tapping a saved connection authenticates over SSH before opening the **Tmux / 最近** (Recent) picker. Long-press a saved connection to edit or delete it. [Connection workflow](docs/LOCAL_SSH.md#create-a-connection-in-the-app)
+
+</details>
+
+<p align="center">
+  <img src="assets/readme/preview.png" width="960" alt="Shello running Claude Code over SSH">
+</p>
+<p align="center"><sub>Claude Code over SSH in Shello.</sub></p>
+
+## Features
+
+- **SSH connections:** passwords or private keys, host-key verification, saved connection editing and LAN discovery.
+- **QR pairing:** run one command on your computer, scan the QR code and verify SSH access.
+- **Persistent remote sessions:** tmux reattachment, automatic reconnection and a background connection service.
+- **Touch terminal:** Chinese IME, text selection, scrolling, direction controls and Ctrl / Esc / Tab shortcuts.
+- **Session home:** thumbnails, reordering and closing; cached previews survive app restarts.
+- **Remote agents:** project-grouped Claude Code / Codex history and a Claude Code / Codex Hook inbox for events and approvals.
+- **Languages:** English and Simplified Chinese. Follow the system or choose a language in Settings.
+- **Appearance:** Shello, black and light themes, font size and configurable toolbar controls.
+
+## Download
+
+| Item | Details |
+| --- | --- |
+| Current release | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
+| APK | [Download Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
+| Android | Android 8.1 / API 27 or newer |
+| Architecture | arm64-v8a only; no 32-bit ARM or x86 APK |
+| Checksums | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
+| Future versions | [All releases](https://github.com/JackCaow/Shello/releases) |
+
+Open the downloaded APK on your phone and follow Android's installation prompts. Public releases use a different certificate from early debug builds and **cannot overwrite those debug installs**. Uninstalling removes local connections and credentials; preserve development installs containing important data. See [signing and upgrade notes](docs/RELEASING.md).
 
 ## Claude Code and Codex
 
@@ -147,6 +174,8 @@ Run `claude` or `codex` in the terminal, or use **最近** to find and resume ex
 | Test evidence and limitations | [Validation](docs/VALIDATION.md) |
 | APK signing and releases | [Release guide](docs/RELEASING.md) |
 | Report an issue | [GitHub Issues](https://github.com/JackCaow/Shello/issues) |
+
+The embeddable terminal library API remains experimental and may change.
 
 `terminal` contains VT, native views and IME input; `sample` contains the Shello app, SSH and tmux integration. Library consumers supply their own transport. **No Maven package is publicly published.**
 

@@ -5,68 +5,45 @@
 <p align="center"><strong>把远端终端，放进口袋。</strong></p>
 <p align="center">Android 原生终端 · SSH + tmux · 扫码配对 · Claude Code / Codex 会话</p>
 <p align="center">
-  <a href="https://github.com/JackCaow/Shello/releases">下载 APK</a> ·
+  <a href="https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk">下载 APK</a> ·
   <a href="#快速配对">快速配对</a> ·
-  <a href="#agent-skill">Agent Skill</a> ·
+  <a href="skills/shello-pair/SKILL.md">Agent Skill</a> ·
   <a href="docs/DEVELOPMENT.md">构建与接入</a> ·
   <a href="README.md">English</a>
 </p>
 
-<p align="center">
-  <img src="assets/readme/preview.png" width="960" alt="在 Shello 中通过 SSH 运行 Claude Code">
-</p>
-<p align="center"><sub>在 Shello 中通过 SSH 运行 Claude Code。</sub></p>
-
-Shello 是开源 Android SSH 终端，使用 **Ghostty VT 内核与 Android 原生绘制**。从手机连接自己的电脑或服务器，使用 shell、Vim、less 和远端 CLI；通过 tmux 保留远端工作现场，也可查找并恢复 Claude Code / Codex 历史会话。
-
-Android 应用已发布 **v0.1.0**。可嵌入的终端库仍处于实验阶段，API 可能调整，暂未发布 Maven 包。
-
-## 下载与安装
-
-| 项目 | 说明 |
-| --- | --- |
-| 当前正式版 | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
-| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
-| Android 要求 | Android 8.1 / API 27 及以上 |
-| 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
-| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
-| 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
-
-下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。
-
-## 能做什么
-
-- **SSH 连接**：密码或私钥认证、服务器指纹确认、已保存连接编辑、局域网 SSH 发现。
-- **扫码配对**：电脑运行一条命令，手机扫码安装 SSH 公钥，随后验证连接。
-- **持续会话**：借助 tmux 恢复远端 shell / Vim 会话，支持自动重连与后台连接服务。
-- **触屏终端**：中文 IME、文本选择、滚动、方向浮板和 Ctrl / Esc / Tab 快捷键。
-- **会话首页**：缩略图、长按排序与关闭；预览保存在本地，重启后可以恢复。
-- **远端智能体**：按项目查看 Claude Code / Codex 最近会话；Claude Code / Codex Hook 支持事件与审批收件箱。
-- **界面语言**：英文与简体中文，支持跟随系统或在设置中单独切换。
-- **外观设置**：Shello / 黑色 / 浅色主题、字体大小与工具栏配置。
-
-## Agent Skill
-
-使用 **[shello-pair](skills/shello-pair/SKILL.md)**，让 Agent 自动准备电脑并展示配对二维码。Skill 会检查和安装缺失依赖、按需开启 SSH，在隔离会话中验证 tmux，最后启动临时 HTTPS 配对服务。
-
-如果已经克隆仓库，将这段话交给 Agent：
-
-> 使用 `skills/shello-pair/SKILL.md` 配置这台电脑，自动安装缺失依赖、配置 SSH 与 tmux，最后展示配对二维码。
-
-如果还没有本地代码，可以直接告诉 Agent：
-
-> 克隆 https://github.com/JackCaow/Shello，然后按照 `skills/shello-pair/SKILL.md` 将这台电脑与 Shello 配对。
-
-也可将完整的 `skills/shello-pair/` 文件夹复制到 Agent 的技能目录。需要保留 `scripts/`、`references/` 和 `agents/`，不能只复制 `SKILL.md`；脱离本仓库时，Skill 会下载并校验固定版本的官方配对脚本。
-
-- **支持系统**：macOS、Debian/Ubuntu、Fedora/RHEL，暂不支持原生 Windows。
-- **保留现有环境**：保留 SSH 密钥、访问配置和 tmux 会话；管理员认证在自己的终端或系统设置中完成。
-- **二维码展示**：支持临时 PNG，无图片能力时可显示终端二维码；Skill 默认配对有效期为 5 分钟，结束后清理临时文件。
-- **结果验证**：明确区分“手机公钥已安装”和“手机 SSH 已连接”，不会将前者误报为配对成功。
+Shello 是开源 Android 远程终端。用手机连接自己的电脑或服务器，运行命令、使用 Claude Code / Codex，并恢复远端会话。
 
 ## 快速配对
 
-不使用 Agent 时，可按以下步骤手动配置。
+**安装 → 复制给 Agent → 扫码。** 手机和电脑连接同一 Wi-Fi，或两端均已连接同一个 Tailscale 网络。
+
+### 1. 手机安装 Shello
+
+[**下载 Shello APK · v0.1.0**](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk)，支持 Android 8.1+、arm64-v8a。已经安装可直接进行下一步。升级旧调试版前，请先阅读[签名与数据说明](docs/RELEASING.md)，不要直接卸载仍有重要数据的版本。
+
+### 2. 在电脑上把这段话发给 Agent
+
+在**要连接的这台电脑**上，打开能执行终端命令的 Agent，复制并发送：
+
+```text
+帮我将这台电脑与 Shello 配对。
+获取 https://github.com/JackCaow/Shello 仓库，
+按照 skills/shello-pair/SKILL.md 的流程，
+自动安装缺失依赖、配置 SSH 和 tmux，最后展示配对二维码。
+保留现有 SSH 配置和会话。
+```
+
+Agent 会准备电脑环境并展示二维码。如果需要系统认证，在自己的终端或系统设置中完成即可。
+
+### 3. 手机扫码连接
+
+打开 Shello，点击 **＋ → 扫码轻松配对**，允许相机权限，扫描自己电脑上的二维码。确认电脑地址，等待 SSH 验证；连接保存后，选择已有会话或创建新会话。
+
+Agent 生成的二维码默认 **5 分钟**有效，过期后让 Agent 重新生成即可。不使用 Agent，或需要更多选项时，展开下面的说明。
+
+<details>
+<summary>手动配对与依赖安装</summary>
 
 ### 1. 准备电脑
 
@@ -121,7 +98,22 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 
 手机生成并保存私钥，电脑只接收公钥；已有 `authorized_keys` 条目会保留。二维码携带临时令牌，不要公开分享。配对完成后可用 **Ctrl+C** 关闭临时服务，已安装的 SSH 公钥会保留。[配对协议与更多说明](docs/HOME_AND_AGENTS.md#pairing)
 
-### Tailscale
+</details>
+
+<details>
+<summary>单独安装 Agent Skill</summary>
+
+也可将完整的 `skills/shello-pair/` 文件夹复制到 Agent 的技能目录。需要保留 `scripts/`、`references/` 和 `agents/`，不能只复制 `SKILL.md`；脱离本仓库时，Skill 会下载并校验固定版本的官方配对脚本。
+
+- **支持系统**：macOS、Debian/Ubuntu、Fedora/RHEL，暂不支持原生 Windows。
+- **保留现有环境**：保留 SSH 密钥、访问配置和 tmux 会话；管理员认证在自己的终端或系统设置中完成。
+- **二维码展示**：支持临时 PNG，无图片能力时可显示终端二维码；Skill 默认配对有效期为 5 分钟，结束后清理临时文件。
+- **结果验证**：明确区分“手机公钥已安装”和“手机 SSH 已连接”，不会将前者误报为配对成功。
+
+</details>
+
+<details>
+<summary>Tailscale 与网络选项</summary>
 
 当前 APK 和配对脚本均支持 Tailscale 自动发现及二维码配对。两端需连接同一 tailnet；固定版本时请使用对应 Release tag 的脚本。
 
@@ -129,7 +121,10 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 
 自动发现结合 VPN 中明确的设备路由，以及最多四条已保存、已信任 SSH 连接提供的节点列表，仅检测最多 128 个已知地址，不遍历整个网段。若 VPN 只提供聚合路由且尚无已保存连接，先扫码配对一台电脑即可。[实现与验证说明](docs/TAILSCALE.md)
 
-## 手动连接 SSH
+</details>
+
+<details>
+<summary>使用自己的 SSH 凭据连接</summary>
 
 不使用二维码也可以连接：
 
@@ -139,6 +134,37 @@ curl -fsSL https://raw.githubusercontent.com/JackCaow/Shello/main/companion/pair
 4. 核对服务器指纹，验证并保存连接。
 
 点击已保存连接后，应用先建立 SSH 连接，再显示 **Tmux / 最近** 选择页。长按已保存连接可以编辑或删除。[详细连接流程](docs/LOCAL_SSH.md#create-a-connection-in-the-app)
+
+</details>
+
+<p align="center">
+  <img src="assets/readme/preview.png" width="960" alt="在 Shello 中通过 SSH 运行 Claude Code">
+</p>
+<p align="center"><sub>在 Shello 中通过 SSH 运行 Claude Code。</sub></p>
+
+## 能做什么
+
+- **SSH 连接**：密码或私钥认证、服务器指纹确认、已保存连接编辑、局域网 SSH 发现。
+- **扫码配对**：电脑运行一条命令，手机扫码安装 SSH 公钥，随后验证连接。
+- **持续会话**：借助 tmux 恢复远端 shell / Vim 会话，支持自动重连与后台连接服务。
+- **触屏终端**：中文 IME、文本选择、滚动、方向浮板和 Ctrl / Esc / Tab 快捷键。
+- **会话首页**：缩略图、长按排序与关闭；预览保存在本地，重启后可以恢复。
+- **远端智能体**：按项目查看 Claude Code / Codex 最近会话；Claude Code / Codex Hook 支持事件与审批收件箱。
+- **界面语言**：英文与简体中文，支持跟随系统或在设置中单独切换。
+- **外观设置**：Shello / 黑色 / 浅色主题、字体大小与工具栏配置。
+
+## 下载与安装
+
+| 项目 | 说明 |
+| --- | --- |
+| 当前正式版 | [v0.1.0](https://github.com/JackCaow/Shello/releases/tag/v0.1.0) |
+| APK | [下载 Shello · arm64-v8a](https://github.com/JackCaow/Shello/releases/download/v0.1.0/Shello-0.1.0-arm64-v8a.apk) |
+| Android 要求 | Android 8.1 / API 27 及以上 |
+| 处理器 | 仅 arm64-v8a；不提供 32 位 ARM 或 x86 包 |
+| 完整性校验 | [SHA256SUMS](https://github.com/JackCaow/Shello/releases/download/v0.1.0/SHA256SUMS) |
+| 后续版本 | [全部 Releases](https://github.com/JackCaow/Shello/releases) |
+
+下载 APK 后在手机上打开，按系统提示允许本次安装。正式发布签名与早期调试版不同，**不能直接覆盖旧调试版**；卸载会清除本地连接和凭据，请勿为升级而直接卸载仍有重要数据的开发版。详见[签名与升级说明](docs/RELEASING.md)。
 
 ## 使用 Claude Code / Codex
 
@@ -177,6 +203,8 @@ CLI 运行在远端电脑上，需要先在那里安装并完成登录。Shello 
 | 测试结果与已知限制 | [验证记录](docs/VALIDATION.md) |
 | APK 签名与发布 | [发布说明](docs/RELEASING.md) |
 | 问题反馈 | [GitHub Issues](https://github.com/JackCaow/Shello/issues) |
+
+可嵌入的终端库仍处于实验阶段，API 可能调整。
 
 `terminal` 提供 VT、原生视图与 IME 输入；`sample` 包含 Shello 的 SSH、tmux 与应用界面。库的传输层由接入方提供，**尚未发布 Maven 包**。
 
