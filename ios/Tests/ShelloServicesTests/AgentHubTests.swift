@@ -70,10 +70,11 @@ final class AgentHubIntegrationTests: XCTestCase {
         XCTAssertNotNil(hub.diagnostics[profile.id]?["capabilities"])
         // Drop a fake pending request into the spool through the hook protocol, then answer it.
         let event = #"{"hook_event_name":"PermissionRequest","session_id":"sess-1","tool_name":"Bash","tool_input":{"command":"ls"},"cwd":"/tmp/demo"}"#
-        // Non-interactive Bash redirects an asynchronous job's implicit stdin to /dev/null.
-        // Give the producer an explicit private payload and keep it alive across SSH channel closure.
-        let payload = ShellQuote.quote(state + "/pending-request.json")
-        let hookRun = try await RemoteCommand.run(profileID: profile.id, store: store, command: "umask 077; cat > \(payload); (nohup env \(command)hook < \(payload) >/dev/null 2>&1 &) ; echo started", input: Data(event.utf8))
+        // Darwin nohup can fail to detach from a console on a non-PTY SSH channel.
+        // Spawn a separate session with explicit file descriptors instead of shell job control.
+        let payload = ShellQuote.quote(state + "/pending-request.input")
+        let launcher = "import subprocess,sys; subprocess.Popen([sys.executable,sys.argv[1],'hook'], stdin=open(sys.argv[2],'rb'), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True); print('started')"
+        let hookRun = try await RemoteCommand.run(profileID: profile.id, store: store, command: "umask 077; cat > \(payload) && env \(isolated)python3 -c \(ShellQuote.quote(launcher)) \(ShellQuote.quote(state + "/ghostty_hook.py")) \(payload)", input: Data(event.utf8))
         XCTAssertTrue(String(decoding: hookRun, as: UTF8.self).contains("started"))
         let deadline = Date().addingTimeInterval(10)
         repeat {
