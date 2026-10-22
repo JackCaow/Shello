@@ -39,6 +39,22 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write('udid=' + device['udid'] + '\n')
           PY
+          printf 'xcode=%s\n' "$(xcodebuild -version | shasum -a 256 | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        id: native-cache
+        with:
+          path: ios/Frameworks/ShelloNative.xcframework
+          key: ios-native-${{ runner.os }}-${{ runner.arch }}-${{ steps.simulator.outputs.xcode }}-${{ hashFiles('scripts/build-native-ios.sh', 'scripts/build-ssh-ios.sh', 'scripts/assemble-ios-frameworks.sh', 'public/native/**', 'public/patches/**') }}
+      - name: Build iOS native libraries
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/shello-ios-verify"
+          { scripts/build-native-ios.sh && scripts/build-ssh-ios.sh && scripts/assemble-ios-frameworks.sh; } 2>&1 | tee "$RUNNER_TEMP/shello-ios-verify/native.log"
+      - uses: actions/cache/save@v4
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        with:
+          path: ios/Frameworks/ShelloNative.xcframework
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
       - name: Verify iOS native libraries, localization, SSH, pairing and UI
         env:
           SHELLO_VERIFY_DIR: ${{ runner.temp }}/shello-ios-verify
