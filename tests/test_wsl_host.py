@@ -1,9 +1,7 @@
 """Opt-in Linux CI fixture for the actual WSL helper/sshd/tmux, not Windows networking."""
-import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import socket
 import subprocess
 import tempfile
@@ -58,6 +56,15 @@ class WslHostTest(unittest.TestCase):
                 root('kill','-TERM',root('cat',folder/'sshd.pid').stdout.strip())
                 daemon.wait(timeout=5)
             root('rm','-rf',folder)
-            root('userdel','--remove',user)
+            # PAM can leave systemd --user alive after SSH disconnects. This is a
+            # newly created, fixture-only account; never target the runner's user.
+            subprocess.run(['sudo','-n','pkill','-KILL','-u',user],capture_output=True)
+            deadline=time.monotonic()+10
+            while time.monotonic()<deadline:
+                result=subprocess.run(['sudo','-n','userdel','--remove',user],capture_output=True,text=True)
+                if result.returncode==0:break
+                if result.returncode!=8:raise RuntimeError(result.stderr)
+                time.sleep(.25)
+            else:raise RuntimeError('Fixture account cleanup timed out')
 
 if __name__=='__main__':unittest.main()
