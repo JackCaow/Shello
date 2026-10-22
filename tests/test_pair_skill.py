@@ -106,6 +106,18 @@ main --check --ssh-port 2222
                     PAIR.select_launcher(None, folder)
             self.assertFalse((folder / 'pair.sh').exists())
 
+    def test_copied_skill_ignores_unrelated_parent_launcher(self):
+        with tempfile.TemporaryDirectory(prefix='sps-', dir='/tmp') as temp:
+            folder = Path(temp)
+            unrelated = folder / 'companion/pair.sh'
+            unrelated.parent.mkdir()
+            unrelated.write_text('unrelated script; must not execute')
+            with patch.object(PAIR, '__file__', str(folder / 'skills/shello-pair/scripts/start_pairing.py')), \
+                    patch.object(PAIR, 'urlopen', return_value=io.BytesIO(b'invalid download')) as download:
+                with self.assertRaisesRegex(ValueError, 'checksum mismatch'):
+                    PAIR.select_launcher(None, folder)
+                download.assert_called_once()
+
     def test_startup_failure_redacts_ticket_and_token(self):
         with tempfile.TemporaryDirectory(prefix='sps-', dir='/tmp') as temp:
             log = Path(temp) / 'log'

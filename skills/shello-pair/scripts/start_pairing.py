@@ -30,8 +30,9 @@ def select_launcher(explicit, folder):
         if not path.is_file():
             raise ValueError('Specified launcher is not a file')
         return path
-    repository_launcher = Path(__file__).resolve().parents[3] / 'companion/pair.sh'
-    if repository_launcher.is_file():
+    repository_root = Path(__file__).resolve().parents[3]
+    repository_launcher = repository_root / 'companion/pair.sh'
+    if (repository_root / '.git').exists() and repository_launcher.is_file():
         return repository_launcher
     with urlopen(RELEASE_URL, timeout=30) as response:
         content = response.read(1048577)
