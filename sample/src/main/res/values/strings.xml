@@ -461,4 +461,15 @@
     <string name="attachment_preview">Attachment preview</string>
     <string name="attachment_pending">Uploading…</string>
     <string name="attachment_files">Files</string>
+    <string name="attachment_type_word">Word document</string>
+    <string name="attachment_type_presentation">Presentation</string>
+    <string name="attachment_type_spreadsheet">Spreadsheet</string>
+    <string name="attachment_type_pdf">PDF document</string>
+    <string name="attachment_type_audio">Audio file</string>
+    <string name="attachment_type_archive">Archive</string>
+    <string name="attachment_type_code">Code file</string>
+    <string name="attachment_type_text">Text document</string>
+    <string name="attachment_type_image">Image file</string>
+    <string name="attachment_type_video">Video file</string>
+    <string name="attachment_type_other">File</string>
 </resources>

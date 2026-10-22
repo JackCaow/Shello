@@ -56,6 +56,18 @@ public class InputRuntimeTest extends AttachmentTestSupport {
             long tap=SystemClock.uptimeMillis();for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_UP}){MotionEvent e=MotionEvent.obtain(tap,tap+20,action,remove.getLeft()+remove.getWidth()/2f,remove.getTop()+remove.getHeight()/2f,0);card.dispatchTouchEvent(e);e.recycle();}
         });await(()->fixture.attachments.isEmpty());inst.runOnMainSync(()->{assertFalse("Corner tap must not reopen preview",((android.app.Dialog)field(activity,"attachmentPreview")).isShowing());assertTrue("Removal must not submit terminal input",bytes.isEmpty());});
     }
+    @Test public void fileTypesStayCompactAndCanBeScrolledWithoutSending()throws Exception{
+        inst.runOnMainSync(()->{
+            for(String name:List.of("slides.pptx","document.docx","recording.mp3","sheet.xlsx","document.pdf","backup.zip","script.py","notes.txt","download.unknown")){
+                AttachmentTransfer upload=new AttachmentTransfer(context,"unused",AttachmentTestProvider.uri("normal"),()->{});upload.name=name;upload.mime="application/octet-stream";upload.busy=false;upload.path="/tmp/ui-fixture/"+name;fixture.attachments.add(upload);
+            }
+        });draftMode();inst.runOnMainSync(()->{call(activity,"hideKeyboard");call(activity,"updateAttachmentStatus");});inst.waitForIdleSync();capture("input-file-type-icons");
+        inst.runOnMainSync(()->{
+            HorizontalScrollView tray=(HorizontalScrollView)field(activity,"attachmentScroll");ViewGroup cards=(ViewGroup)field(activity,"attachmentCards");assertEquals(9,cards.getChildCount());
+            for(int i=0;i<cards.getChildCount();i++){ViewGroup card=(ViewGroup)cards.getChildAt(i);assertEquals(SampleUi.dp(activity,72),card.getWidth());assertEquals(SampleUi.dp(activity,72),card.getHeight());assertTrue(((ImageView)card.getChildAt(0)).getDrawable() instanceof ToolbarIcon);}
+            tray.scrollTo(cards.getWidth(),0);assertTrue(tray.getScrollX()>0);
+        });capture("input-file-type-icons-end");assertTrue("Browsing attachments must not submit terminal input",bytes.isEmpty());
+    }
     @Test public void controlLongPressOpensCorrectAgentGroupsAndLockRetainsPanel()throws Exception{
         inst.runOnMainSync(()->{View ctrl=((LinearLayout)field(activity,"toolbar")).getChildAt(0);long t=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(t,t,0,12,12,0);ctrl.dispatchTouchEvent(down);down.recycle();});SystemClock.sleep(ViewConfiguration.getLongPressTimeout()+100);
         inst.runOnMainSync(()->{View ctrl=((LinearLayout)field(activity,"toolbar")).getChildAt(0);long t=SystemClock.uptimeMillis();MotionEvent up=MotionEvent.obtain(t,t,1,12,12,0);ctrl.dispatchTouchEvent(up);up.recycle();LinearLayout panel=(LinearLayout)field(controls,"panel");assertEquals(View.VISIBLE,panel.getVisibility());View codex=find(panel,"Codex"+AppLanguage.tr(R.string.input_shortcuts_2));assertNotNull(codex);codex.performClick();LinearLayout keys=(LinearLayout)field(controls,"keys");InputButton first=(InputButton)((LinearLayout)keys.getChildAt(0)).getChildAt(0);assertEquals("/new",first.getText().toString());first.performClick();assertEquals(List.of("/new","\r"),bytes);assertEquals(View.GONE,panel.getVisibility());bytes.clear();controls.perform("lock_shortcuts");controls.perform("preset_Claude_2");assertEquals(View.VISIBLE,panel.getVisibility());assertEquals(List.of("/compact","\r"),bytes);});capture("input-shortcuts");

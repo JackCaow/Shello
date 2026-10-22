@@ -12,12 +12,22 @@ final class ToolbarIcon extends Drawable {
     @Override public int getIntrinsicWidth(){return size;}
     @Override public int getIntrinsicHeight(){return size;}
     private void line(Canvas c,float... points){Path path=new Path();path.moveTo(points[0],points[1]);for(int i=2;i<points.length;i+=2)path.lineTo(points[i],points[i+1]);c.drawPath(path,p);}
+    private void document(Canvas c){line(c,14,2,5,2,5,22,20,22,20,8,14,2,14,8,20,8);}
     @Override public void draw(Canvas c){
         c.save();c.translate(getBounds().left,getBounds().top);c.scale(getBounds().width()/24f,getBounds().height()/24f);
         switch(name){
             case "camera":c.drawRoundRect(2,6,22,21,3,3,p);line(c,7,6,9,3,15,3,17,6);c.drawCircle(12,13,4,p);break;
             case "image":c.drawRoundRect(2,3,22,21,2,2,p);c.drawCircle(8,8,2,p);line(c,3,18,9,12,13,16,17,11,22,17);break;
             case "file":line(c,14,2,5,2,5,22,20,22,20,8,14,2,14,8,20,8);line(c,9,13,16,13);line(c,9,17,16,17);break;
+            case "file_word":document(c);line(c,7,12,9,19,12,14,15,19,17,12);break;
+            case "file_presentation":c.drawRoundRect(2,3,22,17,2,2,p);line(c,12,17,12,22);line(c,8,22,16,22);c.drawArc(7,6,15,14,0,270,false,p);line(c,11,6,11,10,15,10);break;
+            case "file_spreadsheet":document(c);c.drawRect(8,11,17,19,p);line(c,8,15,17,15);line(c,12,11,12,19);break;
+            case "file_pdf":document(c);float stroke=p.getStrokeWidth();p.setStrokeWidth(1.2f);line(c,7,18,7,12,9,12,9,15,7,15);line(c,11,18,11,12,13,12,14,13,14,17,13,18,11,18);line(c,16,18,16,12,19,12);line(c,16,15,18,15);p.setStrokeWidth(stroke);break;
+            case "file_audio":line(c,9,17,9,5,20,3,20,15);line(c,9,8,20,6);c.drawOval(3,16,9,21,p);c.drawOval(14,14,20,19,p);break;
+            case "file_archive":c.drawRoundRect(4,2,20,22,2,2,p);for(int y=4;y<13;y+=3)line(c,10,y,14,y);c.drawRoundRect(10,14,14,19,1,1,p);break;
+            case "file_code":document(c);line(c,10,12,7,15,10,18);line(c,15,12,18,15,15,18);break;
+            case "file_video":c.drawRoundRect(2,3,22,21,2,2,p);line(c,7,3,7,21);line(c,17,3,17,21);for(int y=8;y<=16;y+=8){line(c,2,y,7,y);line(c,17,y,22,y);}line(c,10,9,14,12,10,15,10,9);break;
+            case "file_unknown":document(c);c.drawCircle(12,15,1,p);break;
             case "play":line(c,8,4,21,12,8,20,8,4);break;
             case "terminal":line(c,3,5,9,11,3,17);line(c,12,19,21,19);break;
             case "skip":line(c,3,3,16,12,3,21,3,3);line(c,21,3,21,21);break;
