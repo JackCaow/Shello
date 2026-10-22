@@ -19,13 +19,13 @@ final class SampleUi {
             PANEL=0xff161719, FIELD=0xff111315, BORDER=0xff303337, DANGER=0xffff7078;
     static int dp(Context c,int n){return (int)(c.getResources().getDisplayMetrics().density*n+.5f);}
     static GradientDrawable surface(Context c,int color,int radius){
-        GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(c,radius));return d;
+        GradientDrawable d=new GradientDrawable();d.setColor(UiTheme.background(c,color));d.setCornerRadius(dp(c,radius));return d;
     }
     static Drawable touch(Context c,int color,int radius){
-        return new RippleDrawable(ColorStateList.valueOf(0x22ffffff),surface(c,color,radius),surface(c,Color.WHITE,radius));
+        return new RippleDrawable(ColorStateList.valueOf(UiTheme.of(c).ripple),surface(c,color,radius),surface(c,Color.WHITE,radius));
     }
     static TextView text(Context c,String value,int size,int color){
-        TextView t=new TextView(c);t.setText(value);UiDesign.type(t,UiDesign.role(size));t.setTextColor(color);
+        TextView t=new TextView(c);t.setText(value);UiDesign.type(t,UiDesign.role(size));t.setTextColor(UiTheme.foreground(c,color));
         if(size>24&&value!=null&&value.codePointCount(0,value.length())<=2){t.setTextSize(size);t.setTag(R.id.ui_text_role,null);}return t;
     }
     static TextView sectionTitle(Context c,String value){
@@ -37,41 +37,41 @@ final class SampleUi {
     }
     static void field(EditText field){
         Context c=field.getContext();StateListDrawable states=new StateListDrawable();
-        GradientDrawable focus=surface(c,FIELD,18);focus.setStroke(dp(c,1),GREEN);
+        GradientDrawable focus=surface(c,FIELD,18);focus.setColor(UiTheme.of(c).input);focus.setStroke(dp(c,1),UiTheme.of(c).accent);
         states.addState(new int[]{android.R.attr.state_focused},focus);
-        states.addState(new int[]{},surface(c,FIELD,18));
+        states.addState(new int[]{},surface(c,UiTheme.of(c).input,18));
         UiDesign.type(field,UiDesign.Type.BODY);field.setBackground(states);field.setPadding(dp(c,16),dp(c,12),dp(c,16),dp(c,12));
-        field.setTextColor(TEXT);field.setHintTextColor(MUTED);field.setHighlightColor(0x6600d86c);
+        field.setTextColor(UiTheme.foreground(c,TEXT));field.setHintTextColor(UiTheme.foreground(c,MUTED));field.setHighlightColor(UiTheme.of(c).light?0x33087442:0x6600d86c);
         field.setMinHeight(dp(c,UiDesign.FIELD));field.setMinimumHeight(dp(c,UiDesign.FIELD));
     }
     static RadioButton segment(Context c,String title,int id){
         RadioButton b=new RadioButton(c);b.setId(id);b.setText(title);UiDesign.type(b,UiDesign.Type.BODY);UiDesign.touch(b);
         b.setButtonDrawable((Drawable)null);b.setGravity(Gravity.CENTER);b.setMinHeight(dp(c,48));
         b.setPadding(dp(c,12),dp(c,8),dp(c,12),dp(c,8));
-        b.setTextColor(new ColorStateList(new int[][]{{-android.R.attr.state_enabled},{android.R.attr.state_checked},{}},new int[]{MUTED,GREEN,MUTED}));
+        b.setTextColor(new ColorStateList(new int[][]{{-android.R.attr.state_enabled},{android.R.attr.state_checked},{}},new int[]{UiTheme.foreground(c,MUTED),UiTheme.foreground(c,GREEN),UiTheme.foreground(c,MUTED)}));
         StateListDrawable states=new StateListDrawable();
         states.addState(new int[]{android.R.attr.state_checked},surface(c,0xff20372b,14));
         states.addState(new int[]{},surface(c,Color.TRANSPARENT,14));
-        b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x22ffffff),states,surface(c,Color.WHITE,14)));return b;
+        b.setBackground(new RippleDrawable(ColorStateList.valueOf(UiTheme.of(c).ripple),states,surface(c,Color.WHITE,14)));return b;
     }
     static final class Toggle extends CheckBox {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
-        Toggle(Context c){super(c);setButtonDrawable((Drawable)null);UiDesign.type(this,UiDesign.Type.BODY);setTextColor(TEXT);
+        Toggle(Context c){super(c);setButtonDrawable((Drawable)null);UiDesign.type(this,UiDesign.Type.BODY);setTextColor(UiTheme.foreground(c,TEXT));
             setGravity(Gravity.CENTER_VERTICAL);setPadding(dp(c,16),dp(c,16),dp(c,78),dp(c,16));
             setMinHeight(dp(c,64));setBackground(touch(c,FIELD,18));}
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);float right=getWidth()-dp(getContext(),16),top=(getHeight()-dp(getContext(),28))/2f;
             float left=right-dp(getContext(),48),bottom=top+dp(getContext(),28);
-            paint.setColor(isChecked()?GREEN:0xff42464b);paint.setAlpha(isEnabled()?255:90);
+            paint.setColor(isChecked()?UiTheme.of(getContext()).accent:UiTheme.of(getContext()).light?UiTheme.of(getContext()).toggleOff:0xff42464b);paint.setAlpha(isEnabled()?255:90);
             canvas.drawRoundRect(left,top,right,bottom,dp(getContext(),14),dp(getContext(),14),paint);
-            paint.setColor(isChecked()?0xff092618:0xffe6e6e8);paint.setAlpha(isEnabled()?255:90);
+            paint.setColor(UiTheme.of(getContext()).light?Color.WHITE:isChecked()?0xff092618:0xffe6e6e8);paint.setAlpha(isEnabled()?255:90);
             canvas.drawCircle(isChecked()?right-dp(getContext(),14):left+dp(getContext(),14),(top+bottom)/2,dp(getContext(),10),paint);
         }
         @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info){super.onInitializeAccessibilityNodeInfo(info);info.setClassName("android.widget.Switch");}
     }
     static TextView header(Context c,String symbol,String description,int color,Runnable action){
         TextView v=new TextView(c){
-            final ToolbarIcon glyph=new ToolbarIcon(symbol,dp(c,24),color);
+            final ToolbarIcon glyph=new ToolbarIcon(c,symbol,dp(c,24),color);
             @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);int size=dp(c,24);glyph.setBounds((getWidth()-size)/2,(getHeight()-size)/2,(getWidth()+size)/2,(getHeight()+size)/2);glyph.draw(canvas);}
             @Override public CharSequence getAccessibilityClassName(){return "android.widget.Button";}
         };
@@ -80,6 +80,14 @@ final class SampleUi {
     /** Shared navigation for full-screen pages; trailing actions use the same touch target. */
     static final class NavigationBar extends LinearLayout {
         final TextView title;
+        private int contentMax;
+        void contentWidth(int max){contentMax=max;requestLayout();}
+        @Override protected void onMeasure(int ws,int hs){
+            int side=contentMax==0?0:Math.max(0,(MeasureSpec.getSize(ws)-dp(getContext(),contentMax))/2);
+            // Resolve padding before measuring our children, never from a sibling's measurement.
+            if(getPaddingLeft()!=side||getPaddingRight()!=side)setPadding(side,getPaddingTop(),side,getPaddingBottom());
+            super.onMeasure(ws,hs);
+        }
         NavigationBar(Context context,String text,Runnable back){
             super(context);setOrientation(HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);setMinimumHeight(dp(context,56));
             addView(header(context,"back",tr(R.string.back),TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
@@ -89,7 +97,7 @@ final class SampleUi {
         void addAction(View action){addView(action,new LinearLayout.LayoutParams(dp(getContext(),56),dp(getContext(),56)));}
     }
     static ImageView icon(Context c,String name,int color){
-        ImageView v=new ImageView(c);v.setImageDrawable(new ToolbarIcon(name,dp(c,22),color));
+        ImageView v=new ImageView(c);v.setImageDrawable(new ToolbarIcon(c,name,dp(c,22),color));
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);return v;
     }
     static final class Action {
@@ -164,12 +172,12 @@ final class SampleUi {
         @Override public Button getButton(int which){return which==BUTTON_POSITIVE?positive:which==BUTTON_NEGATIVE?negative:super.getButton(which);}
         @Override public void show(){
             super.show();AdaptiveLayout.sheetWindow(activity,this,520,0);
-            if(getWindow()!=null)getWindow().setNavigationBarColor(Color.BLACK);
+            if(getWindow()!=null)UiTheme.window(activity,getWindow());
         }
     }
     private static Button actionButton(Context c,String title,boolean primary,boolean danger){
         Button b=new Button(c);b.setText(title);b.setContentDescription(title);b.setAllCaps(false);UiDesign.type(b,UiDesign.Type.BODY);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
-        b.setTextColor(primary?(danger?Color.WHITE:0xff062519):TEXT);b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(dp(c,UiDesign.ROW));b.setPadding(dp(c,12),dp(c,12),dp(c,12),dp(c,12));
+        b.setTextColor(UiTheme.foreground(c,primary?(danger?Color.WHITE:UiTheme.of(c).onAccent):TEXT));b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(dp(c,UiDesign.ROW));b.setPadding(dp(c,12),dp(c,12),dp(c,12),dp(c,12));
         b.setStateListAnimator(null);b.setBackground(touch(c,primary?(danger?0xffb83240:GREEN):0xff292c30,16));return b;
     }
 }

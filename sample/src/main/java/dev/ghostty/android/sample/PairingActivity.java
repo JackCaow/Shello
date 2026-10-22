@@ -34,7 +34,7 @@ public final class PairingActivity extends ScreenActivity {
         camera.addView(scanner,new FrameLayout.LayoutParams(-1,-1));overlay=new PairingScanOverlay(this,scanner);camera.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
         scanColumn.addView(camera,new LinearLayout.LayoutParams(-1,dp(240)));
         LinearLayout feedback=row();feedback.setGravity(Gravity.CENTER);feedback.setPadding(dp(8),dp(10),dp(8),dp(2));feedback.setMinimumHeight(dp(36));
-        progress=new ProgressBar(this);progress.setIndeterminateTintList(ColorStateList.valueOf(SampleUi.GREEN));progress.setVisibility(View.GONE);
+        progress=new ProgressBar(this);progress.setIndeterminateTintList(ColorStateList.valueOf(uiTheme().accent));progress.setVisibility(View.GONE);
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(dp(18),dp(18));pp.rightMargin=dp(10);feedback.addView(progress,pp);
         status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);UiDesign.paragraph(status);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));scanColumn.addView(feedback);
         LinearLayout command=column();command.setPadding(dp(16),dp(16),dp(16),dp(16));command.setBackground(SampleUi.surface(this,SampleUi.FIELD,18));
@@ -67,7 +67,7 @@ public final class PairingActivity extends ScreenActivity {
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("pairNetwork",networkChoice);super.onSaveInstanceState(state);}
     private Runnable restoreCopy;
     private void spacedItem(String title,String detail,String icon,Runnable action){View v=item(title,detail,icon,action);LinearLayout.LayoutParams p=(LinearLayout.LayoutParams)v.getLayoutParams();p.bottomMargin=dp(12);v.setLayoutParams(p);}
-    private void feedback(String message,boolean loading,boolean error){status.setText(message);status.setTextColor(error?SampleUi.DANGER:SampleUi.MUTED);progress.setVisibility(loading?View.VISIBLE:View.GONE);}
+    private void feedback(String message,boolean loading,boolean error){status.setText(message);status.setTextColor(UiTheme.foreground(this,error?SampleUi.DANGER:SampleUi.MUTED));progress.setVisibility(loading?View.VISIBLE:View.GONE);}
     @Override protected void onResume(){super.onResume();active=true;if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED){if(!busy){feedback(tr(R.string.opening_camera),false,false);scanner.resume();}}else requestPermissions(new String[]{Manifest.permission.CAMERA},94);}
     @Override protected void onPause(){active=false;overlay.setScanning(false);scanner.pause();super.onPause();}
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){super.onRequestPermissionsResult(code,permissions,results);if(code==94&&results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED&&active&&!busy)scanner.resume();else if(code==94)feedback(tr(R.string.camera_access_is_off_scan_from_an_image_or_allow_camera_access_in),false,true);}

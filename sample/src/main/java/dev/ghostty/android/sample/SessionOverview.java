@@ -71,9 +71,9 @@ final class SessionOverview {
             LinearLayout card=column();card.setContentDescription(tr(R.string.resume_session_name,tab.name()));card.setFocusable(true);
             card.setOnClickListener(v->{if(!ordering)actions.open(tab.id);});
             FrameLayout thumb=thumbnail(tab);card.addView(thumb,new LinearLayout.LayoutParams(cardWidth(),cardWidth()));
-            TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon("server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(8),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,-2));
+            TextView name=SampleUi.text(activity,tab.name(),16,SampleUi.TEXT);ToolbarIcon server=new ToolbarIcon(activity,"server",dp(15),SampleUi.TEXT);server.setBounds(0,0,dp(15),dp(15));name.setCompoundDrawables(server,null,null,null);name.setCompoundDrawablePadding(dp(6));name.setTypeface(null,Typeface.NORMAL);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);name.setPadding(0,dp(8),0,0);name.setIncludeFontPadding(false);card.addView(name,new LinearLayout.LayoutParams(-1,-2));
             String sessionLabel=tab.sessionName().trim();TextView type=SampleUi.text(activity,sessionLabel,14,0xff00bc00);type.setSingleLine();type.setEllipsize(android.text.TextUtils.TruncateAt.END);type.setIncludeFontPadding(false);type.setGravity(Gravity.CENTER_VERTICAL);
-            if(!sessionLabel.isEmpty()){ToolbarIcon prompt=new ToolbarIcon("terminal",dp(16),0xff00bc00);prompt.setBounds(0,0,dp(16),dp(16));type.setCompoundDrawables(prompt,null,null,null);type.setCompoundDrawablePadding(dp(5));}
+            if(!sessionLabel.isEmpty()){ToolbarIcon prompt=new ToolbarIcon(activity,"terminal",dp(16),0xff00bc00);prompt.setBounds(0,0,dp(16),dp(16));type.setCompoundDrawables(prompt,null,null,null);type.setCompoundDrawablePadding(dp(5));}
             LinearLayout.LayoutParams typeParams=new LinearLayout.LayoutParams(-1,-2);typeParams.topMargin=dp(UiDesign.TEXT_GAP);card.addView(type,typeParams);
             card.setOnLongClickListener(v->{if(ordering)beginDrag(card,tab.id);else showContext(card,thumb,tab);return true;});
             // Directional accessibility actions let keyboard/TalkBack users reorder without dragging.
@@ -104,7 +104,7 @@ final class SessionOverview {
     private FrameLayout thumbnail(SshSessionService.Tab tab){
         FrameLayout thumb=new FrameLayout(activity);thumb.setBackground(SampleUi.surface(activity,0xff111113,16));thumb.setClipToOutline(true);
         ImageView image=new ImageView(activity);image.setScaleType(ImageView.ScaleType.FIT_START);image.setImageBitmap(tab.preview);image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);thumb.addView(image,new FrameLayout.LayoutParams(-1,-1));
-        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":tr(R.string.local),12,0xffe6efff);badge.setIncludeFontPadding(false);badge.setTypeface(Typeface.MONOSPACE);badge.setPadding(dp(9),dp(3),dp(9),dp(3));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff245ca0:0xff375166,10));
+        TextView badge=SampleUi.text(activity,tab.remote()?"SSH":tr(R.string.local),12,tab.remote()?0xffe6efff:UiTheme.of(activity).text);badge.setIncludeFontPadding(false);badge.setTypeface(Typeface.MONOSPACE);badge.setPadding(dp(9),dp(3),dp(9),dp(3));badge.setBackground(SampleUi.surface(activity,tab.remote()?0xff245ca0:0xff375166,10));
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.RIGHT);bp.setMargins(dp(8),dp(8),dp(8),0);thumb.addView(badge,bp);
         if(tab.preview==null){TextView title=SampleUi.text(activity,tr(R.string.no_preview_yet),15,SampleUi.MUTED);title.setGravity(Gravity.CENTER);thumb.addView(title,new FrameLayout.LayoutParams(-1,-1));}
         return thumb;
@@ -124,12 +124,12 @@ final class SessionOverview {
         Bitmap backdrop=blurred(stage);Bitmap sharp=Bitmap.createBitmap(thumb.getWidth(),thumb.getHeight(),Bitmap.Config.ARGB_8888);thumb.draw(new Canvas(sharp));
         overlay=new FrameLayout(activity);overlay.setContentDescription(tr(R.string.session_actions_for_name,tab.name()));overlay.setClickable(true);overlay.setFocusableInTouchMode(true);overlay.setOnClickListener(v->dismiss());
         ImageView blurred=new ImageView(activity);blurred.setScaleType(ImageView.ScaleType.FIT_XY);blurred.setImageBitmap(backdrop);overlay.addView(blurred,new FrameLayout.LayoutParams(-1,-1));
-        View dim=new View(activity);dim.setBackgroundColor(0x66000000);overlay.addView(dim,new FrameLayout.LayoutParams(-1,-1));
+        View dim=new View(activity);dim.setBackgroundColor(UiTheme.background(activity,0x66000000));overlay.addView(dim,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout menu=column();menu.setBackground(SampleUi.surface(activity,SampleUi.PANEL,22));menu.setClipToOutline(true);
         menu.addView(action(tr(R.string.reorder),"reorder",false,()->setOrdering(true)));
-        View line=new View(activity);line.setBackgroundColor(0xff303033);menu.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
+        View line=new View(activity);line.setBackgroundColor(UiTheme.background(activity,0xff303033));menu.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
         menu.addView(action(tr(R.string.close),"close",true,()->actions.close(tab.id)));
-        View gap=new View(activity);gap.setBackgroundColor(0xff101113);menu.addView(gap,new LinearLayout.LayoutParams(-1,dp(8)));
+        View gap=new View(activity);gap.setBackgroundColor(UiTheme.background(activity,0xff101113));menu.addView(gap,new LinearLayout.LayoutParams(-1,dp(8)));
         menu.addView(action(tr(R.string.close_all),"close",true,actions::closeAll));
         int mw=Math.min(dp(250),w-dp(32));menu.measure(View.MeasureSpec.makeMeasureSpec(mw,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
         int[] a=new int[2],b=new int[2];thumb.getLocationOnScreen(a);stage.getLocationOnScreen(b);

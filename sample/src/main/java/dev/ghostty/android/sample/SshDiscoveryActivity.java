@@ -50,10 +50,10 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         editingId=getIntent().getStringExtra("editProfile");
         if(editingId!=null)try{original=new SshProfileStore(this).read(new SshProfileStore(this).directory(editingId));}
             catch(Exception error){Toast.makeText(this,tr(R.string.cannot_read_this_connection_go_back_and_try_again),Toast.LENGTH_LONG).show();finish();return;}
-        getWindow().setStatusBarColor(Color.BLACK);getWindow().setNavigationBarColor(Color.BLACK);
+        UiTheme.window(this,getWindow());
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
                 |WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        LinearLayout root=column();root.setBackgroundColor(Color.BLACK);setContentView(root);
+        LinearLayout root=column();root.setBackgroundColor(UiTheme.of(this).canvas);setContentView(root);
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{
             android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());
             android.graphics.Insets ime=insets.getInsets(WindowInsets.Type.ime());
@@ -67,9 +67,9 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         form.addView(label(tr(R.string.name)));
         LinearLayout nameRow=row();nameRow.setPadding(0,dp(4),dp(8),dp(4));nameRow.setBackground(round(CARD,20));
         form.addView(nameRow,new LinearLayout.LayoutParams(-1,-2));
-        name=field(tr(R.string.my_mac),tr(R.string.connection_name));name.setBackgroundColor(Color.TRANSPARENT);
+        name=field(tr(R.string.my_mac),tr(R.string.connection_name));name.setBackgroundColor(UiTheme.background(SshDiscoveryActivity.this,Color.TRANSPARENT));
         nameRow.addView(name,new LinearLayout.LayoutParams(0,-2,1));
-        badge=button(tr(R.string.discovering),tr(R.string.discover_ssh_servers_on_your_network),this::showPicker);UiDesign.type(badge,UiDesign.Type.SECONDARY);badge.setTextColor(GREEN);
+        badge=button(tr(R.string.discovering),tr(R.string.discover_ssh_servers_on_your_network),this::showPicker);UiDesign.type(badge,UiDesign.Type.SECONDARY);badge.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));
         badge.setPadding(dp(12),0,dp(12),0);badge.setBackground(round(0xff0d2412,18));
         nameRow.addView(badge,new LinearLayout.LayoutParams(-2,dp(48)));
         LinearLayout addressRow=row();addressRow.setGravity(Gravity.TOP);margin(form,addressRow,24);
@@ -78,7 +78,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         hostColumn.addView(label(tr(R.string.host)));host=field("192.168.1.100",tr(R.string.ssh_host_address));hostColumn.addView(host,new LinearLayout.LayoutParams(-1,-2));
         portColumn.addView(label(tr(R.string.port)));port=field("22",tr(R.string.ssh_port));port.setInputType(InputType.TYPE_CLASS_NUMBER);port.setText("22");portColumn.addView(port,new LinearLayout.LayoutParams(-1,-2));
         status=text("",13,MUTED);margin(form,status,20);
-        TextView refresh=button(tr(R.string.scan_again),tr(R.string.scan_the_network_for_ssh_servers_again),()->rescan(true));refresh.setTextColor(GREEN);margin(form,refresh,12);
+        TextView refresh=button(tr(R.string.scan_again),tr(R.string.scan_the_network_for_ssh_servers_again),()->rescan(true));refresh.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));margin(form,refresh,12);
         margin(form,label(tr(R.string.username)),20);user=field(tr(R.string.username_on_the_server),tr(R.string.ssh_username));form.addView(user,new LinearLayout.LayoutParams(-1,-2));
         margin(form,label(tr(R.string.authentication)),24);
         authChoices=new RadioGroup(this);authChoices.setOrientation(RadioGroup.HORIZONTAL);authChoices.setBaselineAligned(false);
@@ -88,14 +88,14 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         form.addView(authChoices,new LinearLayout.LayoutParams(-1,-2));authChoices.check(R.id.auth_password);
         passwordFields=column();margin(form,passwordFields,12);password=secretField(tr(R.string.login_password),tr(R.string.ssh_login_password));passwordFields.addView(password,new LinearLayout.LayoutParams(-1,-2));
         keyFields=column();keyFields.setVisibility(View.GONE);margin(form,keyFields,12);
-        TextView importKey=button(tr(R.string.choose_private_key),tr(R.string.import_ssh_private_key),this::importKey);importKey.setTextColor(GREEN);importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,-2));
+        TextView importKey=button(tr(R.string.choose_private_key),tr(R.string.import_ssh_private_key),this::importKey);importKey.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));importKey.setBackground(SampleUi.touch(this,0xff14271e,18));keyFields.addView(importKey,new LinearLayout.LayoutParams(-1,-2));
         keyStatus=text(tr(R.string.openssh_pem_private_keys_supported),13,MUTED);margin(keyFields,keyStatus,12);
         passphrase=secretField(tr(R.string.key_passphrase_optional),tr(R.string.ssh_key_passphrase));margin(keyFields,passphrase,12);passphrase.setMinHeight(dp(UiDesign.FIELD));
         authChoices.setOnCheckedChangeListener((group,id)->{passwordFields.setVisibility(id==R.id.auth_password?View.VISIBLE:View.GONE);keyFields.setVisibility(id==R.id.auth_key?View.VISIBLE:View.GONE);});
-        tmux=new SampleUi.Toggle(this);tmux.setText(tr(R.string.keep_remote_session));tmux.setTextColor(TEXT);tmux.setContentDescription(tr(R.string.keep_remote_sessions_with_tmux));margin(form,tmux,20);
+        tmux=new SampleUi.Toggle(this);tmux.setText(tr(R.string.keep_remote_session));tmux.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));tmux.setContentDescription(tr(R.string.keep_remote_sessions_with_tmux));margin(form,tmux,20);
         TextView tmuxHint=text(tr(R.string.install_tmux_on_the_server_to_return_to_your_shell_and_editor_aft),13,MUTED);margin(form,tmuxHint,4);
         connectionStatus=text(tr(R.string.verify_the_server_fingerprint_on_first_connection_connections_are),13,MUTED);margin(form,connectionStatus,24);
-        connectButton=button(original==null?tr(R.string.save_and_connect):tr(R.string.save_changes_and_connect),tr(R.string.save_and_connect_over_ssh),this::verifyConnection);connectButton.setTextColor(Color.BLACK);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
+        connectButton=button(original==null?tr(R.string.save_and_connect):tr(R.string.save_changes_and_connect),tr(R.string.save_and_connect_over_ssh),this::verifyConnection);connectButton.setTextColor(uiTheme().onAccent);connectButton.setBackground(SampleUi.touch(this,GREEN,20));connectButton.setMinHeight(dp(56));margin(form,connectButton,20);
         if(original!=null){
             name.setText(original.name);host.setText(original.host);port.setText(Integer.toString(original.port));user.setText(original.user);
             authChoices.check("key".equals(original.auth)?R.id.auth_key:R.id.auth_password);tmux.setChecked(original.tmux);
@@ -174,7 +174,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         listingStatus=text("",12,MUTED);margin(content,listingStatus,8);
         ScrollView scroll=new ScrollView(this);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,0,1);sp.topMargin=dp(12);content.addView(scroll,sp);
         list=column();scroll.addView(list);
-        TextView retry=button(tr(R.string.scan_again),tr(R.string.scan_for_servers_again),()->rescan(true));retry.setTextColor(GREEN);content.addView(retry,new LinearLayout.LayoutParams(-1,-2));
+        TextView retry=button(tr(R.string.scan_again),tr(R.string.scan_for_servers_again),()->rescan(true));retry.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,GREEN));content.addView(retry,new LinearLayout.LayoutParams(-1,-2));
         picker.setContentView(content);Window window=picker.getWindow();
         if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             WindowManager.LayoutParams p=window.getAttributes();p.gravity=Gravity.BOTTOM;p.dimAmount=.35f;window.setAttributes(p);}
@@ -296,7 +296,7 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
         if(discardDialog!=null)discardDialog.dismiss();if(setup!=null)setup.close();if(trustDialog!=null)trustDialog.dismiss();java.util.Arrays.fill(privateKey,(byte)0);if(original!=null)java.util.Arrays.fill(original.privateKey,(byte)0);super.onDestroy();
     }
     private EditText field(String hint,String description){
-        EditText e=new EditText(this);e.setTextColor(TEXT);e.setHintTextColor(MUTED);e.setTextSize(17);e.setSingleLine(true);
+        EditText e=new EditText(this);e.setTextColor(UiTheme.foreground(SshDiscoveryActivity.this,TEXT));e.setHintTextColor(UiTheme.foreground(SshDiscoveryActivity.this,MUTED));e.setTextSize(17);e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);e.setHint(hint);e.setContentDescription(description);
         e.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);SampleUi.field(e);return e;
     }
@@ -306,6 +306,6 @@ public final class SshDiscoveryActivity extends LocalizedActivity {
     private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(this);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
     private void margin(LinearLayout parent,View child,int top){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(top);parent.addView(child,p);}
-    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
+    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(UiTheme.background(this,color));d.setCornerRadius(dp(radius));return d;}
     private int dp(int n){return (int)(getResources().getDisplayMetrics().density*n+.5f);}
 }

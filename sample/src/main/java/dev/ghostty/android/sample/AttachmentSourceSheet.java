@@ -18,7 +18,7 @@ final class AttachmentSourceSheet {
         int[] subtitles={R.string.attachment_camera_hint,R.string.attachment_photos_hint,R.string.attachment_file_hint};String[] icons={"camera","image","file"};
         for(int i=0;i<titles.length;i++){
             final int source=i;LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(activity,16),dp(activity,12),dp(activity,16),dp(activity,12));row.setMinimumHeight(dp(activity,72));row.setBackground(SampleUi.touch(activity,0xff1b1d1f,18));
-            ImageView icon=new ImageView(activity);icon.setImageDrawable(new ToolbarIcon(icons[i],dp(activity,20),SampleUi.MUTED));icon.setPadding(dp(activity,10),dp(activity,10),dp(activity,10),dp(activity,10));icon.setBackground(SampleUi.surface(activity,0xff101214,13));row.addView(icon,new LinearLayout.LayoutParams(dp(activity,40),dp(activity,40)));
+            ImageView icon=new ImageView(activity);icon.setImageDrawable(new ToolbarIcon(activity,icons[i],dp(activity,20),SampleUi.MUTED));icon.setPadding(dp(activity,10),dp(activity,10),dp(activity,10),dp(activity,10));icon.setBackground(SampleUi.surface(activity,0xff101214,13));row.addView(icon,new LinearLayout.LayoutParams(dp(activity,40),dp(activity,40)));
             LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);TextView name=SampleUi.text(activity,tr(titles[i]),16,SampleUi.TEXT);labels.addView(name);TextView hint=SampleUi.text(activity,tr(subtitles[i]),14,SampleUi.MUTED);hint.setPadding(0,dp(activity,4),0,0);labels.addView(hint);LinearLayout.LayoutParams text=new LinearLayout.LayoutParams(0,-2,1);text.leftMargin=dp(activity,16);row.addView(labels,text);
             row.setContentDescription(tr(titles[i]));row.setOnClickListener(v->{dialog.dismiss();choose.accept(source);});LinearLayout.LayoutParams r=new LinearLayout.LayoutParams(-1,-2);if(i>0)r.topMargin=dp(activity,8);panel.addView(row,r);
         }
@@ -34,7 +34,7 @@ final class AttachmentSourceSheet {
         dialog.setContentView(AdaptiveLayout.sheetScroll(activity,panel));dialog.setCanceledOnTouchOutside(true);dialog.show();
         Window window=dialog.getWindow();window.setBackgroundDrawableResource(android.R.color.transparent);window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setDimAmount(.55f);
         if(activity.getResources().getConfiguration().smallestScreenWidthDp>=600)AdaptiveLayout.sheetWindow(activity,dialog,560,0);
-        dialog.getWindow().setNavigationBarColor(Color.BLACK);
+        UiTheme.window(activity,dialog.getWindow());
         // Phones use the full bottom edge; larger windows keep a centered readable panel.
         if(activity.getResources().getConfiguration().smallestScreenWidthDp<600){
             View owner=activity.getWindow().getDecorView();Runnable resize=()->{android.graphics.Rect bounds=AdaptiveLayout.available(activity);WindowManager.LayoutParams params=dialog.getWindow().getAttributes();if(params.width!=bounds.width()||params.y!=0||params.gravity!=(Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL)){params.width=bounds.width();params.height=WindowManager.LayoutParams.WRAP_CONTENT;params.y=0;params.gravity=Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL;dialog.getWindow().setAttributes(params);}};

@@ -9,6 +9,7 @@ final class ToolbarIcon extends Drawable {
     private final int size;
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     ToolbarIcon(String name,int size,int color){this.name=name;this.size=size;p.setColor(color);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.8f);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeJoin(Paint.Join.ROUND);}
+    ToolbarIcon(android.content.Context context,String name,int size,int color){this(name,size,UiTheme.foreground(context,color));}
     @Override public int getIntrinsicWidth(){return size;}
     @Override public int getIntrinsicHeight(){return size;}
     private void line(Canvas c,float... points){Path path=new Path();path.moveTo(points[0],points[1]);for(int i=2;i<points.length;i+=2)path.lineTo(points[i],points[i+1]);c.drawPath(path,p);}

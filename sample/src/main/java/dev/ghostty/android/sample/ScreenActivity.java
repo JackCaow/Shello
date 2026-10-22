@@ -9,12 +9,12 @@ import android.content.*;
 import android.view.*;
 import android.widget.*;
 
-/** Shared full-screen dark pages; controls keep native accessibility semantics. */
+/** Shared full-screen themed pages; controls keep native accessibility semantics. */
 public abstract class ScreenActivity extends LocalizedActivity {
     LinearLayout body,root,header;TextView heading;ScrollView scroll;
-    @Override public void onCreate(Bundle state){super.onCreate(state);getWindow().setStatusBarColor(Color.BLACK);getWindow().setNavigationBarColor(Color.BLACK);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        root=column();root.setBackgroundColor(Color.BLACK);setContentView(root);
+    @Override public void onCreate(Bundle state){super.onCreate(state);UiTheme.window(this,getWindow());
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        root=column();root.setFocusableInTouchMode(true);root.setBackgroundColor(UiTheme.of(this).canvas);setContentView(root);
         if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());v.setPadding(i.left,i.top,i.right,Math.max(i.bottom,insets.getInsets(WindowInsets.Type.ime()).bottom));return insets;});
         SampleUi.NavigationBar navigation=new SampleUi.NavigationBar(this,"",this::onBackPressed);
         header=navigation;heading=navigation.title;root.addView(header,new LinearLayout.LayoutParams(-1,-2));

@@ -57,7 +57,7 @@ public abstract class SettingsPageActivity extends ScreenActivity {
             group=column();group.setBackground(SampleUi.surface(this,CARD,12));group.setClipToOutline(true);
             body.addView(group,new LinearLayout.LayoutParams(-1,-2));
         }
-        if(group.getChildCount()>0){View line=new View(this);line.setBackgroundColor(DIVIDER);group.addView(line,new LinearLayout.LayoutParams(-1,Math.max(1,dp(1))));}
+        if(group.getChildCount()>0){View line=new View(this);line.setBackgroundColor(UiTheme.background(SettingsPageActivity.this,DIVIDER));group.addView(line,new LinearLayout.LayoutParams(-1,Math.max(1,dp(1))));}
         group.addView(row,new LinearLayout.LayoutParams(-1,-2));
     }
 
@@ -115,16 +115,16 @@ public abstract class SettingsPageActivity extends ScreenActivity {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         SettingSwitch(String title,String subtitle,String icon){
             super(SettingsPageActivity.this);setButtonDrawable((android.graphics.drawable.Drawable)null);
-            UiDesign.type(this,UiDesign.Type.BODY);setTextColor(SampleUi.TEXT);setGravity(Gravity.CENTER_VERTICAL);
+            UiDesign.type(this,UiDesign.Type.BODY);setTextColor(UiTheme.foreground(SettingsPageActivity.this,SampleUi.TEXT));setGravity(Gravity.CENTER_VERTICAL);
             setPadding(dp(16),dp(12),dp(80),dp(12));setMinHeight(dp(UiDesign.ROW));setBackground(SampleUi.touch(SettingsPageActivity.this,Color.TRANSPARENT,0));
-            if(subtitle==null)setText(title);else{SpannableString text=new SpannableString(title+"\n"+subtitle);text.setSpan(new ForegroundColorSpan(SampleUi.MUTED),title.length()+1,text.length(),0);text.setSpan(new AbsoluteSizeSpan(Math.round(14*getResources().getDisplayMetrics().scaledDensity)),title.length()+1,text.length(),0);setText(text);}
+            if(subtitle==null)setText(title);else{SpannableString text=new SpannableString(title+"\n"+subtitle);text.setSpan(new ForegroundColorSpan(UiTheme.foreground(SettingsPageActivity.this,SampleUi.MUTED)),title.length()+1,text.length(),0);text.setSpan(new AbsoluteSizeSpan(Math.round(14*getResources().getDisplayMetrics().scaledDensity)),title.length()+1,text.length(),0);setText(text);}
             setContentDescription(subtitle==null?title:tr(R.string.accessibility_subtitle,title,subtitle));
-            if(icon!=null){ToolbarIcon glyph=new ToolbarIcon(icon,dp(20),SampleUi.MUTED);glyph.setBounds(0,0,dp(20),dp(20));setCompoundDrawables(glyph,null,null,null);setCompoundDrawablePadding(dp(16));}
+            if(icon!=null){ToolbarIcon glyph=new ToolbarIcon(SettingsPageActivity.this,icon,dp(20),SampleUi.MUTED);glyph.setBounds(0,0,dp(20),dp(20));setCompoundDrawables(glyph,null,null,null);setCompoundDrawablePadding(dp(16));}
         }
         @Override protected void onDraw(Canvas c){
             super.onDraw(c);float right=getWidth()-dp(16),left=right-dp(48),cy=getHeight()/2f;
-            paint.setColor(isChecked()?SampleUi.GREEN:0xff242628);c.drawRoundRect(left,cy-dp(12),right,cy+dp(12),dp(12),dp(12),paint);
-            paint.setColor(isChecked()?Color.BLACK:Color.WHITE);float x=isChecked()?right-dp(14):left+dp(14);c.drawRoundRect(x-dp(12),cy-dp(10),x+dp(12),cy+dp(10),dp(10),dp(10),paint);
+            paint.setColor(isChecked()?UiTheme.of(getContext()).accent:UiTheme.of(getContext()).toggleOff);c.drawRoundRect(left,cy-dp(12),right,cy+dp(12),dp(12),dp(12),paint);
+            paint.setColor(UiTheme.of(getContext()).light?Color.WHITE:isChecked()?Color.BLACK:Color.WHITE);float x=isChecked()?right-dp(14):left+dp(14);c.drawRoundRect(x-dp(12),cy-dp(10),x+dp(12),cy+dp(10),dp(10),dp(10),paint);
         }
         @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info){super.onInitializeAccessibilityNodeInfo(info);info.setClassName("android.widget.Switch");}
     }

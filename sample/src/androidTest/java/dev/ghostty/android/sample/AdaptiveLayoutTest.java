@@ -20,15 +20,18 @@ public class AdaptiveLayoutTest {
     private final Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     private final Context context=inst.getTargetContext();
     private volatile Activity current;
+    private String previousTheme;private boolean themeOverride;
     private Application.ActivityLifecycleCallbacks callbacks;
     @Before public void observe(){
+        String mode=InstrumentationRegistry.getArguments().getString("uiTheme");themeOverride=mode!=null;
+        if(themeOverride){SharedPreferences prefs=context.getSharedPreferences("appearance",0);previousTheme=prefs.getString("theme",null);prefs.edit().putString("theme",mode.equals("light")?"light":"shello").commit();}
         callbacks=new Application.ActivityLifecycleCallbacks(){
             public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}
             public void onActivityResumed(Activity a){current=a;}public void onActivityPaused(Activity a){}
             public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
         };((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(callbacks);
     }
-    @After public void close(){if(current!=null)inst.runOnMainSync(()->current.finish());inst.waitForIdleSync();((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(callbacks);}
+    @After public void close(){if(current!=null)inst.runOnMainSync(()->current.finish());inst.waitForIdleSync();((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(callbacks);if(themeOverride){SharedPreferences.Editor e=context.getSharedPreferences("appearance",0).edit();if(previousTheme==null)e.remove("theme");else e.putString("theme",previousTheme);e.commit();}}
     private void open(Class<? extends Activity> type){
         inst.startActivitySync(new Intent(context,type).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));
         await(()->type.isInstance(current)&&!current.isDestroyed()&&current.hasWindowFocus());
@@ -44,6 +47,7 @@ public class AdaptiveLayoutTest {
     private View find(View root,String description){if(description.contentEquals(root.getContentDescription()==null?"":root.getContentDescription()))return root;
         if(root instanceof ViewGroup){ViewGroup group=(ViewGroup)root;for(int i=0;i<group.getChildCount();i++){View v=find(group.getChildAt(i),description);if(v!=null)return v;}}return null;}
     private View decor(){return current.getWindow().getDecorView();}
+    private float getDensity(){return current.getResources().getDisplayMetrics().density;}
     private int dp(int n){return SampleUi.dp(current,n);}
     private void inside(View view){Rect visible=new Rect();assertTrue("Not visible: "+view.getContentDescription(),view.getGlobalVisibleRect(visible));
         assertTrue("Clipped vertically: "+view.getContentDescription(),visible.height()>=view.getHeight()-1);
@@ -146,6 +150,8 @@ public class AdaptiveLayoutTest {
         await(()->((View)field(current,"sheet")).isShown());
         inst.runOnMainSync(()->{View viewport=(View)field(current,"viewport"),toolbar=(View)field(current,"toolScroll");assertTrue(viewport.getWidth()>=decor().getWidth()-dp(100));assertTrue(toolbar.getWidth()<=dp(600));inside(toolbar);});capture("terminal");
         inst.runOnMainSync(()->call(current,"showKeyboard"));SystemClock.sleep(800);inst.runOnMainSync(()->call(current,"togglePad"));inst.waitForIdleSync();
+        try{await(()->{View pad=(View)field(current,"pad");Rect bounds=new Rect();return pad.getGlobalVisibleRect(bounds)&&bounds.height()>=pad.getHeight()-1;});}
+        catch(AssertionError error){inst.runOnMainSync(()->{View pad=(View)field(current,"pad"),viewport=(View)field(current,"viewport");Rect bounds=new Rect();pad.getGlobalVisibleRect(bounds);android.util.Log.e("LayoutAudit","pad="+pad.getWidth()+"x"+pad.getHeight()+" visible="+bounds+" viewport="+viewport.getWidth()+"x"+viewport.getHeight()+" density="+getDensity());});capture("terminal-pad-clipped");throw error;}
         inst.runOnMainSync(()->inside((View)field(current,"pad")));capture("terminal-pad");
         inst.runOnMainSync(()->{View chat=((InputToolbar)field(current,"toolbarContainer")).pinnedButtons.findViewWithTag("chat");assertNotNull(chat);chat.performClick();((EditText)field(current,"draft")).setText("中文 draft 👩🏽‍💻");});
         await(()->((EditText)field(current,"draft")).hasFocus());SystemClock.sleep(600);

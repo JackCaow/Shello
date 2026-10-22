@@ -11,6 +11,21 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
+    <style name="SampleLightTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#087442</item>
+        <item name="android:colorControlActivated">#087442</item>
+        <item name="android:colorControlHighlight">#180B5730</item>
+        <item name="android:textColorHighlight">#33087442</item>
+        <item name="android:windowBackground">#F4F7F5</item>
+        <item name="android:statusBarColor">#F4F7F5</item>
+        <item name="android:navigationBarColor">#F4F7F5</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="SettingsLightTheme" parent="SampleLightTheme">
+        <item name="android:windowAnimationStyle">@style/SettingsWindowAnimation</item>
+    </style>
     <style name="SettingsTheme" parent="SampleTheme">
         <item name="android:windowAnimationStyle">@style/SettingsWindowAnimation</item>
     </style>

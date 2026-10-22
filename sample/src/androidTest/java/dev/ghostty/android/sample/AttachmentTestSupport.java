@@ -20,18 +20,19 @@ import static org.junit.Assume.*;
 /** Shared opt-in device harness; not a test suite itself. */
 abstract class AttachmentTestSupport {
     final Instrumentation inst=InstrumentationRegistry.getInstrumentation();final Context context=inst.getTargetContext();
-    MainActivity activity;String temporaryProfile;ContentProviderClient fixtureProvider;
+    MainActivity activity;String previousTheme;boolean themeOverride;String temporaryProfile;ContentProviderClient fixtureProvider;
     final Application.ActivityLifecycleCallbacks observer=new Application.ActivityLifecycleCallbacks(){
         public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){if(a instanceof MainActivity)activity=(MainActivity)a;}
         public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
     };
     @Before public void observe()throws Exception{
+        String mode=InstrumentationRegistry.getArguments().getString("uiTheme");themeOverride=mode!=null;if(themeOverride){android.content.SharedPreferences prefs=context.getSharedPreferences("appearance",0);previousTheme=prefs.getString("theme",null);prefs.edit().putString("theme",mode.equals("light")?"light":"shello").commit();}
         ((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(observer);
         // OEM autostart restrictions otherwise block cold-starting this test-only app.
         try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("content query --uri content://"+AttachmentTestProvider.AUTHORITY+"/normal");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
         fixtureProvider=context.getContentResolver().acquireContentProviderClient(AttachmentTestProvider.AUTHORITY);assertNotNull("Synthetic fixture provider did not start",fixtureProvider);
     }
-    @After public void unobserve()throws Exception{if(fixtureProvider!=null)fixtureProvider.close();if(temporaryProfile!=null)new SshProfileStore(context).delete(temporaryProfile);if(activity!=null)inst.runOnMainSync(()->{PopupWindow popup=(PopupWindow)field(activity,"connectionMenu");if(popup!=null)popup.dismiss();});((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(observer);}
+    @After public void unobserve()throws Exception{if(fixtureProvider!=null)fixtureProvider.close();if(temporaryProfile!=null)new SshProfileStore(context).delete(temporaryProfile);if(activity!=null)inst.runOnMainSync(()->{PopupWindow popup=(PopupWindow)field(activity,"connectionMenu");if(popup!=null)popup.dismiss();});if(themeOverride){android.content.SharedPreferences.Editor e=context.getSharedPreferences("appearance",0).edit();if(previousTheme==null)e.remove("theme");else e.putString("theme",previousTheme);e.commit();}((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(observer);}
     Object field(Object target,String name){try{Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(target);}catch(Exception e){throw new AssertionError(e);}}
     void call(Object target,String name){try{Method m=target.getClass().getDeclaredMethod(name);m.setAccessible(true);m.invoke(target);}catch(Exception e){throw new AssertionError(e);}}
     void await(BooleanSupplier condition){long until=SystemClock.uptimeMillis()+20000;boolean[] ok={false};do{inst.runOnMainSync(()->ok[0]=condition.getAsBoolean());if(!ok[0])SystemClock.sleep(60);}while(!ok[0]&&SystemClock.uptimeMillis()<until);assertTrue("Destination/state did not settle",ok[0]);}

@@ -13,8 +13,8 @@ final class HomeEmptyState {
     static View card(Context c,boolean session,Runnable add){
         LinearLayout card=new LinearLayout(c);card.setOrientation(session?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);card.setGravity(Gravity.CENTER_VERTICAL|(session?Gravity.CENTER_HORIZONTAL:Gravity.LEFT));
         int padding=SampleUi.dp(c,16);card.setPadding(padding,padding,padding,padding);
-        GradientDrawable surface=SampleUi.surface(c,0xff0b0d0e,session?16:20);surface.setStroke(Math.max(1,SampleUi.dp(c,1)),0xff1e3526,SampleUi.dp(c,3),SampleUi.dp(c,3));
-        card.setBackground(new RippleDrawable(ColorStateList.valueOf(0x2200ee00),surface,SampleUi.surface(c,Color.WHITE,session?16:20)));
+        GradientDrawable surface=SampleUi.surface(c,0xff0b0d0e,session?16:20);surface.setStroke(Math.max(1,SampleUi.dp(c,1)),UiTheme.background(c,0xff1e3526),SampleUi.dp(c,3),SampleUi.dp(c,3));
+        card.setBackground(new RippleDrawable(ColorStateList.valueOf(UiTheme.of(c).ripple),surface,SampleUi.surface(c,Color.WHITE,session?16:20)));
         card.setFocusable(true);card.setContentDescription(AppLanguage.tr(session?R.string.no_active_sessions:R.string.no_saved_connections)+". "+AppLanguage.tr(R.string.new_ssh_connection));card.setOnClickListener(v->add.run());
         ImageView icon=SampleUi.icon(c,session?"terminal":"server",0xff00d800);icon.setPadding(SampleUi.dp(c,15),SampleUi.dp(c,15),SampleUi.dp(c,15),SampleUi.dp(c,15));icon.setBackground(SampleUi.surface(c,0xff071b0d,16));icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         LinearLayout.LayoutParams glyph=new LinearLayout.LayoutParams(SampleUi.dp(c,56),SampleUi.dp(c,56));if(session)glyph.bottomMargin=SampleUi.dp(c,16);else glyph.rightMargin=SampleUi.dp(c,16);card.addView(icon,glyph);

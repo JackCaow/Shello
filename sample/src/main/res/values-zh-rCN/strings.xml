@@ -464,4 +464,6 @@
     <string name="attachment_type_image">图片文件</string>
     <string name="attachment_type_video">视频文件</string>
     <string name="attachment_type_other">文件</string>
+    <string name="appearance_and_terminal_theme">应用与终端主题</string>
+    <string name="appearance_theme_description">应用于整个界面及终端默认颜色。终端程序设置的颜色和反色仍按程序输出显示。</string>
 </resources>
