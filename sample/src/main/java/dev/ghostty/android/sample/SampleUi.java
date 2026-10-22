@@ -90,8 +90,11 @@ final class SampleUi {
             super.onMeasure(ws,hs);
         }
         NavigationBar(Context context,String text,Runnable back){
+            this(context,text,"back",tr(R.string.back),back);
+        }
+        NavigationBar(Context context,String text,String navigationIcon,String navigationDescription,Runnable back){
             super(context);setOrientation(HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);setMinimumHeight(dp(context,56));
-            addView(header(context,"back",tr(R.string.back),TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
+            addView(header(context,navigationIcon,navigationDescription,TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
             title=SampleUi.text(context,text,20,TEXT);UiDesign.type(title,UiDesign.Type.TITLE);title.setSingleLine();title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.leftMargin=dp(context,16);p.rightMargin=dp(context,16);addView(title,p);
         }
