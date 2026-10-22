@@ -1,11 +1,24 @@
 ---
 name: shello-pair
-description: Prepare a macOS or Linux computer for Shello Android pairing. Check and install missing dependencies, enable SSH, verify tmux, start the temporary pairing service and display its QR code. Use when the user asks to pair or configure a computer for Shello.
+description: Prepare a macOS, Linux or Windows (WSL2) computer for Shello Android pairing. Check and install missing dependencies, enable SSH, verify tmux, start the temporary pairing service and display its QR code. Use when the user asks to pair or configure a computer for Shello.
 ---
 
 # Shello 配对
 
-把**运行 agent 的这台电脑**配置成 Shello 的 SSH 主机，展示可扫描的二维码，并验证手机连接。支持 macOS、Debian/Ubuntu 和 Fedora/RHEL 系 Linux；其他系统先查适用的官方安装方式。当前协议不支持原生 Windows。
+把**运行 agent 的这台电脑**配置成 Shello 的 SSH 主机，展示可扫描的二维码，并验证手机连接。支持 macOS、Debian/Ubuntu、Fedora/RHEL，以及 Windows 11 + WSL2。Windows 连接到 WSL Linux，不能启动原生 PowerShell 终端；其他系统先查适用的官方安装方式。
+
+## 先选择执行平台
+
+确认目标电脑的系统。**Windows 从普通用户的 PowerShell 运行随 skill 附带的 `scripts/pair.ps1`**，不要先执行下方 Unix bootstrap，也不要把整个脚本交给管理员账户：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\path\to\shello-pair\scripts\pair.ps1 -Check
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\path\to\shello-pair\scripts\pair.ps1 -Json
+```
+
+`-Check` 只检查 WSL2、普通 Linux 用户和可用 Windows 地址；返回 2 表示缺少环境。正式运行会补依赖、配置独立的 WSL SSH 监听并启动配对。`ready` 事件的 `qr_image` 是 Windows 本地 PNG：保持工具运行，立刻在对话展示。没有图片能力时去掉 `-Json` 显示文本二维码。Windows 启动器已包含经过仓库版本管理的全部辅助脚本，复制整个 skill 后也可用，无需运行可变远程脚本。详见 [Windows / WSL2](references/windows-wsl.md)，完成后直接进入本文“完成验收”。
+
+macOS/Linux 才执行以下流程。
 
 ## 准备电脑
 

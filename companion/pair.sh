@@ -129,7 +129,10 @@ def serve(args):
     args.host = select_host(args.host, args.network)
     print('Pairing over ' + ('Tailscale' if ipaddress.ip_address(args.host) in TAILNET else 'LAN') +
           ' at ' + args.host + '. Keep both devices connected to this network.', flush=True)
-    with socket.create_connection((args.bind or args.host, args.ssh_port), timeout=3):
+    check_host = args.bind or args.host
+    if check_host == '0.0.0.0':
+        check_host = '127.0.0.1'
+    with socket.create_connection((check_host, args.ssh_check_port or args.ssh_port), timeout=3):
         pass
     keys = []
     for path in args.host_key or Path('/etc/ssh').glob('ssh_host_*_key.pub'):
@@ -167,7 +170,7 @@ def serve(args):
                     if paired_at[0] is None:
                         paired_at[0] = time.time()
                         print('Phone public key installed. Verify the SSH connection on your phone.', flush=True)
-                body = json.dumps({'version': 1, 'user': args.user, 'name': socket.gethostname(), 'port': args.ssh_port, 'hostKeys': keys}).encode()
+                body = json.dumps({'version': 1, 'user': args.user, 'name': args.name or socket.gethostname(), 'port': args.ssh_port, 'hostKeys': keys}).encode()
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Content-Length', str(len(body)))
@@ -186,7 +189,7 @@ def serve(args):
         tls.minimum_version = ssl.TLSVersion.TLSv1_2
         tls.load_cert_chain(cert, key)
         server.socket = tls.wrap_socket(server.socket, server_side=True)
-        uri = 'ghostty-pair://v1?' + urlencode({'host': args.host, 'port': server.server_port, 'pin': fingerprint, 'token': token, 'expires': int(deadline)})
+        uri = 'ghostty-pair://v1?' + urlencode({'host': args.host, 'port': args.advertise_port or server.server_port, 'pin': fingerprint, 'token': token, 'expires': int(deadline)})
         if args.qr_file:
             args.qr_file.write_text(uri)
             args.qr_file.chmod(0o600)
@@ -215,6 +218,9 @@ def main():
                         help='auto prefers connected Tailscale, otherwise LAN (default: auto)')
     parser.add_argument('--ssh-port', type=int, default=22)
     parser.add_argument('--port', type=int, default=0, help='Temporary HTTPS port; default random')
+    parser.add_argument('--ssh-check-port', type=int, help='Internal SSH port for a forwarded endpoint (default: --ssh-port)')
+    parser.add_argument('--advertise-port', type=int, help='External HTTPS port if forwarded (default: listener port)')
+    parser.add_argument('--name', help='Display name of this computer, e.g. Windows / Ubuntu (WSL2)')
     parser.add_argument('--user', default=getpass.getuser())
     parser.add_argument('--ttl', type=int, default=180)
     parser.add_argument('--bind', help=argparse.SUPPRESS)
@@ -222,6 +228,8 @@ def main():
     parser.add_argument('--authorized-keys', type=Path, default=Path.home() / '.ssh/authorized_keys')
     parser.add_argument('--qr-file', type=Path, help='Optional private QR payload file for tests')
     args = parser.parse_args()
+    if not 1 <= args.ssh_port <= 65535 or not 0 <= args.port <= 65535 or any(p is not None and not 1 <= p <= 65535 for p in (args.ssh_check_port,args.advertise_port)):
+        parser.error('invalid port')
     if not 30 <= args.ttl <= 600:
         parser.error('--ttl must be 30..600')
     try:
