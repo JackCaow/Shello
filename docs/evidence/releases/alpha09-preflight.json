@@ -1,0 +1,44 @@
+{
+  "version": "0.1.0-alpha09",
+  "version_code": 9,
+  "date": "2026-10-22",
+  "merged_pr": "https://github.com/JackCaow/Shello/pull/2",
+  "merged_commit": "eb65dc29fd7cf9ea84cd1949366553d34c2a76e4",
+  "scope": "Release preflight; hosted tag workflow separately rebuilds, signs and publishes",
+  "checks": {
+    "merge_head_ci": "Both Android library jobs succeeded at cb604d3bf5b18eb8e2844456451ae2fd41ca4dbe",
+    "build": "JDK 17 assembleDebug/assembleDebugAndroidTest/assembleRelease; sample/terminal lintRelease passed",
+    "release_script_tests": 6,
+    "pairing_launcher_tests": 2,
+    "tag_metadata": "v0.1.0-alpha09 exactly matches versionName",
+    "api27": {
+      "tests": 6,
+      "coverage": "Theme persistence/migration and session preview cache",
+      "log": "alpha09-api27.txt"
+    },
+    "api35": {
+      "tests": 6,
+      "coverage": "Theme persistence/migration and session preview cache",
+      "log": "alpha09-api35.txt"
+    },
+    "signed_clean_install": {
+      "api": 35,
+      "device": "Fresh temporary Pixel 7 AVD, arm64-v8a",
+      "version_name": "0.1.0-alpha09",
+      "version_code": 9,
+      "result": "Install and cold launch succeeded; home screenshot inspected; no AndroidRuntime fatal exception",
+      "environment": "Fresh Play Store image displayed an unrelated Digital Wellbeing ANR; that system app was disabled on this disposable AVD before screenshot review"
+    },
+    "release_certificate_sha256": "2a28be23a3a37b400c9ba0ad85325b4d8785efc7b396e4bb6b944045d7027ad5",
+    "local_signed_apk_sha256": "d8cacf71fc402366a0b8635618bc8cb851eeab450330e93f235f3f2357556439"
+  },
+  "prior_device_matrix": [
+    "../light-mode/acceptance.json",
+    "../light-mode/refinement.json"
+  ],
+  "limitations": [
+    "No new real SSH/TUI or hardware-keyboard end-to-end acceptance is claimed.",
+    "Existing development-phone data was not uninstalled or replaced with the release-signed APK.",
+    "No Maven publication."
+  ]
+}
