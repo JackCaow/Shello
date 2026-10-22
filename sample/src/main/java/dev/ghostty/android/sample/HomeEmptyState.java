@@ -17,12 +17,12 @@ final class HomeEmptyState {
         card.setBackground(new RippleDrawable(ColorStateList.valueOf(0x2200ee00),surface,SampleUi.surface(c,Color.WHITE,session?16:20)));
         card.setFocusable(true);card.setContentDescription(AppLanguage.tr(session?R.string.no_active_sessions:R.string.no_saved_connections)+". "+AppLanguage.tr(R.string.new_ssh_connection));card.setOnClickListener(v->add.run());
         ImageView icon=SampleUi.icon(c,session?"terminal":"server",0xff00d800);icon.setPadding(SampleUi.dp(c,15),SampleUi.dp(c,15),SampleUi.dp(c,15),SampleUi.dp(c,15));icon.setBackground(SampleUi.surface(c,0xff071b0d,16));icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        LinearLayout.LayoutParams glyph=new LinearLayout.LayoutParams(SampleUi.dp(c,56),SampleUi.dp(c,56));if(session)glyph.bottomMargin=SampleUi.dp(c,14);else glyph.rightMargin=SampleUi.dp(c,16);card.addView(icon,glyph);
+        LinearLayout.LayoutParams glyph=new LinearLayout.LayoutParams(SampleUi.dp(c,56),SampleUi.dp(c,56));if(session)glyph.bottomMargin=SampleUi.dp(c,16);else glyph.rightMargin=SampleUi.dp(c,16);card.addView(icon,glyph);
         LinearLayout labels=new LinearLayout(c);labels.setOrientation(LinearLayout.VERTICAL);labels.setGravity(session?Gravity.CENTER:Gravity.LEFT);
         TextView title=SampleUi.text(c,AppLanguage.tr(session?R.string.no_active_sessions:R.string.no_saved_connections),16,SampleUi.TEXT);title.setIncludeFontPadding(false);title.setGravity(session?Gravity.CENTER:Gravity.LEFT);labels.addView(title);
-        LinearLayout hint=new LinearLayout(c);hint.setGravity(Gravity.CENTER_VERTICAL);TextView copy=SampleUi.text(c,AppLanguage.tr(R.string.tap_plus_to_add_connection),12,SampleUi.MUTED);copy.setIncludeFontPadding(false);hint.addView(copy);
-        TextView arrow=SampleUi.text(c,"↘",14,0xff00ed00);arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-2,-2);ap.leftMargin=SampleUi.dp(c,10);hint.addView(arrow,ap);
-        LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-2,-2);hp.topMargin=SampleUi.dp(c,8);labels.addView(hint,hp);
+        LinearLayout hint=new LinearLayout(c);hint.setGravity(Gravity.CENTER_VERTICAL);TextView copy=SampleUi.text(c,AppLanguage.tr(R.string.tap_plus_to_add_connection),14,SampleUi.MUTED);copy.setIncludeFontPadding(false);hint.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
+        TextView arrow=SampleUi.text(c,"↘",14,0xff00ed00);arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-2,-2);ap.leftMargin=SampleUi.dp(c,8);hint.addView(arrow,ap);
+        LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=SampleUi.dp(c,8);labels.addView(hint,hp);
         card.addView(labels,new LinearLayout.LayoutParams(session?-1:0,-2,session?0:1));card.setMinimumHeight(SampleUi.dp(c,session?160:92));return card;
     }
 }

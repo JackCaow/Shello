@@ -212,16 +212,36 @@ JNIEXPORT jbyteArray JNICALL FN(paste)(JNIEnv *env,jclass cls,jlong h,jbyteArray
     if(result==GHOSTTY_SUCCESS){output=(*env)->NewByteArray(env,(jsize)written);if(output)(*env)->SetByteArrayRegion(env,output,0,(jsize)written,(jbyte *)buffer);}
     free(buffer);return output;
 }
-JNIEXPORT jbyteArray JNICALL FN(key)(JNIEnv *env,jclass cls,jlong h,jint index) {
-    GhosttyKey keys[]={GHOSTTY_KEY_ARROW_UP,GHOSTTY_KEY_ARROW_DOWN,GHOSTTY_KEY_ARROW_LEFT,GHOSTTY_KEY_ARROW_RIGHT,GHOSTTY_KEY_PAGE_UP,GHOSTTY_KEY_PAGE_DOWN,GHOSTTY_KEY_HOME,GHOSTTY_KEY_END,GHOSTTY_KEY_ENTER,GHOSTTY_KEY_TAB,GHOSTTY_KEY_ESCAPE,GHOSTTY_KEY_BACKSPACE};
-    if(index<0||index>=12)return NULL;
+static const GhosttyKey android_keys[]={GHOSTTY_KEY_ARROW_UP,GHOSTTY_KEY_ARROW_DOWN,GHOSTTY_KEY_ARROW_LEFT,GHOSTTY_KEY_ARROW_RIGHT,GHOSTTY_KEY_PAGE_UP,GHOSTTY_KEY_PAGE_DOWN,GHOSTTY_KEY_HOME,GHOSTTY_KEY_END,GHOSTTY_KEY_ENTER,GHOSTTY_KEY_TAB,GHOSTTY_KEY_ESCAPE,GHOSTTY_KEY_BACKSPACE,GHOSTTY_KEY_DELETE,GHOSTTY_KEY_INSERT,GHOSTTY_KEY_F1,GHOSTTY_KEY_F2,GHOSTTY_KEY_F3,GHOSTTY_KEY_F4,GHOSTTY_KEY_F5,GHOSTTY_KEY_F6,GHOSTTY_KEY_F7,GHOSTTY_KEY_F8,GHOSTTY_KEY_F9,GHOSTTY_KEY_F10,GHOSTTY_KEY_F11,GHOSTTY_KEY_F12};
+static jbyteArray encode_android_key(JNIEnv *env,jlong h,int index,int mods,const char *utf8,size_t len,uint32_t cp){
+    if(index < -1 || index >= (int)(sizeof(android_keys)/sizeof(android_keys[0])))return NULL;
     GhosttyKeyEncoder encoder=NULL;GhosttyKeyEvent event=NULL;
-    ghostty_key_encoder_new(NULL,&encoder);ghostty_key_event_new(NULL,&event);
-    ghostty_key_encoder_setopt_from_terminal(encoder,term(h));
-    ghostty_key_event_set_action(event,GHOSTTY_KEY_ACTION_PRESS);ghostty_key_event_set_key(event,keys[index]);
-    char buf[256];size_t n=0;GhosttyResult r=ghostty_key_encoder_encode(encoder,event,buf,sizeof(buf),&n);
-    ghostty_key_event_free(event);ghostty_key_encoder_free(encoder);check(env,r);if(r!=GHOSTTY_SUCCESS)return NULL;
+    GhosttyResult r=ghostty_key_encoder_new(NULL,&encoder);
+    if(r==GHOSTTY_SUCCESS)r=ghostty_key_event_new(NULL,&event);
+    char buf[4096];size_t n=0;
+    if(r==GHOSTTY_SUCCESS){
+        GhosttyKey key=index>=0?android_keys[index]:GHOSTTY_KEY_UNIDENTIFIED;
+        if(index<0){
+            if(cp>='a'&&cp<='z')key=GHOSTTY_KEY_A+cp-'a';
+            else if(cp>='A'&&cp<='Z')key=GHOSTTY_KEY_A+cp-'A';
+            else if(cp>='0'&&cp<='9')key=GHOSTTY_KEY_DIGIT_0+cp-'0';
+            else switch(cp){case ' ':key=GHOSTTY_KEY_SPACE;break;case '[':key=GHOSTTY_KEY_BRACKET_LEFT;break;case ']':key=GHOSTTY_KEY_BRACKET_RIGHT;break;case '\\':key=GHOSTTY_KEY_BACKSLASH;break;case '/':key=GHOSTTY_KEY_SLASH;break;case '-':key=GHOSTTY_KEY_MINUS;break;case '=':key=GHOSTTY_KEY_EQUAL;break;case '`':key=GHOSTTY_KEY_BACKQUOTE;break;case ',':key=GHOSTTY_KEY_COMMA;break;case '.':key=GHOSTTY_KEY_PERIOD;break;case ';':key=GHOSTTY_KEY_SEMICOLON;break;case 39:key=GHOSTTY_KEY_QUOTE;break;}
+        }
+        ghostty_key_encoder_setopt_from_terminal(encoder,term(h));
+        ghostty_key_event_set_action(event,GHOSTTY_KEY_ACTION_PRESS);
+        ghostty_key_event_set_key(event,key);ghostty_key_event_set_mods(event,(GhosttyMods)mods);
+        if(len)ghostty_key_event_set_utf8(event,utf8,len);
+        ghostty_key_event_set_unshifted_codepoint(event,cp);
+        r=ghostty_key_encoder_encode(encoder,event,buf,sizeof(buf),&n);
+    }
+    if(event)ghostty_key_event_free(event);if(encoder)ghostty_key_encoder_free(encoder);check(env,r);if(r!=GHOSTTY_SUCCESS)return NULL;
     jbyteArray result=(*env)->NewByteArray(env,n);if(result)(*env)->SetByteArrayRegion(env,result,0,n,(jbyte *)buf);return result;
+}
+JNIEXPORT jbyteArray JNICALL FN(key)(JNIEnv *env,jclass cls,jlong h,jint index){return encode_android_key(env,h,index,0,NULL,0,0);}
+JNIEXPORT jbyteArray JNICALL FN(modifiedKey)(JNIEnv *env,jclass cls,jlong h,jint index,jint mods,jbyteArray text,jint cp){
+    jsize len=(*env)->GetArrayLength(env,text);jbyte *data=(*env)->GetByteArrayElements(env,text,NULL);if(!data)return NULL;
+    jbyteArray result=encode_android_key(env,h,index,mods,(char*)data,(size_t)len,(uint32_t)cp);
+    (*env)->ReleaseByteArrayElements(env,text,data,JNI_ABORT);return result;
 }
 JNIEXPORT jbyteArray JNICALL FN(wheel)(JNIEnv *env,jclass cls,jlong h,jboolean down,jfloat x,jfloat y,jint cell_width,jint cell_height) {
     GhosttyMouseEncoder encoder=NULL;GhosttyMouseEvent event=NULL;
@@ -239,6 +259,31 @@ JNIEXPORT jbyteArray JNICALL FN(wheel)(JNIEnv *env,jclass cls,jlong h,jboolean d
         ghostty_mouse_encoder_setopt(encoder,GHOSTTY_MOUSE_ENCODER_OPT_SIZE,&size);
         ghostty_mouse_event_set_action(event,GHOSTTY_MOUSE_ACTION_PRESS);
         ghostty_mouse_event_set_button(event,down?GHOSTTY_MOUSE_BUTTON_FIVE:GHOSTTY_MOUSE_BUTTON_FOUR);
+        ghostty_mouse_event_set_position(event,(GhosttyMousePosition){.x=x,.y=y});
+        r=ghostty_mouse_encoder_encode(encoder,event,buf,sizeof(buf),&n);
+    }
+    ghostty_mouse_event_free(event);ghostty_mouse_encoder_free(encoder);
+    check(env,r);if(r!=GHOSTTY_SUCCESS)return NULL;
+    jbyteArray result=(*env)->NewByteArray(env,n);
+    if(result)(*env)->SetByteArrayRegion(env,result,0,n,(jbyte *)buf);
+    return result;
+}
+JNIEXPORT jbyteArray JNICALL FN(mouse)(JNIEnv *env,jclass cls,jlong h,jint action,jboolean right,jfloat x,jfloat y,jint cell_width,jint cell_height) {
+    GhosttyMouseEncoder encoder=NULL;GhosttyMouseEvent event=NULL;
+    GhosttyResult r=ghostty_mouse_encoder_new(NULL,&encoder);
+    if(r==GHOSTTY_SUCCESS)r=ghostty_mouse_event_new(NULL,&event);
+    char buf[128];size_t n=0;
+    if(r==GHOSTTY_SUCCESS){
+        uint16_t cols=0,rows=0;
+        ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_COLS,&cols);
+        ghostty_terminal_get(term(h),GHOSTTY_TERMINAL_DATA_ROWS,&rows);
+        GhosttyMouseEncoderSize size=GHOSTTY_INIT_SIZED(GhosttyMouseEncoderSize);
+        size.cell_width=cell_width;size.cell_height=cell_height;
+        size.screen_width=cols*cell_width;size.screen_height=rows*cell_height;
+        ghostty_mouse_encoder_setopt_from_terminal(encoder,term(h));
+        ghostty_mouse_encoder_setopt(encoder,GHOSTTY_MOUSE_ENCODER_OPT_SIZE,&size);
+        ghostty_mouse_event_set_action(event,action==0?GHOSTTY_MOUSE_ACTION_PRESS:action==1?GHOSTTY_MOUSE_ACTION_RELEASE:GHOSTTY_MOUSE_ACTION_MOTION);
+        ghostty_mouse_event_set_button(event,right?GHOSTTY_MOUSE_BUTTON_RIGHT:GHOSTTY_MOUSE_BUTTON_LEFT);
         ghostty_mouse_event_set_position(event,(GhosttyMousePosition){.x=x,.y=y});
         r=ghostty_mouse_encoder_encode(encoder,event,buf,sizeof(buf),&n);
     }

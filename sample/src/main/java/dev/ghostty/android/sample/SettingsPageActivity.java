@@ -33,22 +33,22 @@ public abstract class SettingsPageActivity extends ScreenActivity {
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("scroll",scroll.getScrollY());super.onSaveInstanceState(state);}
     protected TextView label(String value,int size,int color){
         TextView text=SampleUi.text(this,value,size,color);
-        text.setIncludeFontPadding(false);text.setLineSpacing(dp(3),1);return text;
+        return text;
     }
 
     @Override void section(String title){
         group=null;
-        TextView caption=label(title,13,SampleUi.MUTED);
+        TextView caption=SampleUi.sectionTitle(this,title);
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);
         boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-        p.topMargin=body.getChildCount()==0?0:dp(landscape?16:24);p.bottomMargin=dp(10);
+        p.topMargin=body.getChildCount()==0?0:dp(landscape?16:24);p.bottomMargin=dp(UiDesign.GAP);
         body.addView(caption,p);
     }
 
     @Override TextView copy(String value){
         group=null;
-        TextView text=label(value,14,SampleUi.MUTED);
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(10);
+        TextView text=label(value,14,SampleUi.MUTED);UiDesign.paragraph(text);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(12);p.bottomMargin=dp(16);
         body.addView(text,p);return text;
     }
 
@@ -62,15 +62,28 @@ public abstract class SettingsPageActivity extends ScreenActivity {
     }
 
     protected LinearLayout settingRow(String title,String subtitle,String icon,View accessory,Runnable action){
-        LinearLayout row=row();row.setPadding(dp(16),dp(12),dp(16),dp(12));row.setMinimumHeight(dp(48));
+        LinearLayout row=row();row.setPadding(dp(16),dp(12),dp(16),dp(12));row.setMinimumHeight(dp(UiDesign.ROW));
         if(icon!=null){
             LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(20),dp(20));ip.rightMargin=dp(16);
             row.addView(SampleUi.icon(this,icon,SampleUi.MUTED),ip);
         }
         LinearLayout words=column();words.addView(label(title,16,SampleUi.TEXT));
-        if(subtitle!=null){TextView sub=label(subtitle,14,SampleUi.MUTED);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(5);words.addView(sub,p);}
-        row.addView(words,new LinearLayout.LayoutParams(0,-2,1));
-        if(accessory!=null){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2);p.leftMargin=dp(12);row.addView(accessory,p);}
+        if(subtitle!=null){TextView sub=label(subtitle,14,SampleUi.MUTED);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(UiDesign.TEXT_GAP);words.addView(sub,p);}
+        if(accessory==null)row.addView(words,new LinearLayout.LayoutParams(0,-2,1));
+        else {
+            // Stack the value/stepper when it would leave a one-character title column.
+            LinearLayout content=new LinearLayout(this){
+                @Override protected void onMeasure(int ws,int hs){
+                    accessory.measure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(ws),MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED));
+                    boolean stack=MeasureSpec.getSize(ws)-accessory.getMeasuredWidth()-dp(12)<dp(112)*getResources().getConfiguration().fontScale;
+                    setOrientation(stack?VERTICAL:HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);
+                    LinearLayout.LayoutParams wp=(LinearLayout.LayoutParams)words.getLayoutParams(),ap=(LinearLayout.LayoutParams)accessory.getLayoutParams();
+                    wp.width=stack?-1:0;wp.weight=stack?0:1;ap.leftMargin=stack?0:dp(12);ap.topMargin=stack?dp(8):0;
+                    super.onMeasure(ws,hs);
+                }
+            };
+            content.addView(words,new LinearLayout.LayoutParams(0,-2,1));content.addView(accessory,new LinearLayout.LayoutParams(-2,-2));row.addView(content,new LinearLayout.LayoutParams(0,-2,1));
+        }
         if(action!=null){row.setContentDescription(title);row.setFocusable(true);row.setBackground(SampleUi.touch(this,Color.TRANSPARENT,0));row.setOnClickListener(v->action.run());}
         addRow(row);return row;
     }
@@ -102,8 +115,8 @@ public abstract class SettingsPageActivity extends ScreenActivity {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         SettingSwitch(String title,String subtitle,String icon){
             super(SettingsPageActivity.this);setButtonDrawable((android.graphics.drawable.Drawable)null);
-            setTextSize(16);setTextColor(SampleUi.TEXT);setIncludeFontPadding(false);setGravity(Gravity.CENTER_VERTICAL);setLineSpacing(dp(3),1);
-            setPadding(dp(16),dp(12),dp(80),dp(12));setMinHeight(dp(48));setBackground(SampleUi.touch(SettingsPageActivity.this,Color.TRANSPARENT,0));
+            UiDesign.type(this,UiDesign.Type.BODY);setTextColor(SampleUi.TEXT);setGravity(Gravity.CENTER_VERTICAL);
+            setPadding(dp(16),dp(12),dp(80),dp(12));setMinHeight(dp(UiDesign.ROW));setBackground(SampleUi.touch(SettingsPageActivity.this,Color.TRANSPARENT,0));
             if(subtitle==null)setText(title);else{SpannableString text=new SpannableString(title+"\n"+subtitle);text.setSpan(new ForegroundColorSpan(SampleUi.MUTED),title.length()+1,text.length(),0);text.setSpan(new AbsoluteSizeSpan(Math.round(14*getResources().getDisplayMetrics().scaledDensity)),title.length()+1,text.length(),0);setText(text);}
             setContentDescription(subtitle==null?title:tr(R.string.accessibility_subtitle,title,subtitle));
             if(icon!=null){ToolbarIcon glyph=new ToolbarIcon(icon,dp(20),SampleUi.MUTED);glyph.setBounds(0,0,dp(20),dp(20));setCompoundDrawables(glyph,null,null,null);setCompoundDrawablePadding(dp(16));}

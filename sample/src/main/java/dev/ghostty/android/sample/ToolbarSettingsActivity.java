@@ -1,39 +1,18 @@
 package dev.ghostty.android.sample;
 
-import static dev.ghostty.android.sample.AppLanguage.tr;
-
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.*;
-
-/** Independent toolbar settings destination. */
-public final class ToolbarSettingsActivity extends SettingsPageActivity {
-    private LinearLayout toolbarPreview;
+/** Independent normal-toolbar and Zen-ring configuration. */
+public final class ToolbarSettingsActivity extends InputSettingsActivity {
     @Override protected void renderSettings(){
-        heading.setText(tr(R.string.toolbar));section(tr(R.string.preview));
-        LinearLayout canvas=column();canvas.setPadding(dp(8),dp(8),dp(8),dp(8));
-        GradientDrawable gradient=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff063a18,0xff164d48});gradient.setCornerRadius(dp(12));canvas.setBackground(gradient);
-        TextView caption=label(tr(R.string.live_toolbar_preview),16,SampleUi.MUTED);caption.setGravity(Gravity.CENTER);canvas.addView(caption,new LinearLayout.LayoutParams(-1,0,1));
-        toolbarPreview=row();toolbarPreview.setPadding(dp(6),dp(6),dp(6),dp(6));toolbarPreview.setBackground(SampleUi.surface(this,Color.BLACK,32));toolbarPreview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-        boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-        canvas.addView(toolbarPreview,new LinearLayout.LayoutParams(-1,dp(52)));body.addView(canvas,new LinearLayout.LayoutParams(-1,dp(landscape?132:276)));refreshToolbar();
-        section(tr(R.string.visible_buttons));
-        for(String[] tool:new String[][]{{"pad",tr(R.string.direction_pad)},{"history",tr(R.string.input_history)},{"paste",tr(R.string.paste)},{"chat",tr(R.string.text_draft)}})
-            toggle(tool[1],null,null,"appearance","tool_"+tool[0],true,this::refreshToolbar);
-        copy(tr(R.string.ctrl_esc_tab_and_the_keyboard_button_are_always_shown_changes_app));
-    }
-    private void refreshToolbar(){
-        if(toolbarPreview==null)return;toolbarPreview.removeAllViews();
-        for(String tool:new String[]{"Ctrl","Esc","Tab","pad","history","paste","chat","keyboard"}){
-            boolean fixed=tool.equals("Ctrl")||tool.equals("Esc")||tool.equals("Tab")||tool.equals("keyboard");
-            if(!fixed&&!prefs.getBoolean("tool_"+tool,true))continue;
-            View view;
-            if(tool.length()>1&&Character.isUpperCase(tool.charAt(0))){TextView key=label(tool,13,SampleUi.TEXT);key.setGravity(Gravity.CENTER);key.setTypeface(Typeface.MONOSPACE);key.setSingleLine(true);key.setAutoSizeTextTypeUniformWithConfiguration(9,13,1,android.util.TypedValue.COMPLEX_UNIT_DIP);view=key;}
-            else{ImageView icon=SampleUi.icon(this,tool.equals("history")?"panel":tool,SampleUi.TEXT);icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);icon.setPadding(dp(8),dp(8),dp(8),dp(8));view=icon;}
-            view.setBackground(SampleUi.surface(this,CARD,24));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(36),1);p.leftMargin=dp(2);p.rightMargin=dp(2);toolbarPreview.addView(view,p);
+        heading.setText(AppLanguage.tr(R.string.input_toolbar));section(AppLanguage.tr(R.string.input_preview));
+        if(controls().flag("zen_mode",false))preview("layout_zen");else{
+            android.widget.LinearLayout canvas=column();canvas.setPadding(dp(12),dp(12),dp(12),dp(12));android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xff063a18,0xff164d48});background.setCornerRadius(dp(12));canvas.setBackground(background);
+            android.widget.TextView caption=label(AppLanguage.tr(R.string.input_live_preview),14,SampleUi.TEXT);caption.setGravity(android.view.Gravity.CENTER);canvas.addView(caption,new android.widget.LinearLayout.LayoutParams(-1,0,1));canvas.addView(layoutPreview("layout_toolbar"),new android.widget.LinearLayout.LayoutParams(-1,dp(InputToolbar.HEIGHT_DP)));boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;body.addView(canvas,new android.widget.LinearLayout.LayoutParams(-1,dp(landscape?144:208)));
         }
+        android.widget.RadioGroup modes=new android.widget.RadioGroup(this);modes.setOrientation(android.widget.LinearLayout.HORIZONTAL);modes.setBaselineAligned(false);
+        modes.addView(SampleUi.segment(this,AppLanguage.tr(R.string.input_toolbar),1),new android.widget.LinearLayout.LayoutParams(0,-2,1));modes.addView(SampleUi.segment(this,AppLanguage.tr(R.string.input_zen_mode),2),new android.widget.LinearLayout.LayoutParams(0,-2,1));modes.check(controls().flag("zen_mode",false)?2:1);modes.setOnCheckedChangeListener((g,id)->{controls().setFlag("zen_mode",id==2);refreshSettings();});android.widget.LinearLayout.LayoutParams mp=new android.widget.LinearLayout.LayoutParams(-1,-2);mp.topMargin=dp(16);body.addView(modes,mp);copy(AppLanguage.tr(controls().flag("zen_mode",false)?R.string.input_zen_mode_double_tap_and_hold_the_terminal_then_drag_to_an_action_on_th:R.string.input_toolbar_pinned_hint));
+        inputToggle(AppLanguage.tr(R.string.input_use_icons_for_modifiers),null,"modifier_icons",false);
+        section(AppLanguage.tr(R.string.input_layouts));item(AppLanguage.tr(R.string.input_configure_toolbar),null,"toolbox",()->openLayout("layout_toolbar",AppLanguage.tr(R.string.input_configure_toolbar)));
+        item(AppLanguage.tr(R.string.input_configure_zen_ring),null,"toolbox",()->openLayout("layout_zen",AppLanguage.tr(R.string.input_configure_zen_ring)));
+        item(AppLanguage.tr(R.string.input_configure_input_box),null,"chat",()->openLayout("layout_composer",AppLanguage.tr(R.string.input_configure_input_box)));
     }
 }

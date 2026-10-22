@@ -12,6 +12,10 @@
     <service android:name=".SshSessionService" android:exported="false" android:foregroundServiceType="specialUse">
       <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started interactive SSH terminal: maintain the remote session and terminal state while the UI is backgrounded; ongoing notification provides disconnect."/>
     </service>
+    <activity android:name=".HardwareKeyboardSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".InputLayoutActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".ShortcutEditorActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
+    <activity android:name=".GestureActionActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
     <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
     <activity android:name=".LanguageSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>
     <activity android:name=".HookSettingsActivity" android:exported="false" android:parentActivityName=".SettingsActivity" android:theme="@style/SettingsTheme" android:enableOnBackInvokedCallback="true"/>

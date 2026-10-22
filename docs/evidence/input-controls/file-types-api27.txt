@@ -1,0 +1,6 @@
+dev.ghostty.android.sample.InputRuntimeTest:..
+dev.ghostty.android.sample.AttachmentFileTypeTest:...
+
+Time: 8.385
+
+OK (5 tests)

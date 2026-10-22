@@ -19,6 +19,12 @@ public final class TerminalView extends FrameLayout {
         /** Selection changed on the UI thread; empty when cleared. The host owns copy actions. */
         default void onSelectionChanged(String text) {}
     }
+    /** Optional host gestures. Return true only when the host handles an assigned action. */
+    public enum Gesture { SINGLE_TAP, DOUBLE_TAP, TRIPLE_TAP, PULL_DOWN, SWIPE_LEFT, SWIPE_RIGHT, TWO_LEFT, TWO_RIGHT, TWO_UP, TWO_DOWN, PINCH_IN, PINCH_OUT, DOUBLE_HOLD_START, DOUBLE_HOLD_MOVE, DOUBLE_HOLD_END, DOUBLE_HOLD_CANCEL }
+    public interface GestureListener { boolean onGesture(Gesture gesture,float x,float y); }
+    private GestureListener gestureListener;
+    public void setGestureListener(GestureListener value){checkUi();gestureListener=value;}
+    private boolean gesture(String name,float x,float y){return gestureListener!=null&&gestureListener.onGesture(Gesture.valueOf(name.toUpperCase(java.util.Locale.ROOT)),x,y);}
     private TerminalSession session;
     private Listener listener;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -44,6 +50,7 @@ public final class TerminalView extends FrameLayout {
         if(session==value)return;
         // Attach first so a rejected owner/thread cannot discard the existing view binding.
         if(value!=null)value.attach(this::outputChanged);
+        cancelPendingGestures();
         if(session!=null)session.detach();
         session=value;touch.clear();frame=null;canvas.cells=new Renderer.Cell[0][];canvas.resetCursorBlink();
         ui.removeCallbacks(drawTask);removeCallbacks(drawTask);frameScheduled=false;
@@ -63,6 +70,21 @@ public final class TerminalView extends FrameLayout {
         canvas.cellW=canvas.paint.measureText("M");canvas.cellH=Math.max(pixels*1.28f,canvas.paint.getFontSpacing());
         touch.clear();resizeToView();refreshFrame();canvas.invalidate();
     }
+    /** Cancel delayed taps, holds and drags before pausing or changing the active PTY. */
+    public void cancelPendingGestures(){
+        checkUi();ui.removeCallbacks(touch.tapAction);ui.removeCallbacks(touch.holdAction);ui.removeCallbacks(touch.autoScroll);
+        if(touch.doubleHeld)gesture("double_hold_cancel",touch.pointerX,touch.pointerY);
+        long now=SystemClock.uptimeMillis();MotionEvent cancel=MotionEvent.obtain(now,now,MotionEvent.ACTION_CANCEL,touch.pointerX,touch.pointerY,0);
+        if(touch.mousePressed){touch.mousePressed=false;touch.mouse(cancel,1);}
+        touch.detector.onTouchEvent(cancel);touch.scaleDetector.onTouchEvent(cancel);cancel.recycle();
+        touch.tapCount=0;touch.doubleHeld=false;touch.handleDrag=false;touch.multi=false;touch.scaled=false;
+    }
+    public void setMouseSelectionEnabled(boolean enabled){checkUi();touch.mouseSelection=enabled;touch.clear();}
+    public boolean isMouseSelectionEnabled(){return touch.mouseSelection;}
+    public void setRightClickEnabled(boolean enabled){checkUi();touch.rightClick=enabled;}
+    public boolean isRightClickEnabled(){return touch.rightClick;}
+    public void setDragArrowsEnabled(boolean enabled){checkUi();touch.dragArrows=enabled;}
+    public boolean isDragArrowsEnabled(){return touch.dragArrows;}
     public void setSelectionEnabled(boolean enabled){checkUi();touch.selectionEnabled=enabled;if(!enabled)touch.clear();}
     public String getSelectedText() { checkUi();return selected; }
     public void clearSelection() { checkUi();touch.clear(); }
@@ -76,6 +98,8 @@ public final class TerminalView extends FrameLayout {
     /** Paste bulk text as one terminal operation; call sendKey(ENTER) separately to submit. */
     public void pasteText(String text) { checkUi();if(session!=null)emitInput(session.encodePaste(text)); }
     public void sendKey(TerminalSession.Key key) { checkUi();if(session!=null)emitInput(session.encodeKey(key)); }
+    public void sendKey(TerminalSession.Key key,int modifiers){checkUi();if(session!=null)emitInput(session.encodeKey(key,modifiers));}
+    public void sendCharacter(int codePoint,String text,int modifiers){checkUi();if(session!=null)emitInput(session.encodeCharacter(codePoint,text,modifiers));}
     private void sendKey(int index) { sendKey(TerminalSession.Key.values()[index]); }
     private void emitInput(byte[] bytes) {
         if(session==null||listener==null)return;
@@ -260,17 +284,28 @@ public final class TerminalView extends FrameLayout {
     }
 
     class TouchLayer extends View {
-        boolean selectionEnabled=true;
+        boolean selectionEnabled=true,mouseSelection,rightClick,dragArrows,mousePressed;
+        float arrowX,arrowY;
+        void mouse(MotionEvent e,int action){if(session==null)return;int cw=Math.max(1,Math.round(cellWidth())),ch=Math.max(1,Math.round(cellHeight()));float x=Math.max(0,Math.min(cols*cellWidth()-1,e.getX()))/cellWidth()*cw,y=Math.max(0,Math.min(rows*cellHeight()-1,e.getY()))/cellHeight()*ch;emitInput(session.encodeMouse(action,rightClick,x,y,cw,ch));}
         final GestureDetector detector;
+        final ScaleGestureDetector scaleDetector;
+        float downX,downY,multiX,multiY;boolean multi,scaled,swipeHandled,doubleHeld;
+        int tapCount;long lastTap;float tapX,tapY,scaleAmount=1;
+        final Runnable tapAction=()->{gesture(tapCount>=3?"triple_tap":tapCount==2?"double_tap":"single_tap",tapX,tapY);tapCount=0;};
+        final Runnable holdAction=()->{if(tapCount==2){doubleHeld=gesture("double_hold_start",tapX,tapY);}};
         boolean selecting=false,handleDrag=false;int start,end,dragHandle=1;float previousY,pointerX,pointerY;
         final Paint overlay=new Paint(Paint.ANTI_ALIAS_FLAG);
         final Runnable autoScroll=()->autoScrollTick();
         TouchLayer(){super(TerminalView.this.getContext());setContentDescription(getContext().getString(R.string.terminal_gestures));detector=new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener(){
             @Override public boolean onDown(MotionEvent e){previousY=e.getY();return true;}
-            @Override public void onLongPress(MotionEvent e){if(!selectionEnabled)return;refreshFrame();selecting=true;dragHandle=1;start=normalize(cell(e.getX(),e.getY()),false);end=normalize(start,true);updateSelection();performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);}
+            @Override public void onLongPress(MotionEvent e){if(doubleHeld||tapCount>=2||multi||!selectionEnabled)return;refreshFrame();selecting=true;dragHandle=1;start=normalize(cell(e.getX(),e.getY()),false);end=normalize(start,true);updateSelection();performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);}
             @Override public boolean onSingleTapUp(MotionEvent e){clear();return true;}
             @Override public boolean onScroll(MotionEvent a,MotionEvent b,float dx,float dy){
-                if(selecting)return true;int delta=(int)((previousY-b.getY())/cellHeight());
+                if(selecting||multi||doubleHeld||swipeHandled)return true;
+                float totalX=b.getX()-downX,totalY=b.getY()-downY;
+                if(Math.abs(totalX)>dp(48)&&Math.abs(totalX)>Math.abs(totalY)*1.5f&&gesture(totalX>0?"swipe_right":"swipe_left",b.getX(),b.getY())){swipeHandled=true;return true;}
+                if(totalY>dp(72)&&Math.abs(totalY)>Math.abs(totalX)*2&&gesture("pull_down",b.getX(),b.getY())){swipeHandled=true;return true;}
+                int delta=(int)((previousY-b.getY())/cellHeight());
                 if(delta!=0){if(frame!=null&&frame.optBoolean("mouse")){
                         // tmux owns its history, even though it uses the alternate screen.
                         // Send negotiated wheel events instead of editing the shell's input history.
@@ -282,7 +317,14 @@ public final class TerminalView extends FrameLayout {
                     }else if(frame!=null&&frame.optInt("alt")!=0){for(int i=0;i<Math.min(4,Math.abs(delta));i++)sendKey(delta>0?1:0);}
                     else {session.scroll(delta);drawFrame();}previousY=b.getY();}return true;
             }
-        });}
+        });
+            detector.setOnDoubleTapListener(null);
+            scaleDetector=new ScaleGestureDetector(getContext(),new ScaleGestureDetector.SimpleOnScaleGestureListener(){
+                @Override public boolean onScaleBegin(ScaleGestureDetector d){scaleAmount=1;return true;}
+                @Override public boolean onScale(ScaleGestureDetector d){scaleAmount*=d.getScaleFactor();if(scaleAmount>1.12f||scaleAmount<.89f){if(gesture(scaleAmount>1?"pinch_out":"pinch_in",d.getFocusX(),d.getFocusY()))scaled=true;scaleAmount=1;}return true;}
+            });
+            scaleDetector.setQuickScaleEnabled(false);scaleDetector.setStylusScaleEnabled(false);
+        }
         int offset(){return frame!=null?frame.optInt("offset"):0;}
         int cell(float x,float y){return (offset()+Math.max(0,Math.min(rows-1,(int)(y/cellHeight()))))*cols+Math.max(0,Math.min(cols-1,(int)(x/cellWidth())));}
         int normalize(int index,boolean last){
@@ -301,6 +343,23 @@ public final class TerminalView extends FrameLayout {
         @Override public boolean onTouchEvent(MotionEvent e){
             if(session==null)return false;
             pointerX=e.getX();pointerY=e.getY();
+            int action=e.getActionMasked();
+            if((mouseSelection||rightClick)&&frame!=null&&frame.optBoolean("mouse")&&e.getPointerCount()==1){if(action==MotionEvent.ACTION_DOWN){mousePressed=true;mouse(e,0);}else if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){mousePressed=false;mouse(e,1);}else if(action==MotionEvent.ACTION_MOVE&&mouseSelection)mouse(e,2);return true;}
+            if(dragArrows&&e.getPointerCount()==1){if(action==MotionEvent.ACTION_DOWN){arrowX=e.getX();arrowY=e.getY();}else if(action==MotionEvent.ACTION_MOVE){float dx=e.getX()-arrowX,dy=e.getY()-arrowY;if(Math.max(Math.abs(dx),Math.abs(dy))>dp(18)){sendKey(Math.abs(dx)>Math.abs(dy)?dx>0?TerminalSession.Key.RIGHT:TerminalSession.Key.LEFT:dy>0?TerminalSession.Key.DOWN:TerminalSession.Key.UP);arrowX=e.getX();arrowY=e.getY();}}return true;}
+            if(action==MotionEvent.ACTION_DOWN){multi=false;scaled=false;swipeHandled=false;doubleHeld=false;downX=e.getX();downY=e.getY();
+                long now=e.getEventTime();if(now-lastTap<ViewConfiguration.getDoubleTapTimeout()&&Math.hypot(downX-tapX,downY-tapY)<dp(40))tapCount++;else tapCount=1;
+                lastTap=now;tapX=downX;tapY=downY;ui.removeCallbacks(tapAction);ui.removeCallbacks(holdAction);if(tapCount==2)ui.postDelayed(holdAction,ViewConfiguration.getLongPressTimeout());
+            }
+            scaleDetector.onTouchEvent(e);
+            if(action==MotionEvent.ACTION_POINTER_DOWN&&e.getPointerCount()==2){if(doubleHeld){gesture("double_hold_cancel",e.getX(),e.getY());doubleHeld=false;}MotionEvent cancel=MotionEvent.obtain(e);cancel.setAction(MotionEvent.ACTION_CANCEL);detector.onTouchEvent(cancel);cancel.recycle();multi=true;multiX=(e.getX(0)+e.getX(1))/2;multiY=(e.getY(0)+e.getY(1))/2;ui.removeCallbacks(holdAction);ui.removeCallbacks(tapAction);}
+            if(multi){
+                if(action==MotionEvent.ACTION_POINTER_UP&&e.getPointerCount()==2&&!scaled&&!swipeHandled){float dx=(e.getX(0)+e.getX(1))/2-multiX,dy=(e.getY(0)+e.getY(1))/2-multiY;if(Math.max(Math.abs(dx),Math.abs(dy))>dp(48)){gesture(Math.abs(dx)>Math.abs(dy)?dx>0?"two_right":"two_left":dy>0?"two_down":"two_up",e.getX(),e.getY());swipeHandled=true;}}
+                if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){multi=false;tapCount=0;}return true;
+            }
+            if(doubleHeld){if(action==MotionEvent.ACTION_MOVE)gesture("double_hold_move",e.getX(),e.getY());if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){gesture(action==MotionEvent.ACTION_CANCEL?"double_hold_cancel":"double_hold_end",e.getX(),e.getY());ui.removeCallbacks(holdAction);tapCount=0;doubleHeld=false;}return true;}
+            if(action==MotionEvent.ACTION_MOVE&&Math.hypot(e.getX()-downX,e.getY()-downY)>ViewConfiguration.get(getContext()).getScaledTouchSlop())ui.removeCallbacks(holdAction);
+            if(action==MotionEvent.ACTION_UP){ui.removeCallbacks(holdAction);if(!selecting&&!swipeHandled&&Math.hypot(e.getX()-downX,e.getY()-downY)<dp(12)&&e.getEventTime()-e.getDownTime()<ViewConfiguration.getLongPressTimeout())ui.postDelayed(tapAction,ViewConfiguration.getDoubleTapTimeout());else tapCount=0;}
+            if(action==MotionEvent.ACTION_CANCEL){ui.removeCallbacks(holdAction);ui.removeCallbacks(tapAction);tapCount=0;}
             if(e.getAction()==MotionEvent.ACTION_DOWN){
                 handleDrag=selecting&&(hit(e,start,false)||hit(e,end,true));
                 if(handleDrag){dragHandle=Math.hypot(e.getX()-hx(start,false),e.getY()-hy(start))<=Math.hypot(e.getX()-hx(end,true),e.getY()-hy(end))?0:1;ui.postDelayed(autoScroll,80);return true;}
@@ -313,6 +372,7 @@ public final class TerminalView extends FrameLayout {
             if(e.getAction()==MotionEvent.ACTION_UP||e.getAction()==MotionEvent.ACTION_CANCEL){handleDrag=false;ui.removeCallbacks(autoScroll);}
             return true;
         }
+        @Override protected void onDetachedFromWindow(){cancelPendingGestures();super.onDetachedFromWindow();}
         void autoScrollTick(){
             if(!selecting||frame==null||frame.optInt("alt")!=0)return;
             int delta=pointerY<cellHeight()?-1:pointerY>getHeight()-cellHeight()?1:0;

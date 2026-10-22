@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /** A thread-confined VT engine. Use the UI thread when attached to a TerminalView. */
 public final class TerminalSession implements AutoCloseable {
-    public enum Key { UP, DOWN, LEFT, RIGHT, PAGE_UP, PAGE_DOWN, HOME, END, ENTER, TAB, ESCAPE, BACKSPACE }
+    public enum Key { UP, DOWN, LEFT, RIGHT, PAGE_UP, PAGE_DOWN, HOME, END, ENTER, TAB, ESCAPE, BACKSPACE, DELETE, INSERT, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12 }
     private final Thread owner = Thread.currentThread();
     private long handle;
     interface Observer { void changed(boolean clearSelection); }
@@ -51,6 +51,20 @@ public final class TerminalSession implements AutoCloseable {
     public void scroll(int delta) { checkOpen(); NativeBridge.scroll(handle, delta); changed(false); }
     public byte[] encodeKey(Key key) { checkOpen(); return NativeBridge.key(handle, Objects.requireNonNull(key).ordinal()); }
 
+    /** Modifier bits shared with the VT engine; combinations respect application cursor / Kitty modes. */
+    public static final int SHIFT=1, CTRL=2, ALT=4, SUPER=8;
+    public byte[] encodeKey(Key key,int modifiers) {
+        checkOpen();validateModifiers(modifiers);
+        return NativeBridge.modifiedKey(handle,Objects.requireNonNull(key).ordinal(),modifiers,new byte[0],0);
+    }
+    /** Encode one Unicode character, retaining its unshifted code point for Ctrl/Alt protocols. */
+    public byte[] encodeCharacter(int codePoint,String text,int modifiers) {
+        checkOpen();validateModifiers(modifiers);Objects.requireNonNull(text,"text");
+        if(!Character.isValidCodePoint(codePoint)||codePoint==0)throw new IllegalArgumentException("Invalid code point");
+        return NativeBridge.modifiedKey(handle,-1,modifiers,text.getBytes(StandardCharsets.UTF_8),codePoint);
+    }
+    private static void validateModifiers(int modifiers){if((modifiers&~15)!=0)throw new IllegalArgumentException("Unknown modifier");}
+
     /** Encode a bulk text insertion using current bracketed-paste mode. Does not submit Enter. */
     public byte[] encodePaste(String text) {
         checkOpen();Objects.requireNonNull(text,"text");
@@ -61,6 +75,8 @@ public final class TerminalSession implements AutoCloseable {
     byte[] encodeWheel(boolean down, float x, float y, int cellWidth, int cellHeight) {
         checkOpen();return NativeBridge.wheel(handle, down, x, y, cellWidth, cellHeight);
     }
+
+    byte[] encodeMouse(int action,boolean right,float x,float y,int cellWidth,int cellHeight){checkOpen();return NativeBridge.mouse(handle,action,right,x,y,cellWidth,cellHeight);}
 
     /** Inclusive, zero-based screen coordinates (including scrollback), in row-major order. */
     public String select(int start, int end) {

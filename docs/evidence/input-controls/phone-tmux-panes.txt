@@ -1,0 +1,5 @@
+dev.ghostty.android.sample.InputRemoteDeviceTest:.
+
+Time: 8.173
+
+OK (1 test)

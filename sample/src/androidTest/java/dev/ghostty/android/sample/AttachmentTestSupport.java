@@ -43,7 +43,7 @@ abstract class AttachmentTestSupport {
     }
     String profile()throws Exception{
         String host=InstrumentationRegistry.getArguments().getString("attachmentHost");assumeNotNull(host);SshProfileStore store=new SshProfileStore(context);
-        for(SshProfileStore.Entry e:store.list())if(host.equals(e.host)){
+        for(SshProfileStore.Entry e:store.list())if(host.equals(e.host)||(host.equals("@active")&&e.id.equals(store.activeId()))){
             String via=InstrumentationRegistry.getArguments().getString("attachmentVia");if(via==null)return e.id;
             // A temporary LAN address uses the already pinned keys; saved user profiles stay intact.
             SshProfileStore.Draft draft=store.read(store.directory(e.id));draft.host=via;draft.tmux=false;draft.name="Attachment acceptance";

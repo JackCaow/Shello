@@ -24,7 +24,7 @@ public final class PairingActivity extends ScreenActivity {
     @Override int contentWidthDp(){return 1040;}
     @Override public void onCreate(Bundle state){super.onCreate(state);heading.setText(tr(R.string.qr_pairing));scroll.setVerticalScrollBarEnabled(false);body.setPadding(dp(16),dp(16),dp(16),dp(24));
         TextView title=SampleUi.text(this,tr(R.string.connect_your_computer),22,SampleUi.TEXT);body.addView(title);
-        TextView hint=SampleUi.text(this,tr(R.string.run_the_pairing_command_then_place_the_qr_code_in_the_frame),14,SampleUi.MUTED);hint.setLineSpacing(dp(3),1);
+        TextView hint=SampleUi.text(this,tr(R.string.run_the_pairing_command_then_place_the_qr_code_in_the_frame),14,SampleUi.MUTED);UiDesign.paragraph(hint);
         LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(8);hp.bottomMargin=dp(16);body.addView(hint,hp);networkChoice=state==null?0:state.getInt("pairNetwork",0);
         AdaptiveLayout.Columns columns=new AdaptiveLayout.Columns(this,600,16);body.addView(columns,new LinearLayout.LayoutParams(-1,-2));
         LinearLayout scanColumn=column(),instructions=column();columns.addView(scanColumn);columns.addView(instructions);
@@ -36,23 +36,24 @@ public final class PairingActivity extends ScreenActivity {
         LinearLayout feedback=row();feedback.setGravity(Gravity.CENTER);feedback.setPadding(dp(8),dp(10),dp(8),dp(2));feedback.setMinimumHeight(dp(36));
         progress=new ProgressBar(this);progress.setIndeterminateTintList(ColorStateList.valueOf(SampleUi.GREEN));progress.setVisibility(View.GONE);
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(dp(18),dp(18));pp.rightMargin=dp(10);feedback.addView(progress,pp);
-        status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);status.setLineSpacing(dp(3),1);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));scanColumn.addView(feedback);
+        status=SampleUi.text(this,tr(R.string.opening_camera),13,SampleUi.MUTED);status.setGravity(Gravity.CENTER);UiDesign.paragraph(status);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);feedback.addView(status,new LinearLayout.LayoutParams(0,-2,1));scanColumn.addView(feedback);
         LinearLayout command=column();command.setPadding(dp(16),dp(16),dp(16),dp(16));command.setBackground(SampleUi.surface(this,SampleUi.FIELD,18));
         LinearLayout commandHeader=row();commandHeader.addView(SampleUi.text(this,"macOS / Linux",15,SampleUi.TEXT),new LinearLayout.LayoutParams(0,-2,1));
         TextView copyButton=SampleUi.text(this,tr(R.string.copy_command),14,SampleUi.GREEN);copyButton.setGravity(Gravity.CENTER);copyButton.setPadding(dp(12),0,dp(12),0);copyButton.setMinHeight(dp(48));copyButton.setBackground(SampleUi.touch(this,0x1200d86c,12));copyButton.setFocusable(true);copyButton.setContentDescription(tr(R.string.copy_pairing_command));
         copyButton.setOnClickListener(v->{clipboard(tr(R.string.shello_pairing_command),pairCommand());copyButton.setText(tr(R.string.copied));if(restoreCopy!=null)copyButton.removeCallbacks(restoreCopy);restoreCopy=()->copyButton.setText(tr(R.string.copy_command));copyButton.postDelayed(restoreCopy,1800);});commandHeader.addView(copyButton);command.addView(commandHeader);
-        TextView code=SampleUi.text(this,pairCommand(),12,SampleUi.MUTED);code.setTypeface(Typeface.MONOSPACE);code.setLineSpacing(dp(4),1);code.setTextIsSelectable(true);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(12);command.addView(code,cp);
-        RadioGroup networks=new RadioGroup(this);networks.setOrientation(RadioGroup.HORIZONTAL);networks.setBackground(SampleUi.surface(this,SampleUi.PANEL,16));
+        TextView code=SampleUi.text(this,pairCommand(),12,SampleUi.MUTED);UiDesign.type(code,UiDesign.Type.CODE);code.setTextIsSelectable(true);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(12);command.addView(code,cp);
+        RadioGroup networks=new RadioGroup(this);networks.setOrientation(RadioGroup.HORIZONTAL);networks.setBaselineAligned(false);networks.setBackground(SampleUi.surface(this,SampleUi.PANEL,16));
         String[] choices={tr(R.string.pair_network_auto),tr(R.string.pair_network_lan),"Tailscale"};
         for(int i=0;i<choices.length;i++){RadioButton option=SampleUi.segment(this,choices[i],View.generateViewId());networks.addView(option,new RadioGroup.LayoutParams(0,-2,1));if(i==networkChoice)networks.check(option.getId());}
         networks.setOnCheckedChangeListener((group,id)->{networkChoice=group.indexOfChild(group.findViewById(id));code.setText(pairCommand());});
         LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,-2);np.topMargin=dp(12);command.addView(networks,np);
-        TextView networkHint=SampleUi.text(this,tr(R.string.pair_network_hint),13,SampleUi.MUTED);networkHint.setPadding(0,dp(12),0,0);command.addView(networkHint);
+        TextView networkHint=SampleUi.text(this,tr(R.string.pair_network_hint),13,SampleUi.MUTED);networkHint.setPadding(0,dp(16),0,0);command.addView(networkHint);
         LinearLayout.LayoutParams commandParams=new LinearLayout.LayoutParams(-1,-2);commandParams.bottomMargin=dp(12);instructions.addView(command,commandParams);
         spacedItem(tr(R.string.scan_from_image),tr(R.string.choose_a_saved_pairing_qr_code),"qr",()->{if(busy)return;Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(pick,95);});
         spacedItem(tr(R.string.about_pairing),null,"qr",()->SampleUi.confirm(this,tr(R.string.qr_pairing),tr(R.string.enable_ssh_and_install_tmux_on_your_computer_first_your_private_k),null,tr(R.string.close),tr(R.string.got_it),false,null,null));
         // Keep secondary actions with the instructions when the scanner occupies the other column.
         while(body.getChildCount()>3){View action=body.getChildAt(3);body.removeView(action);instructions.addView(action);}
+        root.setFocusableInTouchMode(true);root.requestFocus();
         scanner.decodeContinuous(new BarcodeCallback(){public void barcodeResult(BarcodeResult result){scanned(result.getText());}});
         scanner.addStateListener(new CameraPreview.StateListener(){
             public void previewSized(){overlay.invalidate();}

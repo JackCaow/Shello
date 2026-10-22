@@ -1,0 +1,33 @@
+{
+  "base": "096fac1",
+  "behavior": [
+    "Text-input and keyboard buttons stay pinned on the right of the normal toolbar",
+    "Other buttons scroll horizontally with a minimum touch width",
+    "Existing layout values remain readable without rewriting stored preferences",
+    "Layout editor reorders only scrollable actions; custom buttons cannot displace the pinned pair",
+    "Settings preview and live terminal use the same toolbar component",
+    "Vertical toolbar swipes include the pinned area and do not fire the underlying button",
+    "Zen strip keeps its existing two-button layout"
+  ],
+  "verification": {
+    "physical_device_api36": {
+      "app_tests": 29,
+      "log": "toolbar-phone.txt"
+    },
+    "emulator_api27": {
+      "app_tests": 29,
+      "log": "toolbar-api27.txt"
+    },
+    "emulator_api35_landscape": {
+      "focused_pinning_and_visible_drag_tests": 2,
+      "log": "toolbar-landscape.txt"
+    },
+    "jdk17_release_apk_and_lint": true,
+    "pre_existing_device_files_checked": 28,
+    "pre_existing_files_changed": 0
+  },
+  "notes": [
+    "The initial landscape drag fixture targeted rows below the viewport after help text was added. The fixture now scrolls both handles into view before real touch injection; the reorder assertion is retained.",
+    "Real external-keyboard acceptance from the parent feature remains pending. No release tag or remote Maven publication."
+  ]
+}

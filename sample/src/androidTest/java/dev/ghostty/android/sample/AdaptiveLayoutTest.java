@@ -147,7 +147,7 @@ public class AdaptiveLayoutTest {
         inst.runOnMainSync(()->{View viewport=(View)field(current,"viewport"),toolbar=(View)field(current,"toolScroll");assertTrue(viewport.getWidth()>=decor().getWidth()-dp(100));assertTrue(toolbar.getWidth()<=dp(600));inside(toolbar);});capture("terminal");
         inst.runOnMainSync(()->call(current,"showKeyboard"));SystemClock.sleep(800);inst.runOnMainSync(()->call(current,"togglePad"));inst.waitForIdleSync();
         inst.runOnMainSync(()->inside((View)field(current,"pad")));capture("terminal-pad");
-        inst.runOnMainSync(()->{View chat=find(decor(),AppLanguage.tr(R.string.edit_text));assertNotNull(chat);chat.performClick();((EditText)field(current,"draft")).setText("中文 draft 👩🏽‍💻");});
+        inst.runOnMainSync(()->{View chat=((InputToolbar)field(current,"toolbarContainer")).pinnedButtons.findViewWithTag("chat");assertNotNull(chat);chat.performClick();((EditText)field(current,"draft")).setText("中文 draft 👩🏽‍💻");});
         await(()->((EditText)field(current,"draft")).hasFocus());SystemClock.sleep(600);
         inst.runOnMainSync(()->{inside((View)field(current,"sendButton"));assertTrue(((View)field(current,"viewport")).getHeight()>=dp(48));});capture("terminal-keyboard");
         Activity before=current;inst.runOnMainSync(current::recreate);await(()->current!=before&&current.hasWindowFocus()&&field(current,"sshService")!=null);

@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-22",
+  "base": "61af7ba",
+  "scope": "Shared UI typography/spacing audit and compact terminal composer",
+  "changes": [
+    "Shared title/section/body/secondary/caption/control/code roles with explicit line heights; 4dp spacing grid and 48dp minimum actionable targets",
+    "Growing settings/form rows, stacked accessories on narrow layouts, bounded sheets, fixed navigation and readable empty states",
+    "Scrollable toolbar/composer utilities with stationary trailing actions, and 48dp Zen controls that switch to a scrollable grid",
+    "Artwork-only attachment tiles: 56dp artwork, no visible filename/size, nested 48dp corner remove target with 14dp X; file details remain accessible",
+    "36dp circular Send inside a 48dp target; height-limited scrolling composer body keeps actions visible with large text and the IME",
+    "Guard repeated EditText max-lines updates to avoid an endless layout cycle; remove decorative form bottom padding when a short IME viewport needs the space"
+  ],
+  "verification": {
+    "api27_narrow": {
+      "tests": 2,
+      "font_scale": 2.0,
+      "physical_pixels": "1080x1920",
+      "density_override": 540,
+      "width_dp": 320,
+      "coverage": "12 settings screens, SSH/pairing/shortcut forms, discovery sheet; composer artwork, corner removal, real utility drag and pinned actions",
+      "log": "design-api27-narrow.txt"
+    },
+    "api35_phone": {
+      "tests": 4,
+      "font_scale": 1.3,
+      "native_pixels": "1080x2400",
+      "coverage": "Landscape SSH form with IME, terminal draft/recreation, bounded home/new-connection sheet; attachment fixture also passed (its capture was portrait)",
+      "log": "design-api35-landscape.txt"
+    },
+    "api35_tablet": {
+      "tests": 8,
+      "font_scale": 1.3,
+      "native_pixels": "2560x1600",
+      "density": 320,
+      "coverage": "UI audit, home/new-connection, pairing/inbox bounds, terminal draft/recreation, attachment artwork/scroll/pins",
+      "log": "design-api35-tablet.txt"
+    },
+    "build": {
+      "jdk": 17,
+      "tasks": [
+        ":sample:assembleDebug",
+        ":sample:assembleDebugAndroidTest",
+        ":sample:assembleRelease",
+        ":sample:lintDebug"
+      ],
+      "result": "passed"
+    },
+    "local_debug_apk_sha256": "2f198b6ad6ffa9424ce7b0a4f14a10b939a8180280807dda86841a8a2e63e4d0",
+    "screenshots": "Actual native tablet, phone landscape, API 27 narrow 2x text, and physical-device renders inspected locally; private screenshots excluded from Git",
+    "physical_device": {
+      "model": "Xiaomi 25019PNF3C",
+      "api": 36,
+      "pixels": "1080x2400",
+      "density": 440,
+      "ime": "Doubao IME (com.bytedance.android.doubaoime/.ImeService)",
+      "tests": 34,
+      "coverage": "Input runtime 15, input configuration 6, settings behavior 5, settings navigation 4, shared UI audit 4",
+      "log": "design-phone-api36.txt"
+    }
+  },
+  "data_preservation": {
+    "pre_existing_preference_files": 41,
+    "byte_identical": 40,
+    "changed": [
+      "terminal_tabs.xml"
+    ],
+    "missing": 0,
+    "encrypted_profile_files_checked": 1,
+    "encrypted_profiles_byte_identical": true,
+    "notes": "The terminal tab-state file changed during tests; full byte identity is not claimed. Runtime fixtures retain pre-existing tabs and restore selected tab/input preferences. Existing Light theme is retained."
+  },
+  "limitations": [
+    "Real USB/Bluetooth keyboard acceptance remains pending; injected events do not validate hotplug or OS-delivered shortcuts. PR remains draft.",
+    "This UI follow-up does not rerun the prior real SSH/tmux business/transport acceptance; runtime tests use a disposable local VT and fake attachment without upload.",
+    "An earlier API 35 emulator run hit an ART Profile Saver/suspend timeout under host contention. Latest serial focused rerun passed; the discarded run is not counted.",
+    "Synthetic tablet wm-size captures were anamorphic and excluded from visual acceptance; a temporary native Pixel Tablet AVD was used instead, then removed.",
+    "No tag, release or Maven publication."
+  ]
+}

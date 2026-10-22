@@ -1,4 +1,5 @@
 <resources>
     <item type="id" name="auth_password"/>
     <item type="id" name="auth_key"/>
+    <item type="id" name="ui_text_role"/>
 </resources>

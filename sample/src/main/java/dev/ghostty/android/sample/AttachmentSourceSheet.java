@@ -11,15 +11,15 @@ final class AttachmentSourceSheet {
     private AttachmentSourceSheet(){}
     static Dialog show(Activity activity,java.util.function.IntConsumer choose){
         Dialog dialog=new Dialog(activity);LinearLayout panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(activity,20),dp(activity,12),dp(activity,20),dp(activity,48));panel.setBackground(SampleUi.surface(activity,0xff161719,26));
+        panel.setPadding(dp(activity,24),dp(activity,12),dp(activity,24),dp(activity,24));panel.setBackground(SampleUi.surface(activity,0xff161719,26));
         View handle=new View(activity);handle.setBackground(SampleUi.surface(activity,0xff42464b,3));LinearLayout.LayoutParams grip=new LinearLayout.LayoutParams(dp(activity,36),dp(activity,4));grip.gravity=Gravity.CENTER_HORIZONTAL;grip.bottomMargin=dp(activity,24);panel.addView(handle,grip);
-        TextView title=SampleUi.text(activity,tr(R.string.add_attachment),20,SampleUi.TEXT);title.setTypeface(null,android.graphics.Typeface.BOLD);title.setPadding(dp(activity,4),0,0,dp(activity,24));panel.addView(title);
+        TextView title=SampleUi.text(activity,tr(R.string.add_attachment),20,SampleUi.TEXT);UiDesign.type(title,UiDesign.Type.TITLE);title.setPadding(dp(activity,4),0,0,dp(activity,24));panel.addView(title);
         int[] titles={R.string.attachment_camera,R.string.attachment_photos,R.string.attachment_files};
         int[] subtitles={R.string.attachment_camera_hint,R.string.attachment_photos_hint,R.string.attachment_file_hint};String[] icons={"camera","image","file"};
         for(int i=0;i<titles.length;i++){
-            final int source=i;LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(activity,14),dp(activity,12),dp(activity,14),dp(activity,12));row.setMinimumHeight(dp(activity,74));row.setBackground(SampleUi.touch(activity,0xff1b1d1f,18));
+            final int source=i;LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(activity,16),dp(activity,12),dp(activity,16),dp(activity,12));row.setMinimumHeight(dp(activity,72));row.setBackground(SampleUi.touch(activity,0xff1b1d1f,18));
             ImageView icon=new ImageView(activity);icon.setImageDrawable(new ToolbarIcon(icons[i],dp(activity,20),SampleUi.MUTED));icon.setPadding(dp(activity,10),dp(activity,10),dp(activity,10),dp(activity,10));icon.setBackground(SampleUi.surface(activity,0xff101214,13));row.addView(icon,new LinearLayout.LayoutParams(dp(activity,40),dp(activity,40)));
-            LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);TextView name=SampleUi.text(activity,tr(titles[i]),16,SampleUi.TEXT);labels.addView(name);TextView hint=SampleUi.text(activity,tr(subtitles[i]),14,SampleUi.MUTED);hint.setPadding(0,dp(activity,4),0,0);labels.addView(hint);LinearLayout.LayoutParams text=new LinearLayout.LayoutParams(0,-2,1);text.leftMargin=dp(activity,14);row.addView(labels,text);
+            LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);TextView name=SampleUi.text(activity,tr(titles[i]),16,SampleUi.TEXT);labels.addView(name);TextView hint=SampleUi.text(activity,tr(subtitles[i]),14,SampleUi.MUTED);hint.setPadding(0,dp(activity,4),0,0);labels.addView(hint);LinearLayout.LayoutParams text=new LinearLayout.LayoutParams(0,-2,1);text.leftMargin=dp(activity,16);row.addView(labels,text);
             row.setContentDescription(tr(titles[i]));row.setOnClickListener(v->{dialog.dismiss();choose.accept(source);});LinearLayout.LayoutParams r=new LinearLayout.LayoutParams(-1,-2);if(i>0)r.topMargin=dp(activity,8);panel.addView(row,r);
         }
         float[] dragStart={Float.NaN};

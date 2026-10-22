@@ -80,14 +80,14 @@ public class SettingsActivityTest {
             inst.runOnMainSync(()->assertFalse(find(current.root,AppLanguage.tr(R.string.decrease_terminal_font_size)).isEnabled()));
         }finally{finish();restore(prefs,"fontSize",before);}
     }
-    @Test public void toolbarSwitchAndThemePersistAcrossPages(){
-        SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object tool=prefs.getAll().get("tool_paste"),theme=prefs.getAll().get("theme");
+    @Test public void toolbarLayoutAndThemePersistAcrossPages(){
+        SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object theme=prefs.getAll().get("theme");InputPreferences controls=new InputPreferences(context);Object layout=controls.prefs.getAll().get("layout_toolbar");
         try{
-            prefs.edit().putBoolean("tool_paste",true).putString("theme","Shello").commit();open("");click(AppLanguage.tr(R.string.toolbar));page(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.paste));assertFalse(prefs.getBoolean("tool_paste",true));
-            back(SettingsActivity.class);click(AppLanguage.tr(R.string.toolbar));page(ToolbarSettingsActivity.class);inst.runOnMainSync(()->assertFalse(((CheckBox)find(current.root,AppLanguage.tr(R.string.paste))).isChecked()));
-            back(SettingsActivity.class);click(AppLanguage.tr(R.string.theme));page(ThemeSettingsActivity.class);click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));
-            inst.runOnMainSync(()->assertTrue(find(current.root,AppLanguage.tr(R.string.selected_option,AppLanguage.tr(R.string.light))).isSelected()));
-        }finally{finish();restore(prefs,"tool_paste",tool);restore(prefs,"theme",theme);}
+            prefs.edit().putString("theme","shello").commit();
+            open("");click(AppLanguage.tr(R.string.toolbar));page(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);click(AppLanguage.tr(R.string.input_remove)+AppLanguage.tr(R.string.input_paste));assertFalse(controls.list("layout_toolbar").contains("paste"));
+            back(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);assertFalse(controls.list("layout_toolbar").contains("paste"));back(ToolbarSettingsActivity.class);back(SettingsActivity.class);
+            click(AppLanguage.tr(R.string.theme));page(ThemeSettingsActivity.class);click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));
+        }finally{finish();restore(controls.prefs,"layout_toolbar",layout);restore(prefs,"theme",theme);}
     }
     @Test public void legacyThemeMigratesAndNewInstallUsesShello(){
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object before=prefs.getAll().get("theme");
@@ -100,7 +100,7 @@ public class SettingsActivityTest {
         }finally{finish();restore(prefs,"theme",before);}
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{
-        try{for(String page:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts"}){
+        try{for(String page:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
             open(page);inst.runOnMainSync(()->{checkLabels(current.body);assertTrue("Settings column stretched across the window",current.body.getWidth()<=current.dp(640));});
             if("true".equals(InstrumentationRegistry.getArguments().getString("settingsScreenshots"))){
                 Thread.sleep(700);inst.runOnMainSync(()->assertTrue("Settings must be in the foreground for screenshots",current.hasWindowFocus()));Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);
@@ -110,8 +110,28 @@ public class SettingsActivityTest {
             finish();
         }}finally{finish();}
     }
+    private void dragSetting(String from,String to){
+        inst.runOnMainSync(()->{View a=find(current.root,from),b=find(current.root,to);assertNotNull(from,a);assertNotNull(to,b);android.graphics.Rect bounds=new android.graphics.Rect(0,0,a.getWidth(),a.getHeight()),other=new android.graphics.Rect(0,0,b.getWidth(),b.getHeight());current.body.offsetDescendantRectToMyCoords(a,bounds);current.body.offsetDescendantRectToMyCoords(b,other);bounds.union(other);current.scroll.requestChildRectangleOnScreen(current.body,bounds,true);});
+        inst.waitForIdleSync();android.os.SystemClock.sleep(100);
+        int[] start=new int[2],end=new int[2];inst.runOnMainSync(()->{View a=find(current.root,from),b=find(current.root,to);assertNotNull(from,a);assertNotNull(to,b);a.getLocationOnScreen(start);b.getLocationOnScreen(end);start[0]+=a.getWidth()/2;start[1]+=a.getHeight()/2;end[0]+=b.getWidth()/2;end[1]+=b.getHeight()/2;});
+        long down=android.os.SystemClock.uptimeMillis();MotionEvent event=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,start[0],start[1],0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);assertTrue(inst.getUiAutomation().injectInputEvent(event,true));event.recycle();android.os.SystemClock.sleep(100);
+        for(int i=1;i<=8;i++){long time=android.os.SystemClock.uptimeMillis();event=MotionEvent.obtain(down,time,MotionEvent.ACTION_MOVE,start[0]+(end[0]-start[0])*i/8f,start[1]+(end[1]-start[1])*i/8f,0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);assertTrue(inst.getUiAutomation().injectInputEvent(event,true));event.recycle();android.os.SystemClock.sleep(30);}
+        event=MotionEvent.obtain(down,android.os.SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,end[0],end[1],0);event.setSource(InputDevice.SOURCE_TOUCHSCREEN);assertTrue(inst.getUiAutomation().injectInputEvent(event,true));event.recycle();android.os.SystemClock.sleep(350);
+    }
+    @Test public void inputLayoutDragAndEditorSurviveRecreation()throws Exception{
+        InputPreferences controls=new InputPreferences(context);Map<String,?> before=controls.prefs.getAll();
+        try{
+            controls.reset("layout_toolbar");open("toolbar");click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);
+            dragSetting(AppLanguage.tr(R.string.input_drag_to_reorder)+"Esc",AppLanguage.tr(R.string.input_drag_to_reorder)+"Tab");assertTrue(controls.list("layout_toolbar").indexOf("key_TAB")<controls.list("layout_toolbar").indexOf("key_ESCAPE"));
+            click(AppLanguage.tr(R.string.input_custom_shortcut));page(ShortcutEditorActivity.class);SettingsPageActivity original=current;
+            inst.runOnMainSync(()->{try{java.lang.reflect.Field n=ShortcutEditorActivity.class.getDeclaredField("name"),b=ShortcutEditorActivity.class.getDeclaredField("binding"),e=ShortcutEditorActivity.class.getDeclaredField("enter");n.setAccessible(true);b.setAccessible(true);e.setAccessible(true);((EditText)n.get(current)).setText("UI acceptance");((EditText)b.get(current)).setText("text:中文 👨‍👩‍👧‍👦");((CheckBox)e.get(current)).setChecked(true);current.recreate();}catch(Exception error){throw new AssertionError(error);}});
+            long deadline=android.os.SystemClock.uptimeMillis()+10000;while(current==original&&android.os.SystemClock.uptimeMillis()<deadline)android.os.SystemClock.sleep(50);page(ShortcutEditorActivity.class);assertNotSame(original,current);
+            click(AppLanguage.tr(R.string.input_save));page(InputLayoutActivity.class);String custom=controls.list("layout_toolbar").stream().filter(id->"UI acceptance".equals(controls.label(id))).findFirst().orElse(null);assertNotNull("Unsaved editor text was lost on recreation",custom);assertTrue(controls.action(custom).enter());assertEquals("text:中文 👨‍👩‍👧‍👦",controls.action(custom).binding());
+            back(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_input_box));page(InputLayoutActivity.class);assertFalse(controls.list("layout_composer").contains(custom));
+        }finally{finish();SharedPreferences.Editor edit=controls.prefs.edit().clear();for(var item:before.entrySet()){Object value=item.getValue();String key=item.getKey();if(value instanceof String)edit.putString(key,(String)value);else if(value instanceof Boolean)edit.putBoolean(key,(Boolean)value);else if(value instanceof Integer)edit.putInt(key,(Integer)value);else if(value instanceof Float)edit.putFloat(key,(Float)value);else if(value instanceof Long)edit.putLong(key,(Long)value);}assertTrue(edit.commit());}
+    }
     private void checkLabels(View view){
-        assertTrue("View exceeds content width",view.getWidth()<=current.body.getWidth());
+        assertTrue("View exceeds content width",view.getParent() instanceof HorizontalScrollView||view.getWidth()<=current.body.getWidth());
         if(view instanceof TextView){TextView text=(TextView)view;if(text.getLayout()!=null&&text.getEllipsize()==null){
             assertTrue("Text clipped vertically: "+text.getText(),text.getLayout().getHeight()<=text.getHeight()-text.getCompoundPaddingTop()-text.getCompoundPaddingBottom()+1);
             // LineWidth includes trailing wrap spaces; LineMax measures the visible glyphs.

@@ -25,11 +25,12 @@ final class SampleUi {
         return new RippleDrawable(ColorStateList.valueOf(0x22ffffff),surface(c,color,radius),surface(c,Color.WHITE,radius));
     }
     static TextView text(Context c,String value,int size,int color){
-        TextView t=new TextView(c);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;
+        TextView t=new TextView(c);t.setText(value);UiDesign.type(t,UiDesign.role(size));t.setTextColor(color);
+        if(size>24&&value!=null&&value.codePointCount(0,value.length())<=2){t.setTextSize(size);t.setTag(R.id.ui_text_role,null);}return t;
     }
     static TextView sectionTitle(Context c,String value){
         TextView title=text(c,value,13,0xff8e9298);
-        title.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
+        UiDesign.heading(title);
         title.setIncludeFontPadding(false);title.setGravity(Gravity.CENTER_VERTICAL);
         if(android.os.Build.VERSION.SDK_INT>=28)title.setAccessibilityHeading(true);
         return title;
@@ -39,12 +40,12 @@ final class SampleUi {
         GradientDrawable focus=surface(c,FIELD,18);focus.setStroke(dp(c,1),GREEN);
         states.addState(new int[]{android.R.attr.state_focused},focus);
         states.addState(new int[]{},surface(c,FIELD,18));
-        field.setBackground(states);field.setPadding(dp(c,16),dp(c,12),dp(c,16),dp(c,12));
+        UiDesign.type(field,UiDesign.Type.BODY);field.setBackground(states);field.setPadding(dp(c,16),dp(c,12),dp(c,16),dp(c,12));
         field.setTextColor(TEXT);field.setHintTextColor(MUTED);field.setHighlightColor(0x6600d86c);
-        field.setMinHeight(dp(c,56));
+        field.setMinHeight(dp(c,UiDesign.FIELD));field.setMinimumHeight(dp(c,UiDesign.FIELD));
     }
     static RadioButton segment(Context c,String title,int id){
-        RadioButton b=new RadioButton(c);b.setId(id);b.setText(title);b.setTextSize(16);
+        RadioButton b=new RadioButton(c);b.setId(id);b.setText(title);UiDesign.type(b,UiDesign.Type.BODY);UiDesign.touch(b);
         b.setButtonDrawable((Drawable)null);b.setGravity(Gravity.CENTER);b.setMinHeight(dp(c,48));
         b.setPadding(dp(c,12),dp(c,8),dp(c,12),dp(c,8));
         b.setTextColor(new ColorStateList(new int[][]{{-android.R.attr.state_enabled},{android.R.attr.state_checked},{}},new int[]{MUTED,GREEN,MUTED}));
@@ -55,7 +56,7 @@ final class SampleUi {
     }
     static final class Toggle extends CheckBox {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
-        Toggle(Context c){super(c);setButtonDrawable((Drawable)null);setTextSize(16);setTextColor(TEXT);
+        Toggle(Context c){super(c);setButtonDrawable((Drawable)null);UiDesign.type(this,UiDesign.Type.BODY);setTextColor(TEXT);
             setGravity(Gravity.CENTER_VERTICAL);setPadding(dp(c,16),dp(c,16),dp(c,78),dp(c,16));
             setMinHeight(dp(c,64));setBackground(touch(c,FIELD,18));}
         @Override protected void onDraw(Canvas canvas){
@@ -74,7 +75,7 @@ final class SampleUi {
             @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);int size=dp(c,24);glyph.setBounds((getWidth()-size)/2,(getHeight()-size)/2,(getWidth()+size)/2,(getHeight()+size)/2);glyph.draw(canvas);}
             @Override public CharSequence getAccessibilityClassName(){return "android.widget.Button";}
         };
-        v.setContentDescription(description);v.setFocusable(true);v.setBackground(touch(c,Color.TRANSPARENT,24));v.setOnClickListener(view->action.run());return v;
+        UiDesign.touch(v);v.setContentDescription(description);v.setFocusable(true);v.setBackground(touch(c,Color.TRANSPARENT,24));v.setOnClickListener(view->action.run());return v;
     }
     /** Shared navigation for full-screen pages; trailing actions use the same touch target. */
     static final class NavigationBar extends LinearLayout {
@@ -82,8 +83,7 @@ final class SampleUi {
         NavigationBar(Context context,String text,Runnable back){
             super(context);setOrientation(HORIZONTAL);setGravity(Gravity.CENTER_VERTICAL);setMinimumHeight(dp(context,56));
             addView(header(context,"back",tr(R.string.back),TEXT,back),new LinearLayout.LayoutParams(dp(context,56),dp(context,56)));
-            title=SampleUi.text(context,text,20,TEXT);title.setIncludeFontPadding(false);
-            title.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));title.setSingleLine();title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            title=SampleUi.text(context,text,20,TEXT);UiDesign.type(title,UiDesign.Type.TITLE);title.setSingleLine();title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.leftMargin=dp(context,16);p.rightMargin=dp(context,16);addView(title,p);
         }
         void addAction(View action){addView(action,new LinearLayout.LayoutParams(dp(getContext(),56),dp(getContext(),56)));}
@@ -107,7 +107,7 @@ final class SampleUi {
         PopupWindow popup=new PopupWindow(scroll,width,-2,true);popup.setBackgroundDrawable(surface(c,PANEL,22));popup.setElevation(dp(c,18));popup.setOutsideTouchable(true);
         for(Action action:actions){
             int color=action.enabled?(action.danger?DANGER:TEXT):MUTED;
-            LinearLayout row=new LinearLayout(c);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(c,14),dp(c,12),dp(c,14),dp(c,12));row.setMinimumHeight(dp(c,52));
+            LinearLayout row=new LinearLayout(c);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(c,14),dp(c,12),dp(c,14),dp(c,12));row.setMinimumHeight(dp(c,UiDesign.ROW));
             row.setBackground(touch(c,Color.TRANSPARENT,16));row.setContentDescription(action.description);row.setFocusable(action.enabled);row.setEnabled(action.enabled);row.setAlpha(action.enabled?1:.45f);
             TextView title=text(c,action.title,16,color);title.setMaxLines(3);title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             row.addView(title,new LinearLayout.LayoutParams(0,-2,1));
@@ -151,8 +151,8 @@ final class SampleUi {
             panel=new LinearLayout(c);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(c,24),dp(c,12),dp(c,24),dp(c,24));panel.setBackground(surface(c,PANEL,28));
             View grip=new View(c);grip.setBackground(surface(c,0xff54585d,3));LinearLayout.LayoutParams gp=new LinearLayout.LayoutParams(dp(c,40),dp(c,4));gp.gravity=Gravity.CENTER_HORIZONTAL;gp.bottomMargin=dp(c,24);panel.addView(grip,gp);
             LinearLayout body=new LinearLayout(c);body.setOrientation(LinearLayout.VERTICAL);panel.addView(body,new LinearLayout.LayoutParams(-1,-2));
-            TextView heading=text(c,title,22,TEXT);heading.setTypeface(null,Typeface.BOLD);body.addView(heading);
-            TextView copy=text(c,message,15,MUTED);copy.setLineSpacing(dp(c,4),1);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.topMargin=dp(c,16);body.addView(copy,mp);
+            TextView heading=text(c,title,20,TEXT);UiDesign.type(heading,UiDesign.Type.TITLE);body.addView(heading);
+            TextView copy=text(c,message,15,MUTED);UiDesign.paragraph(copy);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.topMargin=dp(c,16);body.addView(copy,mp);
             if(detail!=null){TextView code=text(c,detail,14,TEXT);code.setTypeface(Typeface.MONOSPACE);code.setTextIsSelectable(true);code.setPadding(dp(c,16),dp(c,16),dp(c,16),dp(c,16));code.setBackground(surface(c,FIELD,16));LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(c,16);body.addView(code,cp);}
             negative=actionButton(c,cancel,false,false);positive=actionButton(c,accept,true,danger);
             LinearLayout actions=new LinearLayout(c);LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,-2);ap.topMargin=dp(c,24);panel.addView(actions,ap);
@@ -168,8 +168,8 @@ final class SampleUi {
         }
     }
     private static Button actionButton(Context c,String title,boolean primary,boolean danger){
-        Button b=new Button(c);b.setText(title);b.setContentDescription(title);b.setAllCaps(false);b.setTextSize(16);b.setTypeface(null,Typeface.BOLD);
-        b.setTextColor(primary?(danger?Color.WHITE:0xff062519):TEXT);b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(dp(c,52));b.setPadding(dp(c,12),dp(c,12),dp(c,12),dp(c,12));
+        Button b=new Button(c);b.setText(title);b.setContentDescription(title);b.setAllCaps(false);UiDesign.type(b,UiDesign.Type.BODY);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
+        b.setTextColor(primary?(danger?Color.WHITE:0xff062519):TEXT);b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(dp(c,UiDesign.ROW));b.setPadding(dp(c,12),dp(c,12),dp(c,12),dp(c,12));
         b.setStateListAnimator(null);b.setBackground(touch(c,primary?(danger?0xffb83240:GREEN):0xff292c30,16));return b;
     }
 }

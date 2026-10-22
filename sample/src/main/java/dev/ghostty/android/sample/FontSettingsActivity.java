@@ -16,9 +16,9 @@ public final class FontSettingsActivity extends SettingsPageActivity {
         TextView preview=label("",14,SampleUi.TEXT);preview.setTypeface(Typeface.MONOSPACE);
         View minus=SampleUi.header(this,"minus",tr(R.string.decrease_terminal_font_size),SampleUi.TEXT,()->{});
         View plus=SampleUi.header(this,"plus",tr(R.string.increase_terminal_font_size),SampleUi.TEXT,()->{});
-        stepper.addView(minus,new LinearLayout.LayoutParams(dp(40),dp(48)));
+        stepper.addView(minus,new LinearLayout.LayoutParams(dp(48),dp(48)));
         stepper.addView(number,new LinearLayout.LayoutParams(-2,dp(48)));
-        stepper.addView(plus,new LinearLayout.LayoutParams(dp(40),dp(48)));
+        stepper.addView(plus,new LinearLayout.LayoutParams(dp(48),dp(48)));
         Runnable refresh=()->{int size=prefs.getInt("fontSize",14);number.setText(size+" sp");number.setContentDescription(tr(R.string.terminal_font_size_value,size));preview.setTextSize(size);minus.setEnabled(size>10);minus.setAlpha(size>10?1:.3f);plus.setEnabled(size<24);plus.setAlpha(size<24?1:.3f);};
         minus.setOnClickListener(v->{prefs.edit().putInt("fontSize",Math.max(10,prefs.getInt("fontSize",14)-1)).apply();refresh.run();});
         plus.setOnClickListener(v->{prefs.edit().putInt("fontSize",Math.min(24,prefs.getInt("fontSize",14)+1)).apply();refresh.run();});

@@ -1,0 +1,6 @@
+dev.ghostty.android.KeyboardProtocolTest:....
+dev.ghostty.android.TerminalApiTest:......
+
+Time: 0.62
+
+OK (10 tests)

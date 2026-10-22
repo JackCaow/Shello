@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-22",
+  "base": "3a6bc2b",
+  "scope": "Type-specific fallback artwork for attachments without thumbnails",
+  "categories": [
+    "Word",
+    "Presentation",
+    "Spreadsheet",
+    "PDF",
+    "Audio",
+    "Archive",
+    "Code",
+    "Text",
+    "Image",
+    "Video",
+    "Other"
+  ],
+  "behavior": [
+    "Known filename suffixes override generic or ZIP provider MIME types; specific MIME types classify extensionless files",
+    "Each category has different line artwork and tint, with localized accessibility descriptions",
+    "Actual thumbnails take precedence; artwork-only tray, corner removal and compact dimensions remain intact"
+  ],
+  "verification": {
+    "physical_device": "Xiaomi Android 16 / API 36; 5 focused tests passed",
+    "emulator": "Android 8.1 / API 27; 5 focused tests passed",
+    "coverage": [
+      "Generic/ZIP provider MIME, case-insensitive suffixes, extensionless MIME and unknown/null fallback",
+      "All 11 icon silhouettes render and differ independently of tint",
+      "Actual image thumbnail retained",
+      "Real Activity attachment tray stays compact and scrollable without submitting terminal bytes",
+      "Preview/corner removal and pinned composer actions regression"
+    ],
+    "build": "JDK 17 debug/test/release APKs and debug lint passed",
+    "screenshots": "Physical-device tray renders inspected locally; synthetic attachments only, no upload",
+    "local_debug_apk_sha256": "f9650002c29b7b04c0a2d4a9bb9a92eaf5a47115f514b4d8310e2a8cc5367e65"
+  },
+  "notes": [
+    "UI classification is a visual hint and does not validate file contents.",
+    "Tests use synthetic transfers; no real remote upload is claimed.",
+    "No tag, release or Maven publication."
+  ]
+}
