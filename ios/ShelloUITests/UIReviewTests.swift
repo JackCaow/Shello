@@ -97,7 +97,7 @@ final class UIReviewTests: XCTestCase {
         element("form.cancel"); shot("review-landscape-form")
     }
     func testNewConnectionAutomaticallyDiscoversSSHAndPreservesManualFields() throws {
-        try launch(extra: ["-SHELLO_TEST_DISCOVERY_PORT", ProcessInfo.processInfo.environment["SHELLO_SSHD_PORT"] ?? "2399"])
+        try launch(extra: ["-SHELLO_TEST_DISCOVERY_PORT", ProcessInfo.processInfo.environment["SHELLO_SSHD_PORT"] ?? "2299"])
         element("home.add").tap(); element("home.add.ssh").tap()
         let discover = element("form.discovery")
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "1"), object: discover)], timeout: 15), .completed)

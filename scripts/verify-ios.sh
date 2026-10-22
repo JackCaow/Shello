@@ -20,7 +20,7 @@ scripts/ios-test-sshd.sh start "$work/sshd" >/dev/null
 for _ in $(seq 20); do [[ -s "$work/sshd/passwd_host.pub" ]] && break; sleep 0.25; done; scripts/ios-test-pair.sh start "$work/sshd"
 ipad=${SHELLO_IPAD_UDID:-$(xcrun simctl list devices available | grep -E 'iPad' | grep -Eo '[0-9A-F-]{36}' | head -1 || true)}
 [[ ${SHELLO_SKIP_IPAD:-0} == 1 ]] && ipad=''
-export TEST_RUNNER_SHELLO_SSHD_DIR="$work/sshd" TEST_RUNNER_SHELLO_SSHD_USER=$(id -un)
+export TEST_RUNNER_SHELLO_SSHD_DIR="$work/sshd" TEST_RUNNER_SHELLO_SSHD_USER=$(id -un) TEST_RUNNER_SHELLO_SSHD_PORT=2299
 seed_env() { # UI tests get secrets through the environment so they also work on a physical device
  export TEST_RUNNER_SHELLO_SEED_KEY_B64=$(base64 < "$work/sshd/user_ed25519" | tr -d '\n') TEST_RUNNER_SHELLO_SEED_HOSTPUB=$(cat "$work/sshd/host_ed25519.pub")
  [[ -s "$work/sshd/qr.txt" ]] && export TEST_RUNNER_SHELLO_QR=$(tr -d '\n' < "$work/sshd/qr.txt") || true
