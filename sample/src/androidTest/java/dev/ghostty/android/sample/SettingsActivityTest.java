@@ -62,6 +62,19 @@ public class SettingsActivityTest {
     private void finish(){inst.runOnMainSync(()->{for(int i=opened.size()-1;i>=0;i--){SettingsPageActivity a=opened.get(i);if(!a.isDestroyed())a.finish();}opened.clear();current=null;});android.os.SystemClock.sleep(80);}
     private void restore(SharedPreferences prefs,String key,Object value){SharedPreferences.Editor edit=prefs.edit();if(value==null)edit.remove(key);else if(value instanceof Integer)edit.putInt(key,(Integer)value);else if(value instanceof Boolean)edit.putBoolean(key,(Boolean)value);else edit.putString(key,(String)value);edit.commit();}
 
+    @Test public void appearanceIsTheOnlyEntryForThemeAndLanguage(){
+        open("");
+        inst.runOnMainSync(()->{
+            assertNotNull(find(current.root,AppLanguage.tr(R.string.appearance_and_language)));
+            assertNull(find(current.root,AppLanguage.tr(R.string.theme)));assertNull(find(current.root,AppLanguage.tr(R.string.app_language)));
+            for(String legacy:new String[]{"appearance","theme","language"})assertEquals(AppearanceSettingsActivity.class.getName(),SettingsNavigation.intent(context,legacy).getComponent().getClassName());
+        });
+        click(AppLanguage.tr(R.string.appearance_and_language));page(AppearanceSettingsActivity.class);
+        inst.runOnMainSync(()->{
+            for(String label:new String[]{"Shello",AppLanguage.tr(R.string.black),AppLanguage.tr(R.string.light),"English","简体中文",AppLanguage.tr(R.string.follow_system)})
+                assertTrue(label,find(current.root,label)!=null||find(current.root,AppLanguage.tr(R.string.selected_option,label))!=null);
+        });
+    }
     @Test public void fontStepperBoundsAndRecreation()throws Exception{
         SharedPreferences prefs=context.getSharedPreferences("appearance",0);Object before=prefs.getAll().get("fontSize");
         try{
@@ -86,7 +99,7 @@ public class SettingsActivityTest {
             prefs.edit().putString("theme","shello").commit();
             open("");click(AppLanguage.tr(R.string.toolbar));page(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);click(AppLanguage.tr(R.string.input_remove)+AppLanguage.tr(R.string.input_paste));assertFalse(controls.list("layout_toolbar").contains("paste"));
             back(ToolbarSettingsActivity.class);click(AppLanguage.tr(R.string.input_configure_toolbar));page(InputLayoutActivity.class);assertFalse(controls.list("layout_toolbar").contains("paste"));back(ToolbarSettingsActivity.class);back(SettingsActivity.class);
-            click(AppLanguage.tr(R.string.theme));page(ThemeSettingsActivity.class);click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));
+            click(AppLanguage.tr(R.string.appearance_and_language));page(AppearanceSettingsActivity.class);click(AppLanguage.tr(R.string.light));assertEquals("light",prefs.getString("theme",""));
         }finally{finish();restore(controls.prefs,"layout_toolbar",layout);restore(prefs,"theme",theme);}
     }
     @Test public void legacyThemeMigratesAndNewInstallUsesShello(){
@@ -100,7 +113,7 @@ public class SettingsActivityTest {
         }finally{finish();restore(prefs,"theme",before);}
     }
     @Test public void allSettingsPagesWrapAndCapture()throws Exception{
-        try{for(String page:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
+        try{for(String page:new String[]{"","appearance","font","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
             open(page);inst.runOnMainSync(()->{checkLabels(current.body);assertTrue("Settings column stretched across the window",current.body.getWidth()<=current.dp(640));});
             if("true".equals(InstrumentationRegistry.getArguments().getString("settingsScreenshots"))){
                 Thread.sleep(700);inst.runOnMainSync(()->assertTrue("Settings must be in the foreground for screenshots",current.hasWindowFocus()));Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);

@@ -1,0 +1,8 @@
+
+dev.ghostty.android.sample.UiThemeTest:...
+
+Time: 2.757
+
+OK (3 tests)
+
+

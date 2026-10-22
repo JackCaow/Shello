@@ -18,17 +18,18 @@ public class UiDesignAuditTest {
     private final Context context=inst.getTargetContext();
     private final List<Activity> opened=new ArrayList<>();
     private final List<String> problems=new ArrayList<>();
-    private String previousLanguage;private volatile Activity foreground;
+    private String previousLanguage,previousTheme;private boolean themeOverride;private volatile Activity foreground;
     private final Application.ActivityLifecycleCallbacks observer=new Application.ActivityLifecycleCallbacks(){
         public void onActivityCreated(Activity a,Bundle b){opened.add(a);}public void onActivityStarted(Activity a){}public void onActivityResumed(Activity a){foreground=a;}
         public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
     };
     @Before public void setup()throws Exception{
         ((Application)context.getApplicationContext()).registerActivityLifecycleCallbacks(observer);
+        String mode=InstrumentationRegistry.getArguments().getString("uiTheme");themeOverride=mode!=null;if(themeOverride){android.content.SharedPreferences prefs=context.getSharedPreferences("appearance",0);previousTheme=prefs.getString("theme",null);prefs.edit().putString("theme",mode.equals("light")?"light":"shello").commit();}
         previousLanguage=AppLanguage.choice(context);String language=InstrumentationRegistry.getArguments().getString("designLanguage");if(language!=null)inst.runOnMainSync(()->AppLanguage.select(context,language));
         try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -W -n dev.ghostty.android.sample/.MainActivity");InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
     }
-    @After public void cleanup(){inst.runOnMainSync(()->{for(int i=opened.size()-1;i>=0;i--)if(!opened.get(i).isDestroyed())opened.get(i).finish();if(previousLanguage!=null&&!previousLanguage.equals(AppLanguage.choice(context)))AppLanguage.select(context,previousLanguage);});((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(observer);}
+    @After public void cleanup(){inst.runOnMainSync(()->{for(int i=opened.size()-1;i>=0;i--)if(!opened.get(i).isDestroyed())opened.get(i).finish();if(previousLanguage!=null&&!previousLanguage.equals(AppLanguage.choice(context)))AppLanguage.select(context,previousLanguage);if(themeOverride){android.content.SharedPreferences.Editor e=context.getSharedPreferences("appearance",0).edit();if(previousTheme==null)e.remove("theme");else e.putString("theme",previousTheme);e.commit();}});((Application)context.getApplicationContext()).unregisterActivityLifecycleCallbacks(observer);}
     private void check(String page,View view){
         if(view.getVisibility()!=View.VISIBLE||view.getWidth()==0||view.getHeight()==0)return;
         String name=view.getContentDescription()==null?view.getClass().getSimpleName():view.getContentDescription().toString();
@@ -47,7 +48,7 @@ public class UiDesignAuditTest {
     private Activity open(Intent intent){
         inst.runOnMainSync(()->context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
         long until=SystemClock.uptimeMillis()+10000;boolean[] ready={false};
-        do{inst.runOnMainSync(()->ready[0]=foreground!=null&&foreground.getComponentName().equals(intent.getComponent())&&!foreground.isDestroyed()&&foreground.hasWindowFocus());if(!ready[0])SystemClock.sleep(50);}while(!ready[0]&&SystemClock.uptimeMillis()<until);
+        do{inst.runOnMainSync(()->ready[0]=foreground!=null&&foreground.getComponentName().equals(intent.getComponent())&&!foreground.isDestroyed()&&foreground.hasWindowFocus()&&(!(foreground instanceof LocalizedActivity)||((LocalizedActivity)foreground).uiTheme().light==UiTheme.current(context).light));if(!ready[0])SystemClock.sleep(50);}while(!ready[0]&&SystemClock.uptimeMillis()<until);
         assertTrue("Destination did not resume",ready[0]);inst.waitForIdleSync();SystemClock.sleep(250);return foreground;
     }
     private void audit(String name,Activity page)throws Exception{
@@ -57,7 +58,7 @@ public class UiDesignAuditTest {
     private void capture(String name)throws Exception{SystemClock.sleep(600);Bitmap image=inst.getUiAutomation().takeScreenshot();assertNotNull(image);File dir=new File(context.getCacheDir(),"design-review");assertTrue(dir.isDirectory()||dir.mkdirs());try(FileOutputStream out=new FileOutputStream(new File(dir,name+".png"))){image.compress(Bitmap.CompressFormat.PNG,100,out);}finally{image.recycle();}}
     private void done(){assertTrue(String.join("\n",problems),problems.isEmpty());}
     @Test public void settingsAndFormsKeepReadableTextAndTouchTargets()throws Exception{
-        for(String name:new String[]{"","language","font","theme","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
+        for(String name:new String[]{"","appearance","font","advanced","hook","notifications","toolbar","gestures","chat","shortcuts","hardware"}){
             Activity page=open(SettingsNavigation.intent(context,name));audit(name.isEmpty()?"settings":name,page);inst.runOnMainSync(page::finish);
         }
         for(Class<? extends Activity> type:List.of(SshDiscoveryActivity.class,PairingActivity.class,ShortcutEditorActivity.class)){

@@ -472,4 +472,10 @@
     <string name="attachment_type_image">Image file</string>
     <string name="attachment_type_video">Video file</string>
     <string name="attachment_type_other">File</string>
+    <string name="appearance_and_terminal_theme">App and terminal theme</string>
+    <string name="appearance_theme_description">Applies to the entire app and the terminal’s default colors. Colors and inverse video set by terminal programs remain under their control.</string>
+    <string name="appearance_and_language">Appearance &amp; language</string>
+    <string name="app_preferences">App</string>
+    <string name="appearance_scope">Applies to the app and terminal defaults.</string>
+    <string name="system_language">System language</string>
 </resources>

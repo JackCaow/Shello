@@ -15,13 +15,13 @@ import static org.junit.Assert.*;
 public class LocalizationTest {
     private final Instrumentation inst=InstrumentationRegistry.getInstrumentation();
     private final Context context=inst.getTargetContext();
-    private final BlockingQueue<LanguageSettingsActivity> resumed=new LinkedBlockingQueue<>();
-    private LanguageSettingsActivity current;
+    private final BlockingQueue<AppearanceSettingsActivity> resumed=new LinkedBlockingQueue<>();
+    private AppearanceSettingsActivity current;
     private String original;
     private String originalStoredChoice;
     private final Application.ActivityLifecycleCallbacks callbacks=new Application.ActivityLifecycleCallbacks(){
         public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}
-        public void onActivityResumed(Activity a){if(a instanceof LanguageSettingsActivity){current=(LanguageSettingsActivity)a;resumed.add(current);}}
+        public void onActivityResumed(Activity a){if(a instanceof AppearanceSettingsActivity){current=(AppearanceSettingsActivity)a;resumed.add(current);}}
         public void onActivityPaused(Activity a){}public void onActivityStopped(Activity a){}
         public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
     };
@@ -68,17 +68,17 @@ public class LocalizationTest {
     @Test public void languagePickerRecreatesAndKeepsPage()throws Exception{
         language("en");
         try(ParcelFileDescriptor fd=inst.getUiAutomation().executeShellCommand("am start -W -n dev.ghostty.android.sample/.MainActivity");java.io.InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(fd)){while(in.read()!=-1){}}
-        resumed.clear();inst.runOnMainSync(()->context.startActivity(new Intent(context,LanguageSettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);android.os.SystemClock.sleep(80);
-        assertEquals("App language",current.heading.getText().toString());
-        choose("简体中文","应用语言");choose("English","App language");
-        choose("Follow system",resources((Build.VERSION.SDK_INT>=33?context.getSystemService(LocaleManager.class).getSystemLocales():android.content.res.Resources.getSystem().getConfiguration().getLocales()).get(0).toLanguageTag()).getString(R.string.app_language));
+        resumed.clear();inst.runOnMainSync(()->context.startActivity(new Intent(context,AppearanceSettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));current=resumed.poll(10,TimeUnit.SECONDS);assertNotNull(current);android.os.SystemClock.sleep(80);
+        assertEquals("Appearance & language",current.heading.getText().toString());
+        choose("简体中文","外观与语言");choose("English","Appearance & language");
+        choose("Follow system",resources((Build.VERSION.SDK_INT>=33?context.getSystemService(LocaleManager.class).getSystemLocales():android.content.res.Resources.getSystem().getConfiguration().getLocales()).get(0).toLanguageTag()).getString(R.string.appearance_and_language));
         assertEquals("system",AppLanguage.choice(context));
     }
     private void choose(String label,String heading)throws Exception{
-        LanguageSettingsActivity old=current;resumed.clear();
+        AppearanceSettingsActivity old=current;resumed.clear();
         inst.runOnMainSync(()->{View view=find(old.root,label);assertNotNull(label,view);view.performClick();});
-        LanguageSettingsActivity next=resumed.poll(10,TimeUnit.SECONDS);assertNotNull("Language change must recreate the screen",next);assertNotSame(old,next);current=next;android.os.SystemClock.sleep(80);
-        assertEquals(heading,current.heading.getText().toString());assertEquals(LanguageSettingsActivity.class,current.getClass());
+        AppearanceSettingsActivity next=resumed.poll(10,TimeUnit.SECONDS);assertNotNull("Language change must recreate the screen",next);assertNotSame(old,next);current=next;android.os.SystemClock.sleep(80);
+        assertEquals(heading,current.heading.getText().toString());assertEquals(AppearanceSettingsActivity.class,current.getClass());
     }
     private View find(View v,String description){if(description.contentEquals(v.getContentDescription()==null?"":v.getContentDescription()))return v;if(v instanceof ViewGroup){ViewGroup group=(ViewGroup)v;for(int i=0;i<group.getChildCount();i++){View found=find(group.getChildAt(i),description);if(found!=null)return found;}}return null;}
     @Test public void validationAndBackgroundStateFollowLanguage()throws Exception{

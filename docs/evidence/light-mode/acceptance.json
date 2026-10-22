@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-22",
+  "base": "d3c741b",
+  "scope": "App-wide Light theme using the existing appearance preference",
+  "behavior": [
+    "Light now applies to home, settings and secondary pages, connection/pairing forms, inbox, menus/sheets, native controls and system bars",
+    "Shared immutable per-Activity palette, accessible dark green accents, light surfaces, differentiated attachment/provider colors and white on-accent labels",
+    "Light/dark changes recreate the return stack while retaining settings index scroll, a service-owned terminal and Chinese/emoji draft",
+    "Terminal program colors, camera pixels, attachment thumbnails and cached terminal previews are not passed through the app chrome palette",
+    "Navigation measures its centering padding before children; inbox search no longer opens the IME on entry or uses fullscreen extraction",
+    "Below 240dp of landscape height, the terminal session header hides so a large IME cannot clip the 52dp direction-pad strip or composer actions"
+  ],
+  "verification": {
+    "physical": {
+      "model": "Xiaomi 25019PNF3C",
+      "api": 36,
+      "pixels": "1080x2400",
+      "density": 440,
+      "ime": "Doubao IME",
+      "tests": 23,
+      "log": "phone.txt",
+      "coverage": "UI audit 4, input runtime 16, theme 3; isolated local VT and synthetic attachments"
+    },
+    "theme_back_stack": {
+      "physical_tests": 3,
+      "api27_tests": 3,
+      "logs": [
+        "phone-back-stack.txt",
+        "api27-back-stack.txt"
+      ],
+      "coverage": "Light/dark return through settings index; scroll position, service/session identity, selected tab, draft and native light bar styles"
+    },
+    "api27_landscape": {
+      "tests": 12,
+      "font_scale": 1.3,
+      "pixels": "1920x1080",
+      "density": 420,
+      "log": "api27-landscape.txt",
+      "coverage": "UI audit 4, adaptive layout 7, compact Zen 1; real IME and fully visible direction pad"
+    },
+    "api27_narrow": {
+      "tests": 7,
+      "font_scale": 2.0,
+      "width_dp": 320,
+      "density_override": 540,
+      "language": "zh-CN",
+      "log": "api27-narrow.txt",
+      "coverage": "UI audit 4 and theme 3; original system settings restored"
+    },
+    "api35_tablet": {
+      "tests": 12,
+      "font_scale": 2.0,
+      "native_pixels": "2560x1600",
+      "density": 320,
+      "log": "api35-tablet.txt",
+      "coverage": "UI audit 4, adaptive layout 7, compact Zen 1 on a temporary native Pixel Tablet AVD"
+    },
+    "api35_final_terminal_and_theme": {
+      "tests": 4,
+      "font_scale": 2.0,
+      "log": "api35-tablet-focused.txt",
+      "coverage": "Final short-window header change and expanded settings-back-stack theme test"
+    },
+    "dark_regression": {
+      "api": 27,
+      "tests": 4,
+      "log": "dark.txt",
+      "coverage": "Shared UI audit in dark mode"
+    },
+    "build": {
+      "jdk": 17,
+      "tasks": [
+        ":sample:assembleDebug",
+        ":sample:assembleDebugAndroidTest",
+        ":sample:assembleRelease",
+        ":sample:lintDebug",
+        ":sample:lintRelease",
+        ":terminal:assembleRelease",
+        ":terminal:lintRelease"
+      ],
+      "result": "passed; lint has 0 errors and existing warnings"
+    },
+    "debug_apk_sha256": "61b7e179045ab928653e07a70ca25f427586bc5ddbabfa03bef22f9ec26b13cb",
+    "screenshots": "Physical-device, API 27 narrow/landscape, native API 35 tablet and dark renders inspected locally; personal screenshots excluded from Git"
+  },
+  "data_preservation": {
+    "existing_files_checked": 45,
+    "missing": 0,
+    "encrypted_profiles_byte_identical": true,
+    "appearance_preference_byte_identical": true,
+    "existing_preferences_changed": [
+      "terminal_tabs.xml"
+    ],
+    "added_files": 1,
+    "notes": "Normal terminal tab/resume metadata changed during tests. Original saved profile files, appearance and input preferences remain intact. All installs used matching debug signatures and adb install -r; no uninstall."
+  },
+  "limits": [
+    "Camera hardware was disabled on the temporary tablet AVD; scanner layout was reviewed, not real QR decoding.",
+    "Input/session tests use disposable local VT and synthetic attachments; no new remote Claude Code/vim or real upload acceptance is claimed.",
+    "Initial failed/aborted runs are excluded. A cold AVD needed camera permission; navigation overflow and a clipped API 27 pad were reproduced, fixed and rerun.",
+    "No tag, release or Maven publication."
+  ]
+}

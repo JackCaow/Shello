@@ -66,6 +66,7 @@ public final class MainActivity extends LocalizedActivity {
     private TerminalSession.Checkpoint checkpoint;
     private TerminalView terminal;
     private TerminalInputView directInput;
+    private LinearLayout terminalHeader;
     private EditText draft;
     private LinearLayout root, sheet, composer, pad, selectionBar, savedConnections;
     private String pendingProfile,restoredDraftTab,restoredDraft;
@@ -104,13 +105,13 @@ public final class MainActivity extends LocalizedActivity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.BLACK);
-        getWindow().setNavigationBarColor(Color.BLACK);
+        UiTheme.window(this,getWindow());
+
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
                 | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-        root=column(); root.setBackgroundColor(Color.BLACK);
+        root=column(); root.setBackgroundColor(UiTheme.of(this).canvas);
         root.setFocusableInTouchMode(true);
-        if(Build.VERSION.SDK_INT>=30) applyModernInsets();
+        configureInsets();
         setContentView(root);
         stage=new FrameLayout(this); root.addView(stage,new LinearLayout.LayoutParams(-1,-1));
         sheet=column(); sheet.setBackground(round(SURFACE,24)); sheet.setClipToOutline(true);
@@ -118,7 +119,7 @@ public final class MainActivity extends LocalizedActivity {
         buildHeader();
         viewport=new FrameLayout(this);
         sheet.addView(viewport,new LinearLayout.LayoutParams(-1,0,1));
-        terminal=new TerminalView(this); terminal.setBackgroundColor(SURFACE);
+        terminal=new TerminalView(this); terminal.setBackgroundColor(uiTheme().light?0xfff5f5f5:SURFACE);
         FrameLayout.LayoutParams grid=new FrameLayout.LayoutParams(-1,-1);
         grid.setMargins(dp(8),dp(4),dp(8),0); viewport.addView(terminal,grid);
         buildSelectionBar(); buildPad(); buildToolbar(); buildComposer();
@@ -154,6 +155,11 @@ public final class MainActivity extends LocalizedActivity {
         });
         viewport.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->clampPad());
         sheet.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
+            // A landscape IME can leave less than 52dp for the terminal/pad.
+            // Keep full-size controls and recover the decorative/session header space.
+            boolean shortLandscape=r-l>b-t&&b-t<dp(240);
+            int headerVisibility=shortLandscape?View.GONE:View.VISIBLE;
+            if(terminalHeader.getVisibility()!=headerVisibility)terminalHeader.setVisibility(headerVisibility);
             int toolWidth=Math.min(dp(600),Math.max(0,r-l-dp(16)));
             LinearLayout.LayoutParams tools=(LinearLayout.LayoutParams)toolbarContainer.getLayoutParams();
             if(tools.width!=toolWidth){tools.width=toolWidth;tools.gravity=Gravity.CENTER_HORIZONTAL;toolbarContainer.setLayoutParams(tools);}
@@ -185,17 +191,18 @@ public final class MainActivity extends LocalizedActivity {
     }
 
     private void buildHeader() {
+        terminalHeader=column();sheet.addView(terminalHeader,new LinearLayout.LayoutParams(-1,-2));
         View grip=new View(this); grip.setBackground(round(0xff5a5b60,3));
         LinearLayout.LayoutParams gripParams=new LinearLayout.LayoutParams(dp(44),dp(3));
-        gripParams.gravity=Gravity.CENTER_HORIZONTAL;gripParams.topMargin=dp(8);sheet.addView(grip,gripParams);
+        gripParams.gravity=Gravity.CENTER_HORIZONTAL;gripParams.topMargin=dp(8);terminalHeader.addView(grip,gripParams);
         LinearLayout header=row(); header.setPadding(dp(16),0,dp(16),0);
-        sheet.addView(header,new LinearLayout.LayoutParams(-1,dp(48)));
-        TextView minimize=key("−",tr(R.string.minimize_session),this::minimize); minimize.setTextColor(Color.BLACK);
+        terminalHeader.addView(header,new LinearLayout.LayoutParams(-1,dp(48)));
+        TextView minimize=key("−",tr(R.string.minimize_session),this::minimize); minimize.setTextColor(UiTheme.foreground(MainActivity.this,Color.BLACK));
         minimize.setTextSize(14);
         minimize.setBackground(new android.graphics.drawable.InsetDrawable(round(0xffffcc00,9),dp(14)));
         header.addView(minimize,new LinearLayout.LayoutParams(dp(48),dp(48)));
         TextView menu=icon("panel",tr(R.string.session_tools),()->tools(header));
-        ((ControlLabel)menu).setIcon(new ToolbarIcon("panel",dp(11),Color.BLACK));
+        ((ControlLabel)menu).setIcon(new ToolbarIcon(MainActivity.this,"panel",dp(11),uiTheme().onAccent));
         menu.setBackground(new android.graphics.drawable.InsetDrawable(round(GREEN,9),dp(14)));
         header.addView(menu,new LinearLayout.LayoutParams(dp(48),dp(48)));
         subtitle=label(tr(R.string.local_terminal),12,MUTED);subtitle.setTypeface(Typeface.MONOSPACE);
@@ -217,8 +224,8 @@ public final class MainActivity extends LocalizedActivity {
         composer.setBackground(round(Color.BLACK,26));composer.setVisibility(View.GONE);
         LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);
         params.setMargins(dp(8),dp(6),dp(8),dp(8));sheet.addView(composer,params);
-        draft=new EditText(this);draft.setTextColor(TEXT);draft.setHintTextColor(MUTED);
-        UiDesign.type(draft,UiDesign.Type.BODY);draft.setHint(tr(R.string.type_a_message));draft.setBackgroundColor(Color.TRANSPARENT);
+        draft=new EditText(this);draft.setTextColor(UiTheme.foreground(MainActivity.this,TEXT));draft.setHintTextColor(UiTheme.foreground(MainActivity.this,MUTED));
+        UiDesign.type(draft,UiDesign.Type.BODY);draft.setHint(tr(R.string.type_a_message));draft.setBackgroundColor(UiTheme.background(MainActivity.this,Color.TRANSPARENT));
         // Command drafts must not autocorrect printf/stty into different commands.
         draft.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         draft.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
@@ -249,7 +256,7 @@ public final class MainActivity extends LocalizedActivity {
         });
     }
     private void composerAction(LinearLayout actions,TextView button){
-        button.setBackgroundColor(Color.TRANSPARENT);actions.addView(button,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        button.setBackgroundColor(UiTheme.background(MainActivity.this,Color.TRANSPARENT));actions.addView(button,new LinearLayout.LayoutParams(dp(48),dp(48)));
     }
     private void showMenu(View anchor,java.util.List<SampleUi.Action> actions){
         if(connectionMenu!=null)connectionMenu.dismiss();connectionMenu=SampleUi.menu(this,anchor,actions);
@@ -296,7 +303,7 @@ public final class MainActivity extends LocalizedActivity {
         if(sendButton==null)return;
         boolean ready=(draft.length()>0||shownTab!=null&&!shownTab.attachments.isEmpty())&&SshSessionService.attachmentsReady(shownTab)&&(!sshMode||sshConnected);
         sendButton.setEnabled(ready);sendButton.setBackground(new android.graphics.drawable.InsetDrawable(round(ready?GREEN:0xff191b1e,18),dp(6)));
-        ((ControlLabel)sendButton).setIcon(new ToolbarIcon("send",dp(20),ready?Color.BLACK:MUTED));
+        ((ControlLabel)sendButton).setIcon(new ToolbarIcon(MainActivity.this,"send",dp(20),ready?uiTheme().onAccent:MUTED));
     }
     private void updateAttachmentStatus(){
         attachmentCards.removeAllViews();attachmentStatus.setVisibility(View.GONE);
@@ -343,17 +350,17 @@ public final class MainActivity extends LocalizedActivity {
         viewport.addView(pad,p);
         LinearLayout handle=row();pad.addView(handle,new LinearLayout.LayoutParams(-1,dp(48)));
         padLocked=new InputPreferences(this).flag("pad_locked",false);padFolded=new InputPreferences(this).flag("pad_folded",false);
-        TextView drag=icon("grip",AppLanguage.tr(R.string.input_toggle_dpad),()->{padFolded=!padFolded;new InputPreferences(this).setFlag("pad_folded",padFolded);layoutPad();});drag.setTextColor(MUTED);
-        ((ControlLabel)drag).setIcon(new ToolbarIcon("grip",dp(44),MUTED));
+        TextView drag=icon("grip",AppLanguage.tr(R.string.input_toggle_dpad),()->{padFolded=!padFolded;new InputPreferences(this).setFlag("pad_folded",padFolded);layoutPad();});drag.setTextColor(UiTheme.foreground(MainActivity.this,MUTED));
+        ((ControlLabel)drag).setIcon(new ToolbarIcon(MainActivity.this,"grip",dp(44),MUTED));
         handle.addView(new View(this),new LinearLayout.LayoutParams(dp(32),1));
         handle.addView(drag,new LinearLayout.LayoutParams(dp(64),-1));
         lockButton=icon("unlock",tr(R.string.lock_direction_pad_position),()->{
             padLocked=!padLocked;new InputPreferences(this).setFlag("pad_locked",padLocked);
-            ((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));
+            ((ControlLabel)lockButton).setIcon(new ToolbarIcon(MainActivity.this,padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));
             lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
-        });((ControlLabel)lockButton).setIcon(new ToolbarIcon(padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
+        });((ControlLabel)lockButton).setIcon(new ToolbarIcon(MainActivity.this,padLocked?"lock":"unlock",dp(14),padLocked?GREEN:MUTED));lockButton.setContentDescription(padLocked?tr(R.string.unlock_direction_pad_position):tr(R.string.lock_direction_pad_position));
         handle.addView(lockButton,new LinearLayout.LayoutParams(dp(48),dp(48)));
-        drag.setBackgroundColor(Color.TRANSPARENT);lockButton.setBackgroundColor(Color.TRANSPARENT);
+        drag.setBackgroundColor(UiTheme.background(MainActivity.this,Color.TRANSPARENT));lockButton.setBackgroundColor(UiTheme.background(MainActivity.this,Color.TRANSPARENT));
         drag.setOnTouchListener(new View.OnTouchListener(){float x,y,sx,sy;boolean moved,held;final android.os.Handler h=new android.os.Handler(android.os.Looper.getMainLooper());final Runnable lock=()->{held=true;lockButton.performClick();};
             public boolean onTouch(View v,MotionEvent e){switch(e.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:x=e.getRawX();y=e.getRawY();sx=pad.getX();sy=pad.getY();moved=false;held=false;h.postDelayed(lock,ViewConfiguration.getLongPressTimeout());return true;
@@ -381,7 +388,7 @@ public final class MainActivity extends LocalizedActivity {
         LinearLayout row=row();pad.addView(row,new LinearLayout.LayoutParams(-1,dp(52)));
         for(int i=0;i<3;i++){
             View view=actions[i]==null?new View(this):icon(titles[i],descriptions[i],actions[i]);
-            if(actions[i]!=null)view.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),round(titles[i].equals("return")||titles[i].equals("clear")||titles[i].equals("backspace")?Color.BLACK:KEY,16),null));
+            if(actions[i]!=null)view.setBackground(new RippleDrawable(ColorStateList.valueOf(uiTheme().ripple),round(titles[i].equals("return")||titles[i].equals("clear")||titles[i].equals("backspace")?Color.BLACK:KEY,16),null));
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(50),1);p.setMargins(dp(1),dp(1),dp(1),dp(1));row.addView(view,p);
         }
     }
@@ -406,12 +413,12 @@ public final class MainActivity extends LocalizedActivity {
         pad.setY(Math.max(0,Math.min(pad.getY(),viewport.getHeight()-pad.getHeight())));
     }
     private void buildHome() {
-        homePage=column();homePage.setBackground(new HomeBackdrop());
+        homePage=column();homePage.setBackground(new HomeBackdrop(homePage));
         home=new ScrollView(this);home.setClipToPadding(false);
         LinearLayout content=column();content.setClipChildren(false);int inset=dp(getResources().getConfiguration().screenWidthDp>=600?24:16);content.setPadding(inset,0,inset,dp(110));home.addView(AdaptiveLayout.centered(this,content,1200,null));
         LinearLayout top=row();top.setPadding(inset,0,inset,0);top.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         String[] navIcons={"inbox","settings"};int[] navLabels={R.string.agent_inbox,R.string.settings};
-        for(int i=0;i<navIcons.length;i++){final boolean inbox=i==0;View button=SampleUi.header(this,navIcons[i],tr(navLabels[i]),TEXT,()->startActivity(new Intent(this,inbox?AgentActivity.class:SettingsActivity.class)));button.setBackground(SampleUi.touch(this,0xff111713,22));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(48),dp(48));lp.leftMargin=dp(8);top.addView(button,lp);}
+        for(int i=0;i<navIcons.length;i++){final boolean inbox=i==0;View button=SampleUi.header(this,navIcons[i],tr(navLabels[i]),TEXT,()->startActivity(new Intent(this,inbox?AgentActivity.class:SettingsActivity.class)));button.setBackground(SampleUi.touch(this,uiTheme().light?uiTheme().surface:0xff111713,24));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(48),dp(48));lp.leftMargin=dp(8);top.addView(button,lp);}
         homePage.addView(AdaptiveLayout.centered(this,top,1200,null),new LinearLayout.LayoutParams(-1,dp(56)));
         homePage.addView(home,new LinearLayout.LayoutParams(-1,0,1));
         AdaptiveLayout.Columns homeColumns=new AdaptiveLayout.Columns(this,840,24);content.addView(homeColumns,new LinearLayout.LayoutParams(-1,-2));
@@ -427,19 +434,26 @@ public final class MainActivity extends LocalizedActivity {
             LinearLayout guideHeader=row();guideHeader.setMinimumHeight(dp(48));TextView heading=SampleUi.sectionTitle(this,tr(R.string.discover_shello));guideHeader.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
             android.content.SharedPreferences visited=getSharedPreferences("guide",0);TextView progress=label("",13,0xff00bc65);progress.setIncludeFontPadding(false);guideHeader.addView(progress);
             LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.topMargin=dp(UiDesign.SECTION);content.addView(guideHeader,hp);
-            String[] names={tr(R.string.qr_pairing),tr(R.string.remote_sessions),tr(R.string.inbox_and_approvals),tr(R.string.terminal_theme),tr(R.string.shortcuts),tr(R.string.text_selection)};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
+            String[] names={tr(R.string.qr_pairing),tr(R.string.remote_sessions),tr(R.string.inbox_and_approvals),tr(R.string.appearance_and_language),tr(R.string.shortcuts),tr(R.string.text_selection)};String[] icons={"qr","server","inbox","settings","keyboard","pad"};
             Runnable update=()->{int count=0;for(int i=0;i<names.length;i++)if(visited.getBoolean("viewed_"+i,false))count++;progress.setText(count+"/"+names.length);};update.run();
             HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout cards=row();scroll.addView(cards);content.addView(scroll);
-            for(int i=0;i<names.length;i++){final int index=i;LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setMinimumHeight(dp(100));card.setPadding(0,dp(12),0,dp(12));card.setBackground(SampleUi.touch(this,0xff191b1d,16));card.setContentDescription(names[i]);card.addView(SampleUi.icon(this,icons[i],0xff00ee00),new LinearLayout.LayoutParams(dp(24),dp(24)));TextView text=label(names[i],13,MUTED);text.setGravity(Gravity.CENTER);text.setPadding(dp(8),dp(8),dp(8),0);card.addView(text);
-                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(SettingsNavigation.intent(this,index==3?"theme":index==4?"shortcuts":"gestures"));}});
+            for(int i=0;i<names.length;i++){final int index=i;LinearLayout card=column();card.setGravity(Gravity.CENTER);card.setMinimumHeight(dp(100));card.setPadding(0,dp(12),0,dp(12));card.setBackground(SampleUi.touch(this,uiTheme().light?uiTheme().surface:0xff191b1d,16));card.setContentDescription(names[i]);card.addView(SampleUi.icon(this,icons[i],0xff00ee00),new LinearLayout.LayoutParams(dp(24),dp(24)));TextView text=label(names[i],13,MUTED);text.setGravity(Gravity.CENTER);text.setPadding(dp(8),dp(8),dp(8),0);card.addView(text);
+                card.setOnClickListener(v->{visited.edit().putBoolean("viewed_"+index,true).apply();update.run();switch(index){case 0:startActivityForResult(new Intent(this,PairingActivity.class),74);break;case 1:infoDialog=SampleUi.confirm(this,tr(R.string.remote_sessions),tr(R.string.tap_a_saved_connection_to_choose_or_create_a_remote_tmux_session),null,tr(R.string.close),tr(R.string.got_it),false,null,null);break;case 2:startActivity(new Intent(this,AgentActivity.class));break;default:startActivity(SettingsNavigation.intent(this,index==3?"appearance":index==4?"shortcuts":"gestures"));}});
                 LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(112),-2);cp.rightMargin=dp(8);cards.addView(card,cp);}
         }
         stage.addView(homePage,new FrameLayout.LayoutParams(-1,-1));homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);
-        addConnection=SampleUi.header(this,"plus",tr(R.string.new_ssh_connection),Color.BLACK,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
+        addConnection=SampleUi.header(this,"plus",tr(R.string.new_ssh_connection),uiTheme().onAccent,this::chooseConnection);addConnection.setBackground(SampleUi.touch(this,0xff00ef00,30));FrameLayout.LayoutParams fab=new FrameLayout.LayoutParams(dp(60),dp(60),Gravity.RIGHT|Gravity.BOTTOM);fab.setMargins(0,0,dp(24),dp(24));stage.addView(addConnection,fab);addConnection.setVisibility(View.GONE);
     }
     private final class HomeBackdrop extends android.graphics.drawable.Drawable {
-        final android.graphics.Paint paint=new android.graphics.Paint();
-        @Override public void draw(android.graphics.Canvas canvas){android.graphics.Rect b=getBounds();canvas.drawColor(Color.BLACK);paint.setShader(new android.graphics.RadialGradient(b.width()*.5f,0,b.width()*.8f,0xff041104,Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(b,paint);paint.setShader(new android.graphics.RadialGradient(b.right,b.bottom,b.width()*.65f,0xff032003,Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(b,paint);}
+        final android.graphics.Paint paint=new android.graphics.Paint();final View owner;
+        HomeBackdrop(View owner){this.owner=owner;}
+        @Override public void draw(android.graphics.Canvas canvas){
+            android.graphics.Rect bounds=getBounds();float width=root.getWidth(),height=root.getHeight();
+            float x=owner==root?0:root.getPaddingLeft(),y=owner==root?0:root.getPaddingTop();
+            canvas.drawColor(uiTheme().canvas);
+            paint.setShader(new android.graphics.RadialGradient(width*.5f-x,-y,Math.max(1,width*.8f),UiTheme.background(MainActivity.this,0xff041104),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(bounds,paint);
+            paint.setShader(new android.graphics.RadialGradient(width-x,height-y,Math.max(1,width*.65f),UiTheme.background(MainActivity.this,0xff032003),Color.TRANSPARENT,android.graphics.Shader.TileMode.CLAMP));canvas.drawRect(bounds,paint);
+        }
         @Override public void setAlpha(int a){}@Override public void setColorFilter(android.graphics.ColorFilter f){}@Override public int getOpacity(){return android.graphics.PixelFormat.OPAQUE;}
     }
     private void chooseConnection(){
@@ -505,7 +519,7 @@ public final class MainActivity extends LocalizedActivity {
         }
     }
     private void minimize() {
-        rememberTab();hideKeyboard();if(inputControls!=null)inputControls.clearModifiers();minimized=true;sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
+        rememberTab();hideKeyboard();if(inputControls!=null)inputControls.clearModifiers();minimized=true;root.setBackground(new HomeBackdrop(root));sheet.setVisibility(View.INVISIBLE);homePage.setVisibility(View.VISIBLE);if(addConnection!=null)addConnection.setVisibility(View.VISIBLE);
         if(overview!=null&&sshService!=null)overview.refresh(sshService.tabs());
     }
     private void openTab(String id){
@@ -522,7 +536,7 @@ public final class MainActivity extends LocalizedActivity {
     private void closeAllTabs(){
         if(sshService==null)return;shownTab=null;draft.setText("");sshService.closeAll();minimize();
     }
-    private void resumeSession(){minimized=false;homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
+    private void resumeSession(){minimized=false;root.setBackgroundColor(uiTheme().canvas);homePage.setVisibility(View.GONE);if(addConnection!=null)addConnection.setVisibility(View.GONE);sheet.setVisibility(View.VISIBLE);root.requestFocus();}
     @Override public void onBackPressed() {
         if(overview!=null&&overview.back())return;
         if(minimized){super.onBackPressed();return;}
@@ -744,6 +758,20 @@ public final class MainActivity extends LocalizedActivity {
                 +tr(R.string.local_demo_keys)
                 +tr(R.string.local_demo_help));
     }
+    private void configureInsets(){
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        if(Build.VERSION.SDK_INT>=29)getWindow().setStatusBarContrastEnforced(false);
+        if(Build.VERSION.SDK_INT>=30){
+            getWindow().setDecorFitsSystemWindows(false);getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            getWindow().setNavigationBarContrastEnforced(false);applyModernInsets();
+        }else{
+            View decor=getWindow().getDecorView();decor.setSystemUiVisibility(decor.getSystemUiVisibility()|View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            root.setOnApplyWindowInsetsListener((view,insets)->{
+                view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());
+                return insets.consumeSystemWindowInsets();
+            });
+        }
+    }
     @android.annotation.TargetApi(30) private void applyModernInsets() {
         root.setOnApplyWindowInsetsListener((v,insets)->{
             android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());
@@ -758,15 +786,15 @@ public final class MainActivity extends LocalizedActivity {
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setGravity(Gravity.CENTER_VERTICAL);l.setBaselineAligned(false);return l;}
     private TextView label(String text,int size,int color){return SampleUi.text(this,text,size,color);}
-    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
+    private GradientDrawable round(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(UiTheme.background(this,color));d.setCornerRadius(dp(radius));return d;}
     private TextView key(String title,String description,Runnable action) {
-        TextView v=new ControlLabel();v.setText(title);UiDesign.type(v,UiDesign.Type.CONTROL);UiDesign.touch(v);v.setTextColor(TEXT);v.setGravity(Gravity.CENTER);v.setTypeface(Typeface.MONOSPACE);
+        TextView v=new ControlLabel();v.setText(title);UiDesign.type(v,UiDesign.Type.CONTROL);UiDesign.touch(v);v.setTextColor(UiTheme.foreground(MainActivity.this,TEXT));v.setGravity(Gravity.CENTER);v.setTypeface(Typeface.MONOSPACE);
         v.setSingleLine();v.setEllipsize(TextUtils.TruncateAt.END);v.setContentDescription(description);
-        v.setFocusable(true);v.setBackground(new RippleDrawable(ColorStateList.valueOf(0xff35433c),round(KEY,22),null));
+        v.setFocusable(true);v.setBackground(new RippleDrawable(ColorStateList.valueOf(uiTheme().ripple),round(KEY,22),null));
         v.setOnClickListener(w->action.run());return v;
     }
     private TextView icon(String name,String description,Runnable action) {
-        TextView v=key("",description,action);v.setTag(name);((ControlLabel)v).setIcon(new ToolbarIcon(name,dp(20),TEXT));
+        TextView v=key("",description,action);v.setTag(name);((ControlLabel)v).setIcon(new ToolbarIcon(MainActivity.this,name,dp(20),TEXT));
         return v;
     }
     /** Center icons independently of font ascent/descent, including the small header buttons. */

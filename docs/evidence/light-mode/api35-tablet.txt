@@ -1,0 +1,10 @@
+
+dev.ghostty.android.sample.UiDesignAuditTest:....
+dev.ghostty.android.sample.InputRuntimeTest:.
+dev.ghostty.android.sample.AdaptiveLayoutTest:.......
+
+Time: 102.981
+
+OK (12 tests)
+
+

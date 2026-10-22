@@ -43,7 +43,7 @@ public class SettingsNavigationTest {
         click(AppLanguage.tr(R.string.settings));page(HookSettingsActivity.class);systemBack();page(AgentActivity.class);assertSame(inbox,current);
     }
     @Test public void legacyPageIntentMigratesOnceToIndependentDestination(){
-        inst.runOnMainSync(()->context.startActivity(new Intent(context,AgentActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));page(AgentActivity.class);Activity source=current;inst.runOnMainSync(()->source.startActivity(new Intent(source,SettingsActivity.class).putExtra("page","theme")));page(ThemeSettingsActivity.class);
+        inst.runOnMainSync(()->context.startActivity(new Intent(context,AgentActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));page(AgentActivity.class);Activity source=current;inst.runOnMainSync(()->source.startActivity(new Intent(source,SettingsActivity.class).putExtra("page","theme")));page(AppearanceSettingsActivity.class);
         systemBack();page(SettingsActivity.class);assertNull(current.getIntent().getStringExtra("page"));systemBack();page(AgentActivity.class);assertSame(source,current);
     }
     @Test public void previousWindowCanStillDrawThumbnailAfterTabCloses()throws Exception{

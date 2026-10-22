@@ -13,12 +13,11 @@ final class AdaptiveLayout {
     static int dp(Context c,int value){return SampleUi.dp(c,value);}
 
     static FrameLayout centered(Context c,View content,int maxWidth,View header){
+        if(header instanceof SampleUi.NavigationBar)((SampleUi.NavigationBar)header).contentWidth(maxWidth);
         FrameLayout frame=new FrameLayout(c){
             @Override protected void onMeasure(int ws,int hs){
                 int available=MeasureSpec.getSize(ws),width=Math.min(available,dp(c,maxWidth));
                 content.getLayoutParams().width=width;
-                if(header!=null){int side=(available-width)/2;
-                    if(header.getPaddingLeft()!=side)header.setPadding(side,header.getPaddingTop(),side,header.getPaddingBottom());}
                 super.onMeasure(ws,hs);
             }
         };
@@ -49,7 +48,7 @@ final class AdaptiveLayout {
     }
     /** Call after show. Tall list sheets reserve room for their header and bottom action. */
     static void sheetWindow(Activity activity,Dialog dialog,int maxWidth,int preferredHeight){
-        Window window=dialog.getWindow();if(window==null)return;
+        Window window=dialog.getWindow();if(window==null)return;UiTheme.window(activity,window);
         window.setBackgroundDrawableResource(android.R.color.transparent);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setDimAmount(.55f);
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
